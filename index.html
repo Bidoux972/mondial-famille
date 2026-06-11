@@ -600,6 +600,12 @@ function hero(){
     ? `<div class="rappel-prono ok">✓ Ton prono est posé : ${monPr.score_a}–${monPr.score_b}${monPr.buteur?' · ⚽ '+monPr.buteur:''}</div>`
     : `<div class="rappel-prono manque">⚠️ Tu n'as pas encore pronostiqué ce match !</div>
        <button class="btn" style="display:block;margin:10px auto 0" onclick="event.stopPropagation();goTab('pronos')">🎲 Fais tes pronos</button>`);
+  const memeJour = M.filter(x => !joue(x) && x.id !== prochain.id && jourCle(x) === jourCle(prochain));
+  const puces = memeJour.length ? `<div style="margin-top:12px;border-top:1px solid var(--ligne);padding-top:10px">
+      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gris);font-weight:700;margin-bottom:6px">Aussi au programme du jour — touche un match</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${memeJour.map(x =>
+        `<span onclick="event.stopPropagation();ouvrirAvm(${x.id})" style="background:var(--panneau2);border:1px solid var(--ligne);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer">${F[x.a]} ${x.a} – ${x.b} ${F[x.b]} · <span style="color:var(--lagon);font-family:'Space Grotesk',monospace">${fmtHeure(x.dt)}</span></span>`).join('')}</div>
+    </div>` : '';
   h.innerHTML = `<div class="eti">Prochain match · Groupe ${prochain.g}</div>
     <div class="duel">
       <div class="eq"><div class="drapeau">${F[prochain.a]}</div><div class="nom">${prochain.a}</div></div>
@@ -608,7 +614,8 @@ function hero(){
     </div>
     <div class="quand">${fmtJour(prochain.dt)} · ${fmtHeure(prochain.dt)} ${compte?`<span class="compte">(${compte})</span>`:''}</div>
     ${rappel}
-    ${avmDispo(prochain.id) ? `<div class="rappel-prono" style="color:var(--or);font-weight:700">📋 Touche pour lire l'avant-match</div>` : ''}`;
+    ${avmDispo(prochain.id) ? `<div class="rappel-prono" style="color:var(--or);font-weight:700">Touche ici pour lire l'avant-match</div>` : ''}
+    ${puces}`;
   h.style.cursor = avmDispo(prochain.id)||admin ? 'pointer' : 'default';
   h.onclick = () => { if(avmDispo(prochain.id)||admin) ouvrirAvm(prochain.id); };
 }
@@ -635,7 +642,12 @@ function renduAvm(){
       <div><h3 style="font-size:16px">${m.a} – ${m.b}</h3>
       <div class="surnom">Groupe ${m.g} · ${fmtJour(m.dt)} · ${fmtHeure(m.dt)} 🇲🇶</div></div>
       <span class="f">${F[m.b]}</span></div>
-    ${corps}${adminBloc}</div>`;
+    ${corps}
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" style="flex:1;background:var(--panneau2);color:var(--creme);border:1px solid var(--ligne)" onclick="voirEquipe('${m.a.replace(/'/g,"\\'")}')">Fiche ${m.a}</button>
+      <button class="btn" style="flex:1;background:var(--panneau2);color:var(--creme);border:1px solid var(--ligne)" onclick="voirEquipe('${m.b.replace(/'/g,"\\'")}')">Fiche ${m.b}</button>
+    </div>
+    ${adminBloc}</div>`;
 }
 async function sauverAvm(id){
   const titre = $('avm-titre').value.trim(), contenu = $('avm-contenu').value.trim();
@@ -725,13 +737,14 @@ function carteMatch(m, modePronos){
     <input type="text" id="rbu-${m.id}" placeholder="⚽ Buteurs réels, séparés par des virgules" value="${re&&re.buteurs?String(re.buteurs).replace(/"/g,'&quot;'):''}">
     <input type="text" id="rca-${m.id}" placeholder="🟥 Cartons rouges (facultatif)" value="${re&&re.cartons?String(re.cartons).replace(/"/g,'&quot;'):''}">`;
   }
-  const boutonAvm = (!re && (avmDispo(m.id)||admin)) ? `<div class="monprono" style="margin-top:8px"><a href="javascript:void(0)" onclick="event.stopPropagation();ouvrirAvm(${m.id});window.scrollTo({top:0,behavior:'smooth'})" style="color:var(--or);font-weight:700;text-decoration:none">📋 Avant-match : forces, faiblesses, sélections</a></div>` : '';
+  const boutonAvm = (!re && (avmDispo(m.id)||admin)) ? `<button class="btn" style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--or);color:var(--or)" onclick="ouvrirAvm(${m.id});window.scrollTo({top:0,behavior:'smooth'})">AVANT-MATCH · forces, faiblesses, sélections</button>` : '';
+  const eqClic = n => `onclick="voirEquipe('${n.replace(/'/g,"\\'")}')" style="cursor:pointer"`;
   return `<div class="match">
     <div class="ligne1"><span class="grp">GR. ${m.g}</span><span class="heure">${joue(m)?'TERMINÉ':fmtHeure(m.dt)+' 🇲🇶'}</span></div>
     <div class="duel">
-      <div class="eq"><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
+      <div class="eq" ${eqClic(m.a)}><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
       ${score}
-      <div class="eq dr"><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
+      <div class="eq dr" ${eqClic(m.b)}><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
     </div>${infosResultat}${bas}${boutonAvm}</div>`;
 }
 function listeMatchs(){
@@ -957,6 +970,11 @@ function miniClassement(){
 function toutAfficher(){ blocIdentite(); miniClassement(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none'; }
 
 function goTab(sec){ document.querySelector(`nav button[data-sec=${sec}]`).click(); }
+function voirEquipe(n){
+  goTab('equipes');
+  ficheOuverte = n; zoneEquipes();
+  window.scrollTo({top:0});
+}
 
 /* ============ MISE À JOUR QUOTIDIENNE (un seul collage) ============ */
 async function appliquerMajJour(){
