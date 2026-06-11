@@ -28,6 +28,12 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .moi .txt{flex:1;font-size:14px}
 .moi .txt b{color:var(--or)}
 .moi button{background:none;border:1px solid var(--ligne);color:var(--gris);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Public Sans'}
+/* mini-classement d'accueil */
+.mini-cl{display:flex;gap:12px;align-items:center;background:var(--panneau);border:1px solid var(--ligne);border-radius:12px;padding:10px 14px;margin:10px 0;cursor:pointer;overflow-x:auto}
+.mini-cl .eti{font-size:10px;letter-spacing:1.5px;color:var(--or);text-transform:uppercase;font-weight:700;white-space:nowrap}
+.mini-cl .item{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:13px;font-weight:600}
+.mini-cl .item b{color:var(--or);font-family:'Space Grotesk',monospace;font-size:15px}
+.mini-cl .fleche{margin-left:auto;color:var(--gris);font-size:12px}
 /* écran identité */
 .identite{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin:14px 0}
 .identite label{display:block;font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
@@ -160,6 +166,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     </div>
   </div>
   <div class="moi" id="bloc-moi" style="display:none"></div>
+  <div class="mini-cl" id="mini-classement" style="display:none" onclick="goTab('classement')"></div>
 
   <div class="hero" id="hero" style="display:none"></div>
   <div id="avm"></div>
@@ -414,11 +421,22 @@ const AVM_BASE = {
 };
 
 /* ============ JOUEURS (pour le bonus buteur) ============ */
-/* France : liste officielle FFF vérifiée. Autres équipes : alimentées via les mises à jour quotidiennes (table mondial_joueurs). */
+/* Annotation des postes : [G] gardien, [D] défenseur, [M] milieu, [A] attaquant — facultative, l'app trie attaquants d'abord. */
 const JOUEURS_BASE = {
-"France":"Mbappé, Dembélé, Barcola, Doué, Cherki, Akliouche, M. Thuram, Mateta, Olise, Zaïre-Emery, Rabiot, Tchouaméni, Koné, Kanté, Saliba, Konaté, Upamecano, Koundé, Lacroix, Digne, Gusto, L. Hernandez, T. Hernandez, Maignan, Samba, Risser",
-"Sénégal":"Mané, Jackson, I. Ndiaye, H. Diarra, I. Gueye, P. Gueye, Koulibaly, Niakhate, Diatta, E.M. Diouf, É. Mendy"
+"France":"Mbappé [A], Dembélé [A], Barcola [A], Doué [A], Cherki [A], Akliouche [A], M. Thuram [A], Mateta [A], Olise [A], Zaïre-Emery [M], Rabiot [M], Tchouaméni [M], Koné [M], Kanté [M], Saliba [D], Konaté [D], Upamecano [D], Koundé [D], Lacroix [D], Digne [D], Gusto [D], L. Hernandez [D], T. Hernandez [D], Maignan [G], Samba [G], Risser [G]",
+"Sénégal":"Mané [A], Jackson [A], I. Ndiaye [A], H. Diarra [M], I. Gueye [M], P. Gueye [M], Koulibaly [D], Niakhate [D], Diatta [D], E.M. Diouf [D], É. Mendy [G]"
 };
+const POSTES = {G:['🧤','Gardien'], D:['🛡️','Défenseur'], M:['⚙️','Milieu'], A:['🎯','Attaquant']};
+function parseJoueur(s){
+  const m = String(s).match(/^(.*?)\s*\[([GDMAgdma])\]\s*$/);
+  return m ? {nom:m[1].trim(), pos:m[2].toUpperCase()} : {nom:String(s).trim(), pos:null};
+}
+function joueursPoste(equipe){
+  const ordre = {A:0, M:1, D:2, G:3};
+  return joueursDe(equipe).map(parseJoueur)
+    .sort((x,y)=>((x.pos in ordre)?ordre[x.pos]:4)-((y.pos in ordre)?ordre[y.pos]:4));
+}
+const labelJoueur = j => j.pos ? `${POSTES[j.pos][0]} ${j.nom} · ${POSTES[j.pos][1]}` : j.nom;
 
 /* ============ ÉTAT ============ */
 let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null, ficheOuverte = null, avmOuvert = null;
@@ -648,11 +666,11 @@ function carteMatch(m, modePronos){
   let bas = '';
   if(modePronos && pseudo && !verrou){
     const va = monPr ? monPr.score_a : '', vb = monPr ? monPr.score_b : '';
-    const joueurs = [...joueursDe(m.a).map(j=>({j,e:m.a})), ...joueursDe(m.b).map(j=>({j,e:m.b}))];
+    const jA = joueursPoste(m.a), jB = joueursPoste(m.b);
     const buteurActuel = monPr && monPr.buteur ? monPr.buteur : '';
-    const connu = joueurs.some(x=>x.j===buteurActuel);
-    const optsA = joueursDe(m.a).map(j=>`<option value="${j.replace(/"/g,'&quot;')}" ${j===buteurActuel?'selected':''}>${j}</option>`).join('');
-    const optsB = joueursDe(m.b).map(j=>`<option value="${j.replace(/"/g,'&quot;')}" ${j===buteurActuel?'selected':''}>${j}</option>`).join('');
+    const connu = [...jA, ...jB].some(x=>x.nom===buteurActuel);
+    const optsA = jA.map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===buteurActuel?'selected':''}>${labelJoueur(j)}</option>`).join('');
+    const optsB = jB.map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===buteurActuel?'selected':''}>${labelJoueur(j)}</option>`).join('');
     const bttsVal = monPr ? (monPr.btts===true?'oui':monPr.btts===false?'non':'') : '';
     bas = `<div class="prono-saisie">
       <input type="number" min="0" max="20" id="pa-${m.id}" value="${va}" inputmode="numeric">
@@ -920,7 +938,23 @@ async function ajouterPotin(){
 }
 
 /* ============ ORCHESTRATION ============ */
-function toutAfficher(){ blocIdentite(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none'; }
+function miniClassement(){
+  const z = $('mini-classement');
+  const lignes = PARTICIPANTS.map(p=>{
+    let total=0;
+    Object.values(pronos[p]||{}).forEach(pr=>{
+      const t = ptsTotal(pr, resultats[pr.match_id]);
+      if(t!==null) total += t;
+    });
+    return {p, total};
+  }).sort((x,y)=>y.total-x.total);
+  z.style.display = '';
+  z.innerHTML = `<span class="eti">🏆 Classement</span>` +
+    lignes.map((l,i)=>`<span class="item">${i===0&&l.total>0?'👑':''} ${l.p} <b>${l.total}</b></span>`).join('') +
+    `<span class="fleche">détail ›</span>`;
+}
+
+function toutAfficher(){ blocIdentite(); miniClassement(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none'; }
 
 function goTab(sec){ document.querySelector(`nav button[data-sec=${sec}]`).click(); }
 
