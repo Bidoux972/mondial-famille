@@ -166,6 +166,12 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
   <section id="sec-matchs" class="actif">
     <h2>La grille <small>72 matchs de poules · scores validés par le commissaire au fil du tournoi</small></h2>
+    <div class="admin-bloc" id="admin-maj" style="display:none">
+      <div class="eti">Mise à jour du jour (commissaire)</div>
+      <p class="note">Colle ici le bloc quotidien préparé avec Claude (résultats + buteurs + cartons + joueurs + avant-matchs), puis Appliquer. Tout se met à jour d'un coup.</p>
+      <textarea id="maj-jour" placeholder='{"resultats":[...], "joueurs":{...}, "avantmatchs":[...]}' style="min-height:90px;font-family:monospace;font-size:12px"></textarea>
+      <button class="btn corail" style="margin-top:8px" onclick="appliquerMajJour()">Appliquer la mise à jour</button>
+    </div>
     <div class="filtres">
       <button data-f="venir" class="actif">À venir</button>
       <button data-f="joues">Joués</button>
@@ -175,7 +181,15 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   </section>
 
   <section id="sec-pronos">
-    <h2>Mes pronostics <small>Score exact = 3 pts · Bon vainqueur ou nul = 1 pt · Verrouillé au coup d'envoi</small></h2>
+    <h2>Mes pronostics <small>Verrouillé au coup d'envoi de chaque match</small></h2>
+    <div class="match" style="border-left:4px solid var(--or)">
+      <b style="font-size:13px">📐 Le barème</b>
+      <div class="monprono" style="margin-top:6px;line-height:1.7">
+        Score exact : <b class="pts p3">3 pts</b> · Bon vainqueur ou nul : <b class="pts p1">1 pt</b><br>
+        Bonus buteur (ton joueur marque) : <b class="pts p3">+2 pts</b> · Bonus « les 2 équipes marquent » : <b class="pts p1">+1 pt</b><br>
+        <span style="color:var(--gris)">Maximum 6 pts par match. Les bonus sont facultatifs — mais c'est là que se font les écarts 😏</span>
+      </div>
+    </div>
     <div id="liste-pronos"></div>
   </section>
 
@@ -397,9 +411,17 @@ const AVM_BASE = {
 "Le remake de 2002, quand le Sénégal avait fait tomber la France championne du monde en ouverture. Match classé à haut risque, des joueurs qui se connaissent par cœur des deux côtés. Mardi 16 juin, 15h heure Martinique."}
 };
 
+/* ============ JOUEURS (pour le bonus buteur) ============ */
+/* France : liste officielle FFF vérifiée. Autres équipes : alimentées via les mises à jour quotidiennes (table mondial_joueurs). */
+const JOUEURS_BASE = {
+"France":"Mbappé, Dembélé, Barcola, Doué, Cherki, Akliouche, M. Thuram, Mateta, Olise, Zaïre-Emery, Rabiot, Tchouaméni, Koné, Kanté, Saliba, Konaté, Upamecano, Koundé, Lacroix, Digne, Gusto, L. Hernandez, T. Hernandez, Maignan, Samba, Risser",
+"Sénégal":"Mané, Jackson, I. Ndiaye, H. Diarra, I. Gueye, P. Gueye, Koulibaly, Niakhate, Diatta, E.M. Diouf, É. Mendy"
+};
+
 /* ============ ÉTAT ============ */
 let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null, ficheOuverte = null, avmOuvert = null;
 let avmCloud = {};
+let joueursCloud = {};
 let pronos = {}, resultats = {}, participants = {}, potinsCloud = [];
 try { pseudo = localStorage.getItem('mf_pseudo') || null; admin = localStorage.getItem('mf_admin') === '1'; } catch(e){}
 
@@ -417,18 +439,20 @@ async function sb(path, opts = {}) {
 }
 async function chargerTout() {
   try {
-    const [p, r, pa, po, av] = await Promise.all([
+    const [p, r, pa, po, av, jo] = await Promise.all([
       sb('mondial_pronostics?select=*'),
       sb('mondial_resultats?select=*'),
       sb('mondial_participants?select=*'),
       sb('mondial_potins?select=*&order=created_at.desc'),
-      sb('mondial_avantmatch?select=*').catch(()=>[])
+      sb('mondial_avantmatch?select=*').catch(()=>[]),
+      sb('mondial_joueurs?select=*').catch(()=>[])
     ]);
     pronos = {}; (p||[]).forEach(x => { (pronos[x.pseudo] = pronos[x.pseudo] || {})[x.match_id] = x; });
     resultats = {}; (r||[]).forEach(x => resultats[x.match_id] = x);
     participants = {}; (pa||[]).forEach(x => participants[x.pseudo] = x);
     potinsCloud = po || [];
     avmCloud = {}; (av||[]).forEach(x => avmCloud[x.match_id] = x);
+    joueursCloud = {}; (jo||[]).forEach(x => joueursCloud[x.equipe] = x.joueurs);
   } catch(e) {
     console.error(e);
     toast("Connexion à la base impossible — réessaie dans un instant");
@@ -449,6 +473,31 @@ function points(pr, re){
   if(pr.score_a === re.score_a && pr.score_b === re.score_b) return 3;
   const s = x => Math.sign(x.score_a - x.score_b);
   return s(pr) === s(re) ? 1 : 0;
+}
+const normNom = t => String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,' ').trim();
+function bonus(pr, re){
+  if(!pr || !re) return {but:0, btts:0};
+  let but = 0, btts = 0;
+  if(pr.buteur){
+    const liste = String(re.buteurs||'').split(/[,;\n]/).map(normNom).filter(Boolean);
+    const cible = normNom(pr.buteur);
+    if(cible && liste.some(b => b.includes(cible) || cible.includes(b))) but = 2;
+  }
+  if(pr.btts === true || pr.btts === false){
+    const reel = re.score_a > 0 && re.score_b > 0;
+    if(pr.btts === reel) btts = 1;
+  }
+  return {but, btts};
+}
+function ptsTotal(pr, re){
+  const base = points(pr, re);
+  if(base === null) return null;
+  const b = bonus(pr, re);
+  return base + b.but + b.btts;
+}
+function joueursDe(equipe){
+  const brut = joueursCloud[equipe] || JOUEURS_BASE[equipe] || '';
+  return brut.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
 }
 
 /* ============ IDENTITÉ + PIN ============ */
@@ -473,8 +522,13 @@ function changerJoueur(){
   try{ localStorage.removeItem('mf_pseudo'); localStorage.removeItem('mf_admin'); }catch(e){}
   toutAfficher();
 }
-function demanderPin(p){
+async function demanderPin(p){
   pseudoEnAttente = p;
+  /* rafraîchir la fiche pour ne jamais écraser un code existant ni en redemander un à tort */
+  try{
+    const rows = await sb(`mondial_participants?pseudo=eq.${encodeURIComponent(p)}&select=*`);
+    if(rows && rows[0]) participants[p] = rows[0];
+  }catch(e){}
   const existe = participants[p] && participants[p].code;
   $('pin-zone').classList.add('visible');
   $('pin-question').innerHTML = existe
@@ -496,7 +550,7 @@ async function validerPin(){
         body: JSON.stringify({pseudo:p, code})});
       participants[p] = {...(participants[p]||{}), pseudo:p, code};
       toast('Code créé — bienvenue '+p+' ! 🎉');
-    }catch(e){ toast('Échec de la création du code'); return; }
+    }catch(e){ toast('Échec — demande à Bidou de vérifier la colonne code (SQL)'); return; }
   }
   pseudo = p; $('pin-zone').classList.remove('visible');
   try{ localStorage.setItem('mf_pseudo', p); }catch(e){}
@@ -519,8 +573,9 @@ function hero(){
   const compte = diff < 8.64e7 ? `dans ${hh}h${String(mm).padStart(2,'0')}` : '';
   const monPr = pseudo && pronos[pseudo] ? pronos[pseudo][prochain.id] : null;
   const rappel = !pseudo ? '' : (monPr
-    ? `<div class="rappel-prono ok">✓ Ton prono est posé : ${monPr.score_a}–${monPr.score_b}</div>`
-    : `<div class="rappel-prono manque">⚠️ Tu n'as pas encore pronostiqué ce match !</div>`);
+    ? `<div class="rappel-prono ok">✓ Ton prono est posé : ${monPr.score_a}–${monPr.score_b}${monPr.buteur?' · ⚽ '+monPr.buteur:''}</div>`
+    : `<div class="rappel-prono manque">⚠️ Tu n'as pas encore pronostiqué ce match !</div>
+       <button class="btn" style="display:block;margin:10px auto 0" onclick="event.stopPropagation();goTab('pronos')">🎲 Fais tes pronos</button>`);
   h.innerHTML = `<div class="eti">Prochain match · Groupe ${prochain.g}</div>
     <div class="duel">
       <div class="eq"><div class="drapeau">${F[prochain.a]}</div><div class="nom">${prochain.a}</div></div>
@@ -580,20 +635,54 @@ function carteMatch(m, modePronos){
   else if(verrou) score = `<span class="score attente">en cours / à valider</span>`;
   else score = `<span class="score attente">vs</span>`;
 
+  let infosResultat = '';
+  if(re && re.buteurs) infosResultat += `<div class="monprono">⚽ <b>${re.buteurs}</b></div>`;
+  if(re && re.cartons) infosResultat += `<div class="monprono">🟥 ${re.cartons}</div>`;
+
   let bas = '';
   if(modePronos && pseudo && !verrou){
     const va = monPr ? monPr.score_a : '', vb = monPr ? monPr.score_b : '';
+    const joueurs = [...joueursDe(m.a).map(j=>({j,e:m.a})), ...joueursDe(m.b).map(j=>({j,e:m.b}))];
+    const buteurActuel = monPr && monPr.buteur ? monPr.buteur : '';
+    const connu = joueurs.some(x=>x.j===buteurActuel);
+    const optsA = joueursDe(m.a).map(j=>`<option value="${j.replace(/"/g,'&quot;')}" ${j===buteurActuel?'selected':''}>${j}</option>`).join('');
+    const optsB = joueursDe(m.b).map(j=>`<option value="${j.replace(/"/g,'&quot;')}" ${j===buteurActuel?'selected':''}>${j}</option>`).join('');
+    const bttsVal = monPr ? (monPr.btts===true?'oui':monPr.btts===false?'non':'') : '';
     bas = `<div class="prono-saisie">
       <input type="number" min="0" max="20" id="pa-${m.id}" value="${va}" inputmode="numeric">
       <span>–</span>
       <input type="number" min="0" max="20" id="pb-${m.id}" value="${vb}" inputmode="numeric">
       <button class="btn" onclick="sauverProno(${m.id})">${monPr ? 'Modifier' : 'Valider'}</button>
       ${monPr ? '<span class="ok">✓</span>' : ''}
-    </div>`;
+    </div>
+    <select id="bu-${m.id}" onchange="document.getElementById('but-${m.id}').style.display=this.value==='__autre__'?'':'none'">
+      <option value="">⚽ Bonus buteur (+2) — facultatif</option>
+      ${optsA?`<optgroup label="${F[m.a]} ${m.a}">${optsA}</optgroup>`:''}
+      ${optsB?`<optgroup label="${F[m.b]} ${m.b}">${optsB}</optgroup>`:''}
+      <option value="__autre__" ${buteurActuel&&!connu?'selected':''}>Autre joueur…</option>
+    </select>
+    <input type="text" id="but-${m.id}" placeholder="Nom du buteur" value="${buteurActuel&&!connu?buteurActuel.replace(/"/g,'&quot;'):''}" style="display:${buteurActuel&&!connu?'':'none'}">
+    <select id="bt-${m.id}">
+      <option value="">🥅 Bonus « les 2 équipes marquent » (+1) — facultatif</option>
+      <option value="oui" ${bttsVal==='oui'?'selected':''}>Oui, les deux marquent</option>
+      <option value="non" ${bttsVal==='non'?'selected':''}>Non</option>
+    </select>`;
   } else if(monPr){
-    const pts = points(monPr, re);
-    bas = `<div class="monprono">Ton prono : <b>${monPr.score_a}–${monPr.score_b}</b>` +
-      (pts===null ? '' : ` · <span class="pts p${pts}">${pts===3?'+3 pts, score exact ! 🎯':pts===1?'+1 pt, bon flair':'0 pt, raté 😅'}</span>`) + `</div>`;
+    const base = points(monPr, re), bo = bonus(monPr, re), tot = ptsTotal(monPr, re);
+    let detail = '';
+    if(tot!==null){
+      const morceaux = [];
+      morceaux.push(base===3?'score exact +3 🎯':base===1?'tendance +1':'score raté 0');
+      if(monPr.buteur) morceaux.push(bo.but?`buteur ${monPr.buteur} +2 ⚽`:`buteur ${monPr.buteur} raté`);
+      if(monPr.btts===true||monPr.btts===false) morceaux.push(bo.btts?'2 équipes marquent +1 🥅':'2 équipes raté');
+      detail = ` · <span class="pts p${tot>=3?3:tot>=1?1:0}">${tot} pt${tot>1?'s':''}</span> <span style="color:var(--gris)">(${morceaux.join(', ')})</span>`;
+    } else {
+      const extras = [];
+      if(monPr.buteur) extras.push(`⚽ ${monPr.buteur}`);
+      if(monPr.btts===true) extras.push('🥅 oui'); if(monPr.btts===false) extras.push('🥅 non');
+      detail = extras.length ? ' · '+extras.join(' · ') : '';
+    }
+    bas = `<div class="monprono">Ton prono : <b>${monPr.score_a}–${monPr.score_b}</b>${detail}</div>`;
   }
   if(admin && verrou && !modePronos){
     const ra = re?re.score_a:'', rb = re?re.score_b:'';
@@ -602,7 +691,9 @@ function carteMatch(m, modePronos){
       <span>–</span>
       <input type="number" min="0" max="20" id="rb-${m.id}" value="${rb}" inputmode="numeric">
       <button class="btn corail" onclick="validerScore(${m.id})">${re ? 'Corriger' : 'Valider le score'}</button>
-    </div>`;
+    </div>
+    <input type="text" id="rbu-${m.id}" placeholder="⚽ Buteurs réels, séparés par des virgules" value="${re&&re.buteurs?String(re.buteurs).replace(/"/g,'&quot;'):''}">
+    <input type="text" id="rca-${m.id}" placeholder="🟥 Cartons rouges (facultatif)" value="${re&&re.cartons?String(re.cartons).replace(/"/g,'&quot;'):''}">`;
   }
   const boutonAvm = (!re && (avmDispo(m.id)||admin)) ? `<div class="monprono" style="margin-top:8px"><a href="javascript:void(0)" onclick="event.stopPropagation();ouvrirAvm(${m.id});window.scrollTo({top:0,behavior:'smooth'})" style="color:var(--or);font-weight:700;text-decoration:none">📋 Avant-match : forces, faiblesses, sélections</a></div>` : '';
   return `<div class="match">
@@ -611,7 +702,7 @@ function carteMatch(m, modePronos){
       <div class="eq"><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
       ${score}
       <div class="eq dr"><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
-    </div>${bas}${boutonAvm}</div>`;
+    </div>${infosResultat}${bas}${boutonAvm}</div>`;
 }
 function listeMatchs(){
   let liste = M;
@@ -641,22 +732,28 @@ async function sauverProno(id){
   if(isNaN(a)||isNaN(b)){ toast('Mets un score complet'); return; }
   const m = M.find(x=>x.id===id);
   if(commence(m)){ toast('Trop tard, le match a commencé !'); listePronos(); return; }
+  let buteur = $(`bu-${id}`).value;
+  if(buteur === '__autre__') buteur = $(`but-${id}`).value.trim();
+  const btv = $(`bt-${id}`).value;
+  const btts = btv==='oui' ? true : btv==='non' ? false : null;
   try{
     await sb('mondial_pronostics?on_conflict=pseudo,match_id', {method:'POST',
       prefer:'resolution=merge-duplicates',
-      body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b})});
-    (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b};
-    toast(`Prono ${a}–${b} enregistré ✓`); listePronos(); hero();
+      body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts})});
+    (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts};
+    toast(`Prono ${a}–${b}${buteur?' · ⚽ '+buteur:''} enregistré ✓`); listePronos(); hero();
   }catch(e){ toast("Échec de l'enregistrement, réessaie"); }
 }
 async function validerScore(id){
   const a = parseInt($(`ra-${id}`).value), b = parseInt($(`rb-${id}`).value);
   if(isNaN(a)||isNaN(b)){ toast('Score incomplet'); return; }
+  const buteurs = $(`rbu-${id}`) ? $(`rbu-${id}`).value.trim() : '';
+  const cartons = $(`rca-${id}`) ? $(`rca-${id}`).value.trim() : '';
   try{
     await sb('mondial_resultats?on_conflict=match_id', {method:'POST',
       prefer:'resolution=merge-duplicates',
-      body: JSON.stringify({match_id:id, score_a:a, score_b:b})});
-    resultats[id] = {match_id:id, score_a:a, score_b:b};
+      body: JSON.stringify({match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null})});
+    resultats[id] = {match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null};
     toast('Score validé — classement mis à jour 🏆'); toutAfficher();
   }catch(e){ toast('Échec de la validation'); }
 }
@@ -664,18 +761,24 @@ async function validerScore(id){
 /* ============ CLASSEMENT ============ */
 function classement(){
   const lignes = PARTICIPANTS.map(p=>{
-    let total=0, exacts=0, bons=0, n=0;
+    let total=0, exacts=0, bons=0, buts=0, btts=0, n=0;
     Object.values(pronos[p]||{}).forEach(pr=>{
-      const pts = points(pr, resultats[pr.match_id]);
-      if(pts!==null){ total+=pts; n++; if(pts===3)exacts++; if(pts===1)bons++; }
+      const re = resultats[pr.match_id];
+      const base = points(pr, re);
+      if(base!==null){
+        const bo = bonus(pr, re);
+        total += base + bo.but + bo.btts; n++;
+        if(base===3)exacts++; if(base===1)bons++;
+        if(bo.but)buts++; if(bo.btts)btts++;
+      }
     });
-    return {p,total,exacts,bons,n};
+    return {p,total,exacts,bons,buts,btts,n};
   }).sort((x,y)=>y.total-x.total || y.exacts-x.exacts);
   $('tableau-classement').innerHTML = lignes.map((l,i)=>`
     <div class="rang">
       <div class="pos">${i===0&&l.total>0?'👑':i+1}</div>
       <div><div class="qui">${l.p}${participants[l.p]&&participants[l.p].equipe_ecurie?' · '+(F[participants[l.p].equipe_ecurie]||''):''}</div>
-      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances</div></div>
+      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances · ${l.buts} buteurs ⚽ · ${l.btts} doubles 🥅</div></div>
       <div class="total">${l.total}</div>
     </div>`).join('');
   const total = Object.keys(resultats).length;
@@ -771,7 +874,43 @@ async function ajouterPotin(){
 }
 
 /* ============ ORCHESTRATION ============ */
-function toutAfficher(){ blocIdentite(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); zoneEquipes(); ecuries(); potins(); }
+function toutAfficher(){ blocIdentite(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none'; }
+
+function goTab(sec){ document.querySelector(`nav button[data-sec=${sec}]`).click(); }
+
+/* ============ MISE À JOUR QUOTIDIENNE (un seul collage) ============ */
+async function appliquerMajJour(){
+  let data;
+  try{ data = JSON.parse($('maj-jour').value); }
+  catch(e){ toast('JSON invalide — recopie le bloc complet'); return; }
+  let ok=0, ko=0;
+  try{
+    for(const r of (data.resultats||[])){
+      try{
+        await sb('mondial_resultats?on_conflict=match_id', {method:'POST', prefer:'resolution=merge-duplicates',
+          body: JSON.stringify({match_id:r.match_id, score_a:r.score_a, score_b:r.score_b, buteurs:r.buteurs||null, cartons:r.cartons||null})});
+        ok++;
+      }catch(e){ ko++; }
+    }
+    for(const [equipe, joueurs] of Object.entries(data.joueurs||{})){
+      try{
+        await sb('mondial_joueurs?on_conflict=equipe', {method:'POST', prefer:'resolution=merge-duplicates',
+          body: JSON.stringify({equipe, joueurs})});
+        ok++;
+      }catch(e){ ko++; }
+    }
+    for(const a of (data.avantmatchs||[])){
+      try{
+        await sb('mondial_avantmatch?on_conflict=match_id', {method:'POST', prefer:'resolution=merge-duplicates',
+          body: JSON.stringify({match_id:a.match_id, titre:a.titre||'', contenu:a.contenu||''})});
+        ok++;
+      }catch(e){ ko++; }
+    }
+    $('maj-jour').value='';
+    toast(`Mise à jour appliquée : ${ok} élément${ok>1?'s':''}${ko?` · ${ko} échec(s)`:''} ✓`);
+    await chargerTout();
+  }catch(e){ toast('Échec de la mise à jour'); }
+}
 
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('nav button').forEach(x=>x.classList.remove('actif'));
