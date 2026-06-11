@@ -183,11 +183,12 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   <section id="sec-pronos">
     <h2>Mes pronostics <small>Verrouillé au coup d'envoi de chaque match</small></h2>
     <div class="match" style="border-left:4px solid var(--or)">
-      <b style="font-size:13px">📐 Le barème</b>
+      <b style="font-size:13px">📐 Le barème — on gagne, on perd</b>
       <div class="monprono" style="margin-top:6px;line-height:1.7">
         Score exact : <b class="pts p3">3 pts</b> · Bon vainqueur ou nul : <b class="pts p1">1 pt</b><br>
-        Bonus buteur (ton joueur marque) : <b class="pts p3">+2 pts</b> · Bonus « les 2 équipes marquent » : <b class="pts p1">+1 pt</b><br>
-        <span style="color:var(--gris)">Maximum 6 pts par match. Les bonus sont facultatifs — mais c'est là que se font les écarts 😏</span>
+        Buteur : <b class="pts p3">+2</b> s'il marque, <b class="pts p0">−1</b> sinon · « Les 2 équipes marquent » : <b class="pts p1">+1</b> juste, <b class="pts p0">−1</b> faux<br>
+        🌟 <b>Match en Or</b> (1 par jour) : TOUT est doublé, gains comme pertes — de <b class="pts p0">−4</b> à <b class="pts p3">+12</b><br>
+        <span style="color:var(--gris)">Les bonus sont de vrais paris : on ne les joue que si on y croit. C'est là que se font les écarts 😏</span>
       </div>
     </div>
     <div id="liste-pronos"></div>
@@ -197,7 +198,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     <h2>Classement <small>Qui est le meilleur pronostiqueur de la famille ?</small></h2>
     <div class="classement" id="tableau-classement"></div>
     <p class="note" id="note-classement"></p>
-    <p class="note">📐 Barème : score exact <b>3</b> · bon vainqueur/nul <b>1</b> · bonus buteur <b>+2</b> · bonus « les 2 équipes marquent » <b>+1</b> — maximum 6 pts par match.</p>
+    <p class="note">📐 Barème : score exact <b>3</b> · tendance <b>1</b> · buteur <b>+2/−1</b> · « les 2 marquent » <b>+1/−1</b> · 🌟 Match en Or = tout ×2 (de −4 à +12).</p>
   </section>
 
   <section id="sec-equipes">
@@ -485,11 +486,11 @@ function bonus(pr, re){
   if(pr.buteur){
     const liste = String(re.buteurs||'').split(/[,;\n]/).map(normNom).filter(Boolean);
     const cible = normNom(pr.buteur);
-    if(cible && liste.some(b => b.includes(cible) || cible.includes(b))) but = 2;
+    but = (cible && liste.some(b => b.includes(cible) || cible.includes(b))) ? 2 : -1;
   }
   if(pr.btts === true || pr.btts === false){
     const reel = re.score_a > 0 && re.score_b > 0;
-    if(pr.btts === reel) btts = 1;
+    btts = (pr.btts === reel) ? 1 : -1;
   }
   return {but, btts};
 }
@@ -497,8 +498,9 @@ function ptsTotal(pr, re){
   const base = points(pr, re);
   if(base === null) return null;
   const b = bonus(pr, re);
-  return base + b.but + b.btts;
+  return (base + b.but + b.btts) * (pr.en_or ? 2 : 1);
 }
+const jourCle = m => m.dt.toLocaleDateString('fr-FR',{timeZone:'America/Martinique'});
 function joueursDe(equipe){
   const brut = joueursCloud[equipe] || JOUEURS_BASE[equipe] || '';
   return brut.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
@@ -660,16 +662,20 @@ function carteMatch(m, modePronos){
       ${monPr ? '<span class="ok">✓</span>' : ''}
     </div>
     <select id="bu-${m.id}" onchange="document.getElementById('but-${m.id}').style.display=this.value==='__autre__'?'':'none'">
-      <option value="">⚽ Bonus buteur (+2) — facultatif</option>
+      <option value="">⚽ Buteur : +2 s'il marque / −1 sinon — facultatif</option>
       ${optsA?`<optgroup label="${F[m.a]} ${m.a}">${optsA}</optgroup>`:''}
       ${optsB?`<optgroup label="${F[m.b]} ${m.b}">${optsB}</optgroup>`:''}
       <option value="__autre__" ${buteurActuel&&!connu?'selected':''}>Autre joueur…</option>
     </select>
     <input type="text" id="but-${m.id}" placeholder="Nom du buteur" value="${buteurActuel&&!connu?buteurActuel.replace(/"/g,'&quot;'):''}" style="display:${buteurActuel&&!connu?'':'none'}">
     <select id="bt-${m.id}">
-      <option value="">🥅 Bonus « les 2 équipes marquent » (+1) — facultatif</option>
+      <option value="">🥅 « Les 2 équipes marquent » : +1 juste / −1 faux — facultatif</option>
       <option value="oui" ${bttsVal==='oui'?'selected':''}>Oui, les deux marquent</option>
       <option value="non" ${bttsVal==='non'?'selected':''}>Non</option>
+    </select>
+    <select id="or-${m.id}">
+      <option value="">Match normal</option>
+      <option value="or" ${monPr&&monPr.en_or?'selected':''}>🌟 MATCH EN OR — tout est doublé, gains ET pertes (1 par jour)</option>
     </select>`;
   } else if(monPr){
     const base = points(monPr, re), bo = bonus(monPr, re), tot = ptsTotal(monPr, re);
@@ -677,13 +683,15 @@ function carteMatch(m, modePronos){
     if(tot!==null){
       const morceaux = [];
       morceaux.push(base===3?'score exact +3 🎯':base===1?'tendance +1':'score raté 0');
-      if(monPr.buteur) morceaux.push(bo.but?`buteur ${monPr.buteur} +2 ⚽`:`buteur ${monPr.buteur} raté`);
-      if(monPr.btts===true||monPr.btts===false) morceaux.push(bo.btts?'2 équipes marquent +1 🥅':'2 équipes raté');
-      detail = ` · <span class="pts p${tot>=3?3:tot>=1?1:0}">${tot} pt${tot>1?'s':''}</span> <span style="color:var(--gris)">(${morceaux.join(', ')})</span>`;
+      if(monPr.buteur) morceaux.push(bo.but===2?`buteur ${monPr.buteur} +2 ⚽`:`buteur ${monPr.buteur} −1 ❌`);
+      if(monPr.btts===true||monPr.btts===false) morceaux.push(bo.btts===1?'2 équipes marquent +1 🥅':'2 équipes −1 ❌');
+      if(monPr.en_or) morceaux.push('🌟 EN OR ×2');
+      detail = ` · <span class="pts p${tot>=3?3:tot>=1?1:0}">${tot>0?'+':''}${tot} pt${Math.abs(tot)>1?'s':''}</span> <span style="color:var(--gris)">(${morceaux.join(', ')})</span>`;
     } else {
       const extras = [];
       if(monPr.buteur) extras.push(`⚽ ${monPr.buteur}`);
       if(monPr.btts===true) extras.push('🥅 oui'); if(monPr.btts===false) extras.push('🥅 non');
+      if(monPr.en_or) extras.push('🌟 EN OR');
       detail = extras.length ? ' · '+extras.join(' · ') : '';
     }
     bas = `<div class="monprono">Ton prono : <b>${monPr.score_a}–${monPr.score_b}</b>${detail}</div>`;
@@ -740,12 +748,29 @@ async function sauverProno(id){
   if(buteur === '__autre__') buteur = $(`but-${id}`).value.trim();
   const btv = $(`bt-${id}`).value;
   const btts = btv==='oui' ? true : btv==='non' ? false : null;
+  const enOr = $(`or-${id}`).value === 'or';
+  if(enOr){
+    const cle = jourCle(m);
+    const autres = Object.values(pronos[pseudo]||{}).filter(pr=>pr.en_or && pr.match_id!==id);
+    for(const pr of autres){
+      const m2 = M.find(x=>x.id===pr.match_id);
+      if(m2 && jourCle(m2)===cle){
+        if(commence(m2)){ toast(`Ton Match en Or du jour est déjà verrouillé : ${m2.a}–${m2.b}`); return; }
+        try{
+          await sb(`mondial_pronostics?pseudo=eq.${encodeURIComponent(pseudo)}&match_id=eq.${pr.match_id}`,
+            {method:'PATCH', body: JSON.stringify({en_or:false})});
+          pr.en_or = false;
+          toast(`🌟 déplacé de ${m2.a}–${m2.b} vers ce match`);
+        }catch(e){ toast('Échec du transfert du Match en Or'); return; }
+      }
+    }
+  }
   try{
     await sb('mondial_pronostics?on_conflict=pseudo,match_id', {method:'POST',
       prefer:'resolution=merge-duplicates',
-      body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts})});
-    (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts};
-    toast(`Prono ${a}–${b}${buteur?' · ⚽ '+buteur:''} enregistré ✓`); listePronos(); hero();
+      body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, en_or:enOr})});
+    (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, en_or:enOr};
+    toast(`Prono ${a}–${b}${buteur?' · ⚽ '+buteur:''}${enOr?' · 🌟 EN OR':''} enregistré ✓`); listePronos(); hero();
   }catch(e){ toast("Échec de l'enregistrement, réessaie"); }
 }
 async function validerScore(id){
@@ -765,24 +790,25 @@ async function validerScore(id){
 /* ============ CLASSEMENT ============ */
 function classement(){
   const lignes = PARTICIPANTS.map(p=>{
-    let total=0, exacts=0, bons=0, buts=0, btts=0, n=0;
+    let total=0, exacts=0, bons=0, buts=0, butsKo=0, ors=0, n=0;
     Object.values(pronos[p]||{}).forEach(pr=>{
       const re = resultats[pr.match_id];
       const base = points(pr, re);
       if(base!==null){
+        total += ptsTotal(pr, re); n++;
         const bo = bonus(pr, re);
-        total += base + bo.but + bo.btts; n++;
         if(base===3)exacts++; if(base===1)bons++;
-        if(bo.but)buts++; if(bo.btts)btts++;
+        if(bo.but===2)buts++; if(bo.but===-1)butsKo++;
+        if(pr.en_or)ors++;
       }
     });
-    return {p,total,exacts,bons,buts,btts,n};
+    return {p,total,exacts,bons,buts,butsKo,ors,n};
   }).sort((x,y)=>y.total-x.total || y.exacts-x.exacts);
   $('tableau-classement').innerHTML = lignes.map((l,i)=>`
     <div class="rang">
       <div class="pos">${i===0&&l.total>0?'👑':i+1}</div>
       <div><div class="qui">${l.p}${participants[l.p]&&participants[l.p].equipe_ecurie?' · '+(F[participants[l.p].equipe_ecurie]||''):''}</div>
-      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances · ${l.buts} buteurs ⚽ · ${l.btts} doubles 🥅</div></div>
+      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances · buteurs ${l.buts}⚽/${l.butsKo}❌ · ${l.ors} 🌟</div></div>
       <div class="total">${l.total}</div>
     </div>`).join('');
   const total = Object.keys(resultats).length;
