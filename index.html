@@ -162,6 +162,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   <div class="moi" id="bloc-moi" style="display:none"></div>
 
   <div class="hero" id="hero" style="display:none"></div>
+  <div id="avm"></div>
 
   <section id="sec-matchs" class="actif">
     <h2>La grille <small>72 matchs de poules · scores validés par le commissaire au fil du tournoi</small></h2>
@@ -315,21 +316,21 @@ M.sort((x,y)=>x.dt-y.dt);
 /* ============ FICHES DES 48 ÉQUIPES ============ */
 /* niveau : 1 à 5 étoiles · leaders / surveiller / histoire */
 const EQUIPES = {
-"France":{g:"I",niv:5,surnom:"Les Bleus",leaders:"Kylian Mbappé, le capitaine et la star planétaire, entouré des cadres Griezmann et Tchouaméni. Didier Deschamps dispute sa dernière compétition sur le banc après 14 ans de règne.",surveiller:"Toute la génération dorée du milieu : Zaïre-Emery et les jeunes pousses qui veulent prendre le pouvoir.",histoire:"Champions 2018, finalistes maudits 2022 (cette séance de tirs au but contre l'Argentine...). C'est LA quête de revanche du tournoi, et la tournée d'adieu de Deschamps. La France vient en plus de perdre sa place de n°1 FIFA juste avant le tournoi — vexant. Premier test immédiat : le Sénégal, une équipe remplie de joueurs qui connaissent les Bleus par cœur."},
+"France":{g:"I",niv:5,surnom:"Les Bleus",leaders:"Kylian Mbappé, capitaine, joueur le plus capé (96 sél.) et meilleur buteur de la liste, avec Ousmane Dembélé, le Ballon d'Or en titre. Didier Deschamps dirige sa 4e et DERNIÈRE Coupe du monde après 14 ans de règne. Et le retour surprise : N'Golo Kanté, 35 ans, rappelé pour l'expérience.",surveiller:"La nouvelle vague offensive : Doué, Cherki, Olise, Barcola, Akliouche — Deschamps a un embarras de richesse devant. Et la charnière de Premier League : Saliba, Konaté, Upamecano.",histoire:"Champions 2018, finalistes maudits 2022 (cette séance de tirs au but contre l'Argentine...). C'est LA quête de revanche, et la tournée d'adieu de Deschamps. Onze rescapés de 2022 seulement : ni Griezmann (retraité international), ni Lloris, ni Varane — une page se tourne. Et la France a perdu sa place de n°1 FIFA juste avant le tournoi. Premier test immédiat : le Sénégal."},
 "Brésil":{g:"C",niv:5,surnom:"La Seleção",leaders:"Neymar, de retour de l'enfer des blessures à 34 ans, et Vinicius Jr, la flèche du Real Madrid. Carlo Ancelotti, premier sélectionneur étranger du Brésil de l'histoire moderne.",surveiller:"Endrick, le gamin prodige, et Raphinha à qui Neymar a fait « une grande promesse » selon la presse brésilienne.",histoire:"Le Brésil n'a plus gagné depuis 2002 — une éternité pour le pays du foot. Quand Neymar a découvert sa convocation, il a fondu en larmes devant les caméras. Tout un pays retient son souffle pour la dernière chance de son enfant prodige. Et en face dans le groupe : Haïti, le petit poucet caribéen. Match à regarder en famille obligatoire."},
 "Argentine":{g:"J",niv:5,surnom:"L'Albiceleste",leaders:"Lionel Messi, 39 ans, champion du monde en titre, pour sa toute dernière Coupe du monde. Autour de lui, la bande de 2022 : Julián Álvarez, De Paul, le gardien-provocateur Emiliano Martínez.",surveiller:"Les jeunes qui se battent pour accompagner Messi dans sa dernière danse — chaque place dans cette équipe vaut de l'or.",histoire:"Champions en titre. Chaque match peut être le DERNIER match en Coupe du monde du plus grand joueur de l'histoire. Rien que pour ça, on ne rate aucun match de l'Argentine. L'émotion garantie du tournoi."},
 "Espagne":{g:"H",niv:5,surnom:"La Roja",leaders:"Lamine Yamal, 18 ans, le petit génie du Barça qui régale la planète, et Pedri, le métronome. Champions d'Europe 2024.",surveiller:"Yamal, encore et toujours : à 18 ans, il peut devenir la star absolue de ce Mondial, comme Pelé en 1958.",histoire:"L'Espagne est co-favorite avec la France et joue le plus beau football d'Europe. Si Ginou veut miser malin, c'est un cheval sérieux. Un éventuel France-Espagne en phase finale serait LA finale avant la lettre."},
 "Angleterre":{g:"L",niv:5,surnom:"Les Three Lions",leaders:"Harry Kane, le buteur-machine toujours en quête d'un premier trophée, Jude Bellingham, le patron du Real Madrid, et Thomas Tuchel sur le banc.",surveiller:"Bellingham : le joueur total, capable de porter l'Angleterre tout seul.",histoire:"60 ans que l'Angleterre attend (1966...). Finaliste de l'Euro deux fois de suite, toujours battue au bout. La malédiction anglaise est le feuilleton préféré du foot mondial : vont-ils ENFIN gagner quelque chose ?"},
 "Portugal":{g:"K",niv:4,surnom:"A Seleção das Quinas",leaders:"Cristiano Ronaldo, 41 ans (!), pour une dernière apparition qui défie le temps. Autour : Bruno Fernandes, Bernardo Silva, et la nouvelle génération.",surveiller:"Le jeune attaquant Eli Junior Kroupi, confirmé dans le groupe par le sélectionneur Roberto Martinez — et la question quotidienne : Ronaldo titulaire ou pas ?",histoire:"Ronaldo et Messi dans le même Mondial, probablement pour la dernière fois de l'histoire. Le Portugal est costaud, mais le feuilleton, c'est CR7 : sa légende personnelle contre l'horloge. Même sa légende Scolari l'a critiqué publiquement avant le tournoi — ambiance."},
-"Allemagne":{g:"E",niv:4,surnom:"La Mannschaft",leaders:"Jamal Musiala, le magicien, Joshua Kimmich le métronome, et Florian Wirtz, le talent générationnel.",surveiller:"Wirtz–Musiala : la paire la plus excitante d'Europe quand elle est lancée.",histoire:"Éliminée dès les poules en 2018 ET 2022 — l'ogre allemand est devenu fragile. La presse allemande dit même qu'ils « craignent la Côte d'Ivoire » dans leur groupe. Une Allemagne qui doute, c'est rare : à surveiller comme le lait sur le feu."},
-"Pays-Bas":{g:"F",niv:4,surnom:"Les Oranje",leaders:"Virgil van Dijk, le roc, et Memphis Depay devant. Du solide partout.",surveiller:"Xavi Simons, formé au PSG, qui veut briller à la face du monde.",histoire:"Trois finales perdues (74, 78, 2010) : les Pays-Bas sont la plus grande équipe à n'avoir JAMAIS gagné la Coupe du monde. Toujours beaux, jamais champions. La malédiction orange continue-t-elle ?"},
-"Belgique":{g:"G",niv:3,surnom:"Les Diables Rouges",leaders:"Kevin De Bruyne en fin de règne, Doku le dribbleur fou, et Rudi Garcia (un Français !) sur le banc qui annonce une « révolution tactique ».",surveiller:"Doku : quand il accélère, personne ne le rattrape.",histoire:"La « génération dorée » belge (Hazard, Lukaku...) n'a rien gagné, et ça s'est fini en eau de boudin — Lukaku a publiquement fracassé l'ancien sélectionneur. Nouvelle ère, vieux problèmes : la Belgique, c'est le soap opera du foot européen."},
+"Allemagne":{g:"E",niv:4,surnom:"La Mannschaft",leaders:"Florian Wirtz, le talent générationnel, et Joshua Kimmich le métronome. Coup dur avant le tournoi : la pépite Lennart Karl déclarée forfait.",surveiller:"Wirtz : quand il est lancé, l'Allemagne change de dimension.",histoire:"Éliminée dès les poules en 2018 ET 2022 — l'ogre allemand est devenu fragile. La presse allemande dit même qu'ils « craignent la Côte d'Ivoire » dans leur groupe. Une Allemagne qui doute, c'est rare : à surveiller comme le lait sur le feu."},
+"Pays-Bas":{g:"F",niv:4,surnom:"Les Oranje",leaders:"Virgil van Dijk, le roc et capitaine, à la tête d'une équipe solide à tous les étages.",surveiller:"Le choc d'entrée contre le Japon, tombeur de l'Allemagne et de l'Espagne en 2022 : piège immédiat.",histoire:"Trois finales perdues (74, 78, 2010) : les Pays-Bas sont la plus grande équipe à n'avoir JAMAIS gagné la Coupe du monde. Toujours beaux, jamais champions. La malédiction orange continue-t-elle ?"},
+"Belgique":{g:"G",niv:3,surnom:"Les Diables Rouges",leaders:"Jérémy Doku, le dribbleur fou, et Rudi Garcia (un Français !) sur le banc, qui annonce une « révolution tactique » pour ce Mondial.",surveiller:"Doku : quand il accélère, personne ne le rattrape.",histoire:"La « génération dorée » belge (Hazard, De Bruyne, Lukaku...) n'a rien gagné, et ça s'est fini en eau de boudin — Lukaku a publiquement fracassé l'ancien sélectionneur Tedesco. Nouvelle ère, vieux problèmes : la Belgique, c'est le soap opera du foot européen."},
 "Norvège":{g:"I",niv:4,surnom:"Les Vikings",leaders:"Erling Haaland, le buteur-cyborg de Manchester City, et Martin Ødegaard, le cerveau d'Arsenal.",surveiller:"Haaland face à la France le 26 juin : le choc Mbappé-Haaland que tout le monde attend depuis des années.",histoire:"Premier Mondial de la Norvège depuis 1998 — Haaland n'avait jamais pu jouer une Coupe du monde ! Et les Norvégiens ont débarqué avec 300 kg de poisson et 116 kg de fromage dans leurs valises pour nourrir l'équipe. Véridique. L'adversaire le plus dangereux de la France dans le groupe."},
-"Sénégal":{g:"I",niv:3,surnom:"Les Lions de la Teranga",leaders:"Sadio Mané, la légende nationale, et une colonie de joueurs formés en France qui connaissent les Bleus par cœur.",surveiller:"Tous les binationaux : la moitié de l'équipe aurait pu jouer pour la France. Ce France-Sénégal du 16 juin, c'est un match de famille — classé à haut risque par les autorités.",histoire:"Le Sénégal de 2002 avait battu la France championne du monde en ouverture — le plus grand exploit de son histoire. 24 ans après, rebelote : France-Sénégal en ouverture de groupe. Le destin a de l'humour. À 15h heure Martinique, personne ne travaille ce jour-là."},
+"Sénégal":{g:"I",niv:3,surnom:"Les Lions de la Teranga",leaders:"Sadio Mané, la légende nationale, le roc Kalidou Koulibaly, le gardien Édouard Mendy et Nicolas Jackson devant, sous les ordres du sélectionneur Pape Thiaw.",surveiller:"Iliman Ndiaye et Habib Diarra, la nouvelle génération de Premier League. Et un détail qui change tout : la moitié de l'équipe est née ou formée en France.",histoire:"Le Sénégal arrive en colère : vainqueur de la CAN en finale contre le Maroc... mais titre RETIRÉ par la CAF après que l'équipe a quitté la pelouse pour contester un penalty. Une équipe en mission revanche. Et le destin a de l'humour : comme en 2002 (le fameux exploit contre la France championne du monde), France-Sénégal en ouverture. Le 16 juin à 15h heure Martinique : personne ne bosse cet après-midi-là."},
 "Maroc":{g:"C",niv:4,surnom:"Les Lions de l'Atlas",leaders:"Achraf Hakimi, le capitaine du PSG, et Brahim Díaz. Demi-finalistes historiques en 2022.",surveiller:"La défense marocaine : la plus dure à jouer du tournoi, et le soutien de TOUT le continent africain plus la diaspora.",histoire:"Premier pays africain en demi-finale d'une Coupe du monde (2022). Le Maroc n'est plus une surprise, c'est un cador. Dans le groupe du Brésil et d'Haïti : ce groupe C est un feuilleton à lui tout seul."},
-"Haïti":{g:"C",niv:1,surnom:"Les Grenadiers",leaders:"Une équipe de battants emmenée par des joueurs qui évoluent en France et dans la Caraïbe. Duckens Nazon, l'attaquant emblématique.",surveiller:"Tout le pays — première Coupe du monde depuis 1974 ! Et déjà du croustillant : la FIFA a obligé Haïti à modifier ses maillots jugés à « caractère politique ».",histoire:"LE petit poucet du cœur pour nous, Caribéens. Haïti traverse des années terribles, et cette qualification est un miracle sportif qui fait pleurer tout un peuple. Ils affrontent le BRÉSIL le 19 juin. David contre Goliath, version créole. On regarde en famille, et on chante."},
+"Haïti":{g:"C",niv:1,surnom:"Les Grenadiers",leaders:"Une équipe de battants nourrie par la diaspora, avec des joueurs qui évoluent en France, en Amérique du Nord et dans la Caraïbe.",surveiller:"Tout le pays — première Coupe du monde depuis 1974 ! Et déjà du croustillant : la FIFA a obligé Haïti à modifier ses maillots jugés à « caractère politique ».",histoire:"LE petit poucet du cœur pour nous, Caribéens. Haïti traverse des années terribles, et cette qualification est un miracle sportif qui fait pleurer tout un peuple. Ils affrontent le BRÉSIL le 19 juin. David contre Goliath, version créole. On regarde en famille, et on chante."},
 "Curaçao":{g:"E",niv:1,surnom:"La Vibe Bleue",leaders:"Des joueurs formés aux Pays-Bas (héritage colonial oblige) pleins d'envie.",surveiller:"Le pays entier : environ 150 000 habitants — l'île tiendrait presque dans un stade ! Plus petit pays de l'histoire en Coupe du monde.",histoire:"Première participation de l'histoire, et un deuxième représentant caribéen avec Haïti ! Ils héritent de l'Allemagne dans leur groupe. Quoi qu'il arrive, c'est déjà la plus belle histoire de l'île. Solidarité caribéenne obligatoire."},
-"Mexique":{g:"A",niv:3,surnom:"El Tri",leaders:"Santiago Giménez devant, et la ferveur de tout un peuple à domicile.",surveiller:"Le facteur stade Azteca : 87 000 personnes en fusion à 2 200 m d'altitude. L'ouverture du tournoi s'y est jouée.",histoire:"Pays co-hôte, le Mexique a ouvert le bal le 11 juin contre l'Afrique du Sud — comme en 2010, même affiche. La malédiction mexicaine : éliminé en 8es SEPT fois de suite. À domicile, c'est maintenant ou jamais."},
+"Mexique":{g:"A",niv:3,surnom:"El Tri",leaders:"La ferveur de tout un peuple à domicile, et l'expérience d'un pays qui dispute sa 18e Coupe du monde.",surveiller:"Le facteur stade Azteca : 87 000 personnes en fusion à 2 200 m d'altitude. L'ouverture du tournoi s'y est jouée.",histoire:"Pays co-hôte, le Mexique a ouvert le bal le 11 juin contre l'Afrique du Sud — comme en 2010, même affiche. La malédiction mexicaine : éliminé en 8es SEPT fois de suite. À domicile, c'est maintenant ou jamais."},
 "États-Unis":{g:"D",niv:3,surnom:"Team USA",leaders:"Christian Pulisic, le capitaine, Timothy Weah et Folarin Balogun (deux noms bien connus de la Ligue 1).",surveiller:"La pression du pays hôte : tout le sport US les regarde, et le foot veut conquérir l'Amérique.",histoire:"Co-hôtes et morts de faim de réussir LEUR Mondial. Une élimination précoce serait un fiasco national. Groupe piégeux avec la Turquie et l'Australie."},
 "Canada":{g:"B",niv:2,surnom:"Les Rouges",leaders:"Alphonso Davies, la fusée du Bayern, et Jonathan David, le buteur passé par la Ligue 1.",surveiller:"Davies : un des joueurs les plus rapides du monde, à domicile.",histoire:"Co-hôte, jamais passé un premier tour. Avec Davies et David, cette génération canadienne est la meilleure de l'histoire du pays. Le moment ou jamais."},
 "Croatie":{g:"L",niv:3,surnom:"Les Vatreni",leaders:"Luka Modrić, 40 ans, l'éternel magicien, pour une dernière (encore une légende en tournée d'adieu !).",surveiller:"Modrić : chaque touche de balle est une leçon de football.",histoire:"Finaliste 2018, 3e en 2022 : la petite Croatie (moins de 4 millions d'habitants) surperforme TOUJOURS. Et tant que Modrić est là, personne ne veut les croiser. Dans le groupe de l'Angleterre : choc immédiat le 17 juin."},
@@ -380,8 +381,25 @@ const POTINS_BASE = [
  {titre:"La France a perdu son trône", contenu:"Juste avant le tournoi, la France a perdu sa place de n°1 au classement FIFA. Vexation ou motivation ? Réponse sur le terrain. Elle reste co-favorite avec l'Espagne, qui régale tout le monde avec le petit génie Lamine Yamal (18 ans).", tag:"Les favoris"}
 ];
 
+/* ============ AVANT-MATCHS DE BASE (vérifiés à la livraison) ============ */
+/* Les avant-matchs frais arrivent via Supabase (table mondial_avantmatch), collés par le commissaire */
+const AVM_BASE = {
+49:{titre:"France – Sénégal : le choc des retrouvailles",contenu:
+"🇫🇷 FRANCE\n"+
+"Forces : une profondeur offensive folle — Mbappé (capitaine, 96 sél.), Dembélé Ballon d'Or, et la nouvelle vague Doué, Olise, Cherki, Barcola. Charnière de Premier League : Saliba, Konaté, Upamecano.\n"+
+"Faiblesses : un milieu remodelé (retour de Kanté à 35 ans comme caution d'expérience), la pression du statut de favori, et ce trône de n°1 FIFA perdu juste avant le tournoi.\n"+
+"La sélection (officielle FFF) : Maignan, Samba, Risser - Digne, Gusto, L. et T. Hernandez, Konaté, Koundé, Lacroix, Saliba, Upamecano - Kanté, Koné, Rabiot, Tchouaméni, Zaïre-Emery, Olise - Mbappé (cap.), Dembélé, Barcola, Doué, Cherki, Akliouche, M. Thuram, Mateta.\n"+
+"\n🇸🇳 SÉNÉGAL\n"+
+"Forces : une défense réputée parmi les plus dures d'Afrique (Koulibaly, É. Mendy aux cages), l'expérience des cadres, et un trio offensif Ndiaye–Jackson–Mané qui pique.\n"+
+"Faiblesses : la turbulence — l'équipe sort d'une CAN gagnée sur le terrain contre le Maroc mais au titre RETIRÉ par la CAF après avoir quitté la pelouse en finale. Mission revanche ou tête à l'envers ?\n"+
+"Le onze probable (presse) : É. Mendy - Diatta, Koulibaly, Niakhate, Diouf - Diarra, I. Gueye, P. Gueye - Ndiaye, Jackson, Mané. Sélectionneur : Pape Thiaw.\n"+
+"\n🔥 L'ENJEU\n"+
+"Le remake de 2002, quand le Sénégal avait fait tomber la France championne du monde en ouverture. Match classé à haut risque, des joueurs qui se connaissent par cœur des deux côtés. Mardi 16 juin, 15h heure Martinique."}
+};
+
 /* ============ ÉTAT ============ */
-let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null, ficheOuverte = null;
+let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null, ficheOuverte = null, avmOuvert = null;
+let avmCloud = {};
 let pronos = {}, resultats = {}, participants = {}, potinsCloud = [];
 try { pseudo = localStorage.getItem('mf_pseudo') || null; admin = localStorage.getItem('mf_admin') === '1'; } catch(e){}
 
@@ -399,16 +417,18 @@ async function sb(path, opts = {}) {
 }
 async function chargerTout() {
   try {
-    const [p, r, pa, po] = await Promise.all([
+    const [p, r, pa, po, av] = await Promise.all([
       sb('mondial_pronostics?select=*'),
       sb('mondial_resultats?select=*'),
       sb('mondial_participants?select=*'),
-      sb('mondial_potins?select=*&order=created_at.desc')
+      sb('mondial_potins?select=*&order=created_at.desc'),
+      sb('mondial_avantmatch?select=*').catch(()=>[])
     ]);
     pronos = {}; (p||[]).forEach(x => { (pronos[x.pseudo] = pronos[x.pseudo] || {})[x.match_id] = x; });
     resultats = {}; (r||[]).forEach(x => resultats[x.match_id] = x);
     participants = {}; (pa||[]).forEach(x => participants[x.pseudo] = x);
     potinsCloud = po || [];
+    avmCloud = {}; (av||[]).forEach(x => avmCloud[x.match_id] = x);
   } catch(e) {
     console.error(e);
     toast("Connexion à la base impossible — réessaie dans un instant");
@@ -508,7 +528,46 @@ function hero(){
       <div class="eq"><div class="drapeau">${F[prochain.b]}</div><div class="nom">${prochain.b}</div></div>
     </div>
     <div class="quand">${fmtJour(prochain.dt)} · ${fmtHeure(prochain.dt)} ${compte?`<span class="compte">(${compte})</span>`:''}</div>
-    ${rappel}`;
+    ${rappel}
+    ${avmDispo(prochain.id) ? `<div class="rappel-prono" style="color:var(--or);font-weight:700">📋 Touche pour lire l'avant-match</div>` : ''}`;
+  h.style.cursor = avmDispo(prochain.id)||admin ? 'pointer' : 'default';
+  h.onclick = () => { if(avmDispo(prochain.id)||admin) ouvrirAvm(prochain.id); };
+}
+
+/* ============ AVANT-MATCH ============ */
+function avmDispo(id){ return !!(avmCloud[id] || AVM_BASE[id]); }
+function avmContenu(id){ return avmCloud[id] || AVM_BASE[id] || null; }
+function ouvrirAvm(id){ avmOuvert = (avmOuvert===id) ? null : id; renduAvm(); if(avmOuvert) $('avm').scrollIntoView({behavior:'smooth'}); }
+function renduAvm(){
+  const z = $('avm');
+  if(!avmOuvert){ z.innerHTML=''; return; }
+  const m = M.find(x=>x.id===avmOuvert);
+  const c = avmContenu(avmOuvert);
+  const corps = c ? `<div class="bloc"><div class="eti">${c.titre||'Avant-match'}</div>
+      <p>${(c.contenu||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</p></div>`
+    : `<p class="note">Pas encore d'avant-match pour cette rencontre — le commissaire le publie en général la veille du match.</p>`;
+  const adminBloc = admin ? `<div class="admin-bloc"><div class="eti">Publier / corriger l'avant-match (commissaire)</div>
+      <input type="text" id="avm-titre" placeholder="Titre" value="${c&&avmCloud[avmOuvert]?String(c.titre||'').replace(/"/g,'&quot;'):''}">
+      <textarea id="avm-contenu" placeholder="Colle ici le bloc avant-match préparé avec Claude" style="min-height:140px">${c&&avmCloud[avmOuvert]?String(c.contenu||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'):''}</textarea>
+      <button class="btn corail" style="margin-top:8px" onclick="sauverAvm(${avmOuvert})">Publier l'avant-match</button></div>` : '';
+  z.innerHTML = `<div class="fiche">
+    <button class="retour" onclick="ouvrirAvm(${avmOuvert})">✕ Fermer l'avant-match</button>
+    <div class="tete"><span class="f">${F[m.a]}</span>
+      <div><h3 style="font-size:16px">${m.a} – ${m.b}</h3>
+      <div class="surnom">Groupe ${m.g} · ${fmtJour(m.dt)} · ${fmtHeure(m.dt)} 🇲🇶</div></div>
+      <span class="f">${F[m.b]}</span></div>
+    ${corps}${adminBloc}</div>`;
+}
+async function sauverAvm(id){
+  const titre = $('avm-titre').value.trim(), contenu = $('avm-contenu').value.trim();
+  if(!contenu){ toast('Le contenu est vide'); return; }
+  try{
+    await sb('mondial_avantmatch?on_conflict=match_id', {method:'POST',
+      prefer:'resolution=merge-duplicates',
+      body: JSON.stringify({match_id:id, titre, contenu})});
+    avmCloud[id] = {match_id:id, titre, contenu};
+    toast('Avant-match publié 📋'); renduAvm(); hero(); listeMatchs(); listePronos();
+  }catch(e){ toast("Échec — la table mondial_avantmatch existe-t-elle ?"); }
 }
 
 /* ============ MATCHS ============ */
@@ -545,13 +604,14 @@ function carteMatch(m, modePronos){
       <button class="btn corail" onclick="validerScore(${m.id})">${re ? 'Corriger' : 'Valider le score'}</button>
     </div>`;
   }
+  const boutonAvm = (!re && (avmDispo(m.id)||admin)) ? `<div class="monprono" style="margin-top:8px"><a href="javascript:void(0)" onclick="event.stopPropagation();ouvrirAvm(${m.id});window.scrollTo({top:0,behavior:'smooth'})" style="color:var(--or);font-weight:700;text-decoration:none">📋 Avant-match : forces, faiblesses, sélections</a></div>` : '';
   return `<div class="match">
     <div class="ligne1"><span class="grp">GR. ${m.g}</span><span class="heure">${joue(m)?'TERMINÉ':fmtHeure(m.dt)+' 🇲🇶'}</span></div>
     <div class="duel">
       <div class="eq"><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
       ${score}
       <div class="eq dr"><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
-    </div>${bas}</div>`;
+    </div>${bas}${boutonAvm}</div>`;
 }
 function listeMatchs(){
   let liste = M;
@@ -711,7 +771,7 @@ async function ajouterPotin(){
 }
 
 /* ============ ORCHESTRATION ============ */
-function toutAfficher(){ blocIdentite(); hero(); listeMatchs(); listePronos(); classement(); zoneEquipes(); ecuries(); potins(); }
+function toutAfficher(){ blocIdentite(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); zoneEquipes(); ecuries(); potins(); }
 
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('nav button').forEach(x=>x.classList.remove('actif'));
