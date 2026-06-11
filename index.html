@@ -17,12 +17,28 @@
 html{-webkit-text-size-adjust:100%}
 body{background:var(--nuit);color:var(--creme);font-family:'Public Sans',system-ui,sans-serif;min-height:100vh;padding-bottom:84px}
 .madras{height:8px;background:var(--madras)}
-header{padding:18px 16px 10px;text-align:center}
+header{padding:16px 16px 8px;text-align:center}
 header h1{font-family:'Archivo Black',sans-serif;font-size:clamp(22px,6vw,34px);letter-spacing:.5px;line-height:1.05;text-transform:uppercase}
 header h1 .or{color:var(--or)}
 header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .wrap{max-width:680px;margin:0 auto;padding:0 14px}
-/* hero prochain match */
+/* bannière joueur connecté */
+.moi{display:flex;align-items:center;gap:10px;background:var(--panneau);border:1px solid var(--or);border-radius:12px;padding:10px 14px;margin:12px 0}
+.moi .f{font-size:24px}
+.moi .txt{flex:1;font-size:14px}
+.moi .txt b{color:var(--or)}
+.moi button{background:none;border:1px solid var(--ligne);color:var(--gris);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Public Sans'}
+/* écran identité */
+.identite{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin:14px 0}
+.identite label{display:block;font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.pastilles{display:flex;gap:8px;flex-wrap:wrap}
+.pastille{flex:1;min-width:90px;padding:14px 8px;border-radius:10px;border:1px solid var(--ligne);background:var(--panneau2);color:var(--creme);font-weight:700;font-size:15px;cursor:pointer;text-align:center;font-family:'Public Sans'}
+.pin-zone{margin-top:12px;display:none}
+.pin-zone.visible{display:block}
+.pin-zone .question{font-size:14px;margin-bottom:4px}
+.pin-zone input{width:120px;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Space Grotesk',monospace;font-size:20px;font-weight:700;text-align:center;letter-spacing:6px;margin-top:6px}
+.pin-zone input:focus{outline:2px solid var(--or)}
+/* hero */
 .hero{background:var(--panneau);border:1px solid var(--ligne);border-radius:16px;padding:16px;margin:14px 0;position:relative;overflow:hidden}
 .hero::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:var(--madras)}
 .hero .eti{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:10px}
@@ -31,25 +47,21 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .hero .eq .drapeau{font-size:38px;line-height:1}
 .hero .eq .nom{font-weight:700;font-size:15px;margin-top:4px}
 .hero .vs{font-family:'Archivo Black',sans-serif;color:var(--gris);font-size:14px}
-.hero .quand{text-align:center;margin-top:12px;font-family:'Space Grotesk',monospace;color:var(--creme)}
+.hero .quand{text-align:center;margin-top:12px;font-family:'Space Grotesk',monospace}
 .hero .quand .compte{color:var(--corail);font-weight:700}
-/* identité */
-.identite{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin:14px 0}
-.identite label{display:block;font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-.pastilles{display:flex;gap:8px;flex-wrap:wrap}
-.pastille{flex:1;min-width:90px;padding:12px 8px;border-radius:10px;border:1px solid var(--ligne);background:var(--panneau2);color:var(--creme);font-weight:700;font-size:15px;cursor:pointer;text-align:center}
-.pastille.actif{background:var(--or);color:var(--nuit);border-color:var(--or)}
-/* onglets bas */
+.hero .rappel-prono{text-align:center;margin-top:8px;font-size:12px}
+.hero .rappel-prono.manque{color:var(--corail);font-weight:700}
+.hero .rappel-prono.ok{color:var(--lagon)}
+/* nav */
 nav{position:fixed;bottom:0;left:0;right:0;background:var(--panneau);border-top:1px solid var(--ligne);display:flex;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;background:none;border:none;color:var(--gris);padding:10px 2px 8px;font-family:'Public Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer}
-nav button .ico{display:block;font-size:20px;margin-bottom:2px}
+nav button{flex:1;background:none;border:none;color:var(--gris);padding:9px 1px 7px;font-family:'Public Sans',sans-serif;font-size:10px;font-weight:600;cursor:pointer}
+nav button .ico{display:block;font-size:19px;margin-bottom:2px}
 nav button.actif{color:var(--or)}
-/* sections */
 section{display:none;padding-top:4px}
 section.actif{display:block}
 h2{font-family:'Archivo Black',sans-serif;font-size:18px;text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px}
 h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transform:none;letter-spacing:0;font-weight:400;display:block;margin-top:2px}
-/* cartes match */
+/* matchs */
 .jour{font-family:'Space Grotesk',monospace;color:var(--or);font-size:13px;font-weight:700;margin:16px 0 8px;text-transform:capitalize;border-bottom:1px solid var(--ligne);padding-bottom:4px}
 .match{background:var(--panneau);border:1px solid var(--ligne);border-radius:12px;padding:12px;margin-bottom:8px}
 .match .ligne1{display:flex;align-items:center;gap:8px}
@@ -64,15 +76,13 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .match .score.attente{color:var(--gris);font-size:13px}
 .match .monprono{margin-top:8px;font-size:12px;color:var(--gris)}
 .match .monprono b{color:var(--creme)}
-.match .pts{font-weight:700}
+.pts{font-weight:700}
 .pts.p3{color:var(--lagon)} .pts.p1{color:var(--or)} .pts.p0{color:var(--corail)}
-/* prono inputs */
 .prono-saisie{display:flex;align-items:center;gap:8px;margin-top:10px}
 .prono-saisie input{width:52px;padding:8px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Space Grotesk',monospace;font-size:16px;font-weight:700;text-align:center}
 .prono-saisie input:focus{outline:2px solid var(--or);border-color:var(--or)}
 .btn{padding:9px 14px;border-radius:8px;border:none;background:var(--or);color:var(--nuit);font-weight:700;font-family:'Public Sans';font-size:13px;cursor:pointer}
 .btn.corail{background:var(--corail);color:#fff}
-.btn.fantome{background:transparent;border:1px solid var(--ligne);color:var(--gris)}
 .btn:disabled{opacity:.45;cursor:default}
 .ok{color:var(--lagon);font-size:12px;font-weight:700}
 /* classement */
@@ -90,8 +100,29 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .ecurie .tete .f{font-size:30px}
 .ecurie .tete .qui{font-weight:700}
 .ecurie .tete .equipe{color:var(--or);font-weight:700}
-.ecurie .etat{font-size:12px;color:var(--gris);margin-top:6px}
+.ecurie .etat{font-size:12px;color:var(--gris);margin-top:6px;line-height:1.4}
 select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Public Sans';font-size:14px;margin-top:8px}
+/* équipes */
+.eq-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+.eq-tuile{background:var(--panneau);border:1px solid var(--ligne);border-radius:12px;padding:12px 10px;cursor:pointer;text-align:center}
+.eq-tuile .f{font-size:28px}
+.eq-tuile .nom{font-weight:700;font-size:13px;margin-top:4px}
+.eq-tuile .etoiles{color:var(--or);font-size:11px;margin-top:2px;letter-spacing:2px}
+.eq-tuile .grp-mini{font-size:10px;color:var(--gris);margin-top:2px}
+.fiche{background:var(--panneau);border:1px solid var(--ligne);border-radius:16px;padding:16px;margin:12px 0;position:relative;overflow:hidden}
+.fiche::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:var(--madras)}
+.fiche .retour{background:none;border:none;color:var(--gris);font-size:13px;cursor:pointer;padding:0;margin-bottom:10px;font-family:'Public Sans';font-weight:600}
+.fiche .tete{display:flex;align-items:center;gap:12px}
+.fiche .tete .f{font-size:46px}
+.fiche .tete h3{font-family:'Archivo Black';font-size:20px;text-transform:uppercase}
+.fiche .tete .surnom{color:var(--or);font-size:13px;font-style:italic}
+.fiche .tete .etoiles{color:var(--or);letter-spacing:3px;font-size:13px;margin-top:2px}
+.fiche .bloc{margin-top:14px}
+.fiche .bloc .eti{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:4px}
+.fiche .bloc p{font-size:14px;line-height:1.5;color:#cfd9e4}
+.fiche .bloc p b{color:var(--creme)}
+.fiche .ses-matchs{margin-top:14px}
+.fiche .btn{margin-top:14px;width:100%}
 /* potins */
 .potin{background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--corail);border-radius:12px;padding:14px;margin-bottom:10px}
 .potin .titre{font-weight:700;margin-bottom:4px}
@@ -99,14 +130,13 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .potin .tag{display:inline-block;margin-top:8px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--or);font-weight:700}
 textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Public Sans';font-size:14px;min-height:70px;margin-top:8px}
 input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Public Sans';font-size:14px;margin-top:8px}
-/* admin */
 .admin-bloc{border:1px dashed var(--or);border-radius:12px;padding:12px;margin:12px 0;background:rgba(245,180,60,.05)}
 .admin-bloc .eti{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);font-weight:700}
 .note{font-size:12px;color:var(--gris);margin:8px 0;line-height:1.4}
-.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--lagon);color:var(--nuit);font-weight:700;padding:10px 18px;border-radius:24px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:99}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--lagon);color:var(--nuit);font-weight:700;padding:10px 18px;border-radius:24px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:99;max-width:90vw;text-align:center}
 .toast.visible{opacity:1}
 .filtres{display:flex;gap:6px;margin:10px 0}
-.filtres button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--ligne);background:var(--panneau2);color:var(--gris);font-weight:600;font-size:12px;cursor:pointer}
+.filtres button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--ligne);background:var(--panneau2);color:var(--gris);font-weight:600;font-size:12px;cursor:pointer;font-family:'Public Sans'}
 .filtres button.actif{background:var(--or);color:var(--nuit);border-color:var(--or)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -119,14 +149,22 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 </header>
 
 <div class="wrap">
+  <!-- identité -->
   <div class="identite" id="bloc-identite">
     <label>Qui regarde ?</label>
     <div class="pastilles" id="pastilles"></div>
+    <div class="pin-zone" id="pin-zone">
+      <div class="question" id="pin-question"></div>
+      <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="····">
+      <button class="btn" style="margin-left:10px" onclick="validerPin()">OK</button>
+    </div>
   </div>
+  <div class="moi" id="bloc-moi" style="display:none"></div>
+
   <div class="hero" id="hero" style="display:none"></div>
 
   <section id="sec-matchs" class="actif">
-    <h2>La grille <small>72 matchs de poules, validés par Bidou au fil du tournoi</small></h2>
+    <h2>La grille <small>72 matchs de poules · scores validés par le commissaire au fil du tournoi</small></h2>
     <div class="filtres">
       <button data-f="venir" class="actif">À venir</button>
       <button data-f="joues">Joués</button>
@@ -146,21 +184,22 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     <p class="note" id="note-classement"></p>
   </section>
 
+  <section id="sec-equipes">
+    <h2>Les équipes <small>48 fiches : les leaders, le joueur à surveiller, la belle histoire</small></h2>
+    <div id="zone-equipes"></div>
+  </section>
+
   <section id="sec-ecuries">
     <h2>Les écuries <small>Chacun son équipe de cœur — on la suit jusqu'au bout (ou pas)</small></h2>
     <div id="liste-ecuries"></div>
-    <div class="ecurie" id="choix-ecurie" style="display:none">
-      <b>Choisis ton écurie</b>
-      <select id="select-ecurie"></select>
-      <button class="btn" style="margin-top:10px" onclick="sauverEcurie()">C'est mon équipe !</button>
-    </div>
+    <p class="note">Pour choisir ton écurie : va dans l'onglet Équipes, ouvre une fiche, et appuie sur « J'en fais mon écurie ».</p>
   </section>
 
   <section id="sec-potins">
     <h2>Les potins <small>Ce qu'il faut savoir pour briller devant la télé</small></h2>
     <div id="liste-potins"></div>
     <div class="admin-bloc" id="admin-potin" style="display:none">
-      <div class="eti">Ajouter un potin (admin)</div>
+      <div class="eti">Ajouter un potin (commissaire)</div>
       <input type="text" id="potin-titre" placeholder="Titre du potin">
       <textarea id="potin-contenu" placeholder="Le potin..."></textarea>
       <button class="btn corail" style="margin-top:8px" onclick="ajouterPotin()">Publier</button>
@@ -168,9 +207,9 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   </section>
 
   <div class="admin-bloc" id="bloc-admin" style="display:none">
-    <div class="eti">Mode admin</div>
-    <p class="note">Réservé au commissaire du tournoi. Permet de valider les scores et publier des potins.</p>
-    <input type="password" id="code-admin" placeholder="Code admin">
+    <div class="eti">Mode commissaire</div>
+    <p class="note">Permet de valider les scores des matchs et publier des potins.</p>
+    <input type="password" id="code-admin" placeholder="Code commissaire">
     <button class="btn" style="margin-top:8px" onclick="activerAdmin()">Déverrouiller</button>
   </div>
 </div>
@@ -178,25 +217,25 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 <nav>
   <button data-sec="matchs" class="actif"><span class="ico">📅</span>Matchs</button>
   <button data-sec="pronos"><span class="ico">🎲</span>Pronos</button>
-  <button data-sec="classement"><span class="ico">🏆</span>Classement</button>
+  <button data-sec="classement"><span class="ico">🏆</span>Classt</button>
+  <button data-sec="equipes"><span class="ico">⚽</span>Équipes</button>
   <button data-sec="ecuries"><span class="ico">🐎</span>Écuries</button>
   <button data-sec="potins"><span class="ico">🍿</span>Potins</button>
 </nav>
 <div class="toast" id="toast"></div>
 
 <script>
-/* ============ CONFIGURATION (à modifier ici) ============ */
+/* ============ CONFIGURATION ============ */
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
 const PARTICIPANTS = ['Bidou','Ginou','Véro'];
 const ADMIN_PSEUDO = 'Bidou';
 
-/* ============ ÉQUIPES & DRAPEAUX ============ */
+/* ============ DRAPEAUX ============ */
 const F = {"Mexique":"🇲🇽","Afrique du Sud":"🇿🇦","Corée du Sud":"🇰🇷","Tchéquie":"🇨🇿","Canada":"🇨🇦","Bosnie":"🇧🇦","Qatar":"🇶🇦","Suisse":"🇨🇭","Brésil":"🇧🇷","Maroc":"🇲🇦","Haïti":"🇭🇹","Écosse":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","États-Unis":"🇺🇸","Paraguay":"🇵🇾","Australie":"🇦🇺","Turquie":"🇹🇷","Allemagne":"🇩🇪","Curaçao":"🇨🇼","Côte d'Ivoire":"🇨🇮","Équateur":"🇪🇨","Pays-Bas":"🇳🇱","Japon":"🇯🇵","Suède":"🇸🇪","Tunisie":"🇹🇳","Belgique":"🇧🇪","Égypte":"🇪🇬","Iran":"🇮🇷","Nouvelle-Zélande":"🇳🇿","Espagne":"🇪🇸","Cap-Vert":"🇨🇻","Arabie Saoudite":"🇸🇦","Uruguay":"🇺🇾","France":"🇫🇷","Sénégal":"🇸🇳","Irak":"🇮🇶","Norvège":"🇳🇴","Argentine":"🇦🇷","Algérie":"🇩🇿","Autriche":"🇦🇹","Jordanie":"🇯🇴","Portugal":"🇵🇹","RD Congo":"🇨🇩","Ouzbékistan":"🇺🇿","Colombie":"🇨🇴","Angleterre":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croatie":"🇭🇷","Ghana":"🇬🇭","Panama":"🇵🇦"};
 
 /* ============ LES 72 MATCHS — heure Martinique (UTC-4) ============ */
-/* Source : calendrier officiel (footmercato), horaires France convertis -6h */
 const M = [
  [1,"A","Mexique","Afrique du Sud","2026-06-11T15:00:00-04:00"],
  [2,"A","Corée du Sud","Tchéquie","2026-06-11T22:00:00-04:00"],
@@ -273,20 +312,76 @@ const M = [
 ].map(([id,g,a,b,dt])=>({id,g,a,b,dt:new Date(dt)}));
 M.sort((x,y)=>x.dt-y.dt);
 
+/* ============ FICHES DES 48 ÉQUIPES ============ */
+/* niveau : 1 à 5 étoiles · leaders / surveiller / histoire */
+const EQUIPES = {
+"France":{g:"I",niv:5,surnom:"Les Bleus",leaders:"Kylian Mbappé, le capitaine et la star planétaire, entouré des cadres Griezmann et Tchouaméni. Didier Deschamps dispute sa dernière compétition sur le banc après 14 ans de règne.",surveiller:"Toute la génération dorée du milieu : Zaïre-Emery et les jeunes pousses qui veulent prendre le pouvoir.",histoire:"Champions 2018, finalistes maudits 2022 (cette séance de tirs au but contre l'Argentine...). C'est LA quête de revanche du tournoi, et la tournée d'adieu de Deschamps. La France vient en plus de perdre sa place de n°1 FIFA juste avant le tournoi — vexant. Premier test immédiat : le Sénégal, une équipe remplie de joueurs qui connaissent les Bleus par cœur."},
+"Brésil":{g:"C",niv:5,surnom:"La Seleção",leaders:"Neymar, de retour de l'enfer des blessures à 34 ans, et Vinicius Jr, la flèche du Real Madrid. Carlo Ancelotti, premier sélectionneur étranger du Brésil de l'histoire moderne.",surveiller:"Endrick, le gamin prodige, et Raphinha à qui Neymar a fait « une grande promesse » selon la presse brésilienne.",histoire:"Le Brésil n'a plus gagné depuis 2002 — une éternité pour le pays du foot. Quand Neymar a découvert sa convocation, il a fondu en larmes devant les caméras. Tout un pays retient son souffle pour la dernière chance de son enfant prodige. Et en face dans le groupe : Haïti, le petit poucet caribéen. Match à regarder en famille obligatoire."},
+"Argentine":{g:"J",niv:5,surnom:"L'Albiceleste",leaders:"Lionel Messi, 39 ans, champion du monde en titre, pour sa toute dernière Coupe du monde. Autour de lui, la bande de 2022 : Julián Álvarez, De Paul, le gardien-provocateur Emiliano Martínez.",surveiller:"Les jeunes qui se battent pour accompagner Messi dans sa dernière danse — chaque place dans cette équipe vaut de l'or.",histoire:"Champions en titre. Chaque match peut être le DERNIER match en Coupe du monde du plus grand joueur de l'histoire. Rien que pour ça, on ne rate aucun match de l'Argentine. L'émotion garantie du tournoi."},
+"Espagne":{g:"H",niv:5,surnom:"La Roja",leaders:"Lamine Yamal, 18 ans, le petit génie du Barça qui régale la planète, et Pedri, le métronome. Champions d'Europe 2024.",surveiller:"Yamal, encore et toujours : à 18 ans, il peut devenir la star absolue de ce Mondial, comme Pelé en 1958.",histoire:"L'Espagne est co-favorite avec la France et joue le plus beau football d'Europe. Si Ginou veut miser malin, c'est un cheval sérieux. Un éventuel France-Espagne en phase finale serait LA finale avant la lettre."},
+"Angleterre":{g:"L",niv:5,surnom:"Les Three Lions",leaders:"Harry Kane, le buteur-machine toujours en quête d'un premier trophée, Jude Bellingham, le patron du Real Madrid, et Thomas Tuchel sur le banc.",surveiller:"Bellingham : le joueur total, capable de porter l'Angleterre tout seul.",histoire:"60 ans que l'Angleterre attend (1966...). Finaliste de l'Euro deux fois de suite, toujours battue au bout. La malédiction anglaise est le feuilleton préféré du foot mondial : vont-ils ENFIN gagner quelque chose ?"},
+"Portugal":{g:"K",niv:4,surnom:"A Seleção das Quinas",leaders:"Cristiano Ronaldo, 41 ans (!), pour une dernière apparition qui défie le temps. Autour : Bruno Fernandes, Bernardo Silva, et la nouvelle génération.",surveiller:"Le jeune attaquant Eli Junior Kroupi, confirmé dans le groupe par le sélectionneur Roberto Martinez — et la question quotidienne : Ronaldo titulaire ou pas ?",histoire:"Ronaldo et Messi dans le même Mondial, probablement pour la dernière fois de l'histoire. Le Portugal est costaud, mais le feuilleton, c'est CR7 : sa légende personnelle contre l'horloge. Même sa légende Scolari l'a critiqué publiquement avant le tournoi — ambiance."},
+"Allemagne":{g:"E",niv:4,surnom:"La Mannschaft",leaders:"Jamal Musiala, le magicien, Joshua Kimmich le métronome, et Florian Wirtz, le talent générationnel.",surveiller:"Wirtz–Musiala : la paire la plus excitante d'Europe quand elle est lancée.",histoire:"Éliminée dès les poules en 2018 ET 2022 — l'ogre allemand est devenu fragile. La presse allemande dit même qu'ils « craignent la Côte d'Ivoire » dans leur groupe. Une Allemagne qui doute, c'est rare : à surveiller comme le lait sur le feu."},
+"Pays-Bas":{g:"F",niv:4,surnom:"Les Oranje",leaders:"Virgil van Dijk, le roc, et Memphis Depay devant. Du solide partout.",surveiller:"Xavi Simons, formé au PSG, qui veut briller à la face du monde.",histoire:"Trois finales perdues (74, 78, 2010) : les Pays-Bas sont la plus grande équipe à n'avoir JAMAIS gagné la Coupe du monde. Toujours beaux, jamais champions. La malédiction orange continue-t-elle ?"},
+"Belgique":{g:"G",niv:3,surnom:"Les Diables Rouges",leaders:"Kevin De Bruyne en fin de règne, Doku le dribbleur fou, et Rudi Garcia (un Français !) sur le banc qui annonce une « révolution tactique ».",surveiller:"Doku : quand il accélère, personne ne le rattrape.",histoire:"La « génération dorée » belge (Hazard, Lukaku...) n'a rien gagné, et ça s'est fini en eau de boudin — Lukaku a publiquement fracassé l'ancien sélectionneur. Nouvelle ère, vieux problèmes : la Belgique, c'est le soap opera du foot européen."},
+"Norvège":{g:"I",niv:4,surnom:"Les Vikings",leaders:"Erling Haaland, le buteur-cyborg de Manchester City, et Martin Ødegaard, le cerveau d'Arsenal.",surveiller:"Haaland face à la France le 26 juin : le choc Mbappé-Haaland que tout le monde attend depuis des années.",histoire:"Premier Mondial de la Norvège depuis 1998 — Haaland n'avait jamais pu jouer une Coupe du monde ! Et les Norvégiens ont débarqué avec 300 kg de poisson et 116 kg de fromage dans leurs valises pour nourrir l'équipe. Véridique. L'adversaire le plus dangereux de la France dans le groupe."},
+"Sénégal":{g:"I",niv:3,surnom:"Les Lions de la Teranga",leaders:"Sadio Mané, la légende nationale, et une colonie de joueurs formés en France qui connaissent les Bleus par cœur.",surveiller:"Tous les binationaux : la moitié de l'équipe aurait pu jouer pour la France. Ce France-Sénégal du 16 juin, c'est un match de famille — classé à haut risque par les autorités.",histoire:"Le Sénégal de 2002 avait battu la France championne du monde en ouverture — le plus grand exploit de son histoire. 24 ans après, rebelote : France-Sénégal en ouverture de groupe. Le destin a de l'humour. À 15h heure Martinique, personne ne travaille ce jour-là."},
+"Maroc":{g:"C",niv:4,surnom:"Les Lions de l'Atlas",leaders:"Achraf Hakimi, le capitaine du PSG, et Brahim Díaz. Demi-finalistes historiques en 2022.",surveiller:"La défense marocaine : la plus dure à jouer du tournoi, et le soutien de TOUT le continent africain plus la diaspora.",histoire:"Premier pays africain en demi-finale d'une Coupe du monde (2022). Le Maroc n'est plus une surprise, c'est un cador. Dans le groupe du Brésil et d'Haïti : ce groupe C est un feuilleton à lui tout seul."},
+"Haïti":{g:"C",niv:1,surnom:"Les Grenadiers",leaders:"Une équipe de battants emmenée par des joueurs qui évoluent en France et dans la Caraïbe. Duckens Nazon, l'attaquant emblématique.",surveiller:"Tout le pays — première Coupe du monde depuis 1974 ! Et déjà du croustillant : la FIFA a obligé Haïti à modifier ses maillots jugés à « caractère politique ».",histoire:"LE petit poucet du cœur pour nous, Caribéens. Haïti traverse des années terribles, et cette qualification est un miracle sportif qui fait pleurer tout un peuple. Ils affrontent le BRÉSIL le 19 juin. David contre Goliath, version créole. On regarde en famille, et on chante."},
+"Curaçao":{g:"E",niv:1,surnom:"La Vibe Bleue",leaders:"Des joueurs formés aux Pays-Bas (héritage colonial oblige) pleins d'envie.",surveiller:"Le pays entier : environ 150 000 habitants — l'île tiendrait presque dans un stade ! Plus petit pays de l'histoire en Coupe du monde.",histoire:"Première participation de l'histoire, et un deuxième représentant caribéen avec Haïti ! Ils héritent de l'Allemagne dans leur groupe. Quoi qu'il arrive, c'est déjà la plus belle histoire de l'île. Solidarité caribéenne obligatoire."},
+"Mexique":{g:"A",niv:3,surnom:"El Tri",leaders:"Santiago Giménez devant, et la ferveur de tout un peuple à domicile.",surveiller:"Le facteur stade Azteca : 87 000 personnes en fusion à 2 200 m d'altitude. L'ouverture du tournoi s'y est jouée.",histoire:"Pays co-hôte, le Mexique a ouvert le bal le 11 juin contre l'Afrique du Sud — comme en 2010, même affiche. La malédiction mexicaine : éliminé en 8es SEPT fois de suite. À domicile, c'est maintenant ou jamais."},
+"États-Unis":{g:"D",niv:3,surnom:"Team USA",leaders:"Christian Pulisic, le capitaine, Timothy Weah et Folarin Balogun (deux noms bien connus de la Ligue 1).",surveiller:"La pression du pays hôte : tout le sport US les regarde, et le foot veut conquérir l'Amérique.",histoire:"Co-hôtes et morts de faim de réussir LEUR Mondial. Une élimination précoce serait un fiasco national. Groupe piégeux avec la Turquie et l'Australie."},
+"Canada":{g:"B",niv:2,surnom:"Les Rouges",leaders:"Alphonso Davies, la fusée du Bayern, et Jonathan David, le buteur passé par la Ligue 1.",surveiller:"Davies : un des joueurs les plus rapides du monde, à domicile.",histoire:"Co-hôte, jamais passé un premier tour. Avec Davies et David, cette génération canadienne est la meilleure de l'histoire du pays. Le moment ou jamais."},
+"Croatie":{g:"L",niv:3,surnom:"Les Vatreni",leaders:"Luka Modrić, 40 ans, l'éternel magicien, pour une dernière (encore une légende en tournée d'adieu !).",surveiller:"Modrić : chaque touche de balle est une leçon de football.",histoire:"Finaliste 2018, 3e en 2022 : la petite Croatie (moins de 4 millions d'habitants) surperforme TOUJOURS. Et tant que Modrić est là, personne ne veut les croiser. Dans le groupe de l'Angleterre : choc immédiat le 17 juin."},
+"Colombie":{g:"K",niv:3,surnom:"Los Cafeteros",leaders:"Luis Díaz, la flèche, et James Rodríguez — au cœur d'une « énorme polémique » avant le tournoi selon la presse, comme toujours avec lui.",surveiller:"Díaz : capable de gagner un match à lui seul.",histoire:"La Colombie revient en force après avoir raté 2022. Ambiance, musique, drama avec James : les Colombiens n'ennuient jamais. Croisent le Portugal de Ronaldo le 27 juin."},
+"Uruguay":{g:"H",niv:3,surnom:"La Celeste",leaders:"Federico Valverde, le moteur du Real, et Marcelo Bielsa, l'entraîneur le plus fou et fascinant du foot mondial — qui vient d'écarter une star « pour raisons extra-sportives ».",surveiller:"Le Bielsa-ball : pressing total, parfois génial, parfois suicidaire.",histoire:"Deux étoiles (1930, 1950), une grinta légendaire, et Bielsa « El Loco » aux commandes. Dans le groupe de l'Espagne : Uruguay-Espagne le 26 juin, du très lourd."},
+"Japon":{g:"F",niv:3,surnom:"Les Samouraïs Bleus",leaders:"Kaoru Mitoma le dribbleur, Takefusa Kubo le créateur.",surveiller:"Le Japon a battu l'Allemagne ET l'Espagne en 2022 — plus personne ne les prend de haut.",histoire:"L'équipe surprise par excellence, et les supporters les plus classes du monde (ils nettoient le stade après les matchs). Le Japon vise enfin un quart de finale historique."},
+"Maroc2":null,
+"Suisse":{g:"B",niv:3,surnom:"La Nati",leaders:"Granit Xhaka, le patron, avec 3 joueurs de Ligue 1 dans la liste officielle.",surveiller:"La régularité suisse : jamais spectaculaire, toujours là en 8es.",histoire:"La Suisse, c'est le coffre-fort du foot : solide, ponctuelle, ennuyeuse pour les adversaires. Tombe dans un groupe abordable avec le Canada, le Qatar et la Bosnie."},
+"Sénégal2":null,
+"Tchéquie":{g:"A",niv:2,surnom:"Les Lions de Bohême",leaders:"Patrik Schick, le buteur géant.",surveiller:"Schick sur coups de pied arrêtés.",histoire:"Retour au Mondial pour les héritiers de la grande école tchèque. Groupe ouvert avec le Mexique : qualifiable."},
+"Afrique du Sud":{g:"A",niv:2,surnom:"Les Bafana Bafana",leaders:"Une équipe collective et joueuse, championne d'Afrique du Sud du rythme.",surveiller:"L'envie : premier Mondial depuis 2010, celui qu'ils avaient organisé.",histoire:"Match d'ouverture contre le Mexique — exactement comme en 2010 chez eux (1-1 à l'époque). Le destin aime les clins d'œil."},
+"Corée du Sud":{g:"A",niv:2,surnom:"Les Guerriers Taeguk",leaders:"Son Heung-min, la superstar et capitaine adoré.",surveiller:"Son : probablement son dernier Mondial, tout un pays derrière lui.",histoire:"La Corée a sorti le Portugal en poules en 2022. Avec Son en mission, jamais à sous-estimer."},
+"Bosnie":{g:"B",niv:2,surnom:"Les Dragons",leaders:"Edin Džeko, 40 ans, l'increvable buteur-légende.",surveiller:"Džeko : encore une légende pour sa dernière danse.",histoire:"Deuxième Mondial de l'histoire bosnienne. Une équipe de cœur, un peuple de passionnés."},
+"Qatar":{g:"B",niv:1,surnom:"Les Grenats",leaders:"L'ossature championne d'Asie 2019 et 2023.",surveiller:"Leur revanche : humiliés « chez eux » en 2022 (3 défaites).",histoire:"Premier Mondial du Qatar hors de ses murs. Double champion d'Asie quand même — pas un figurant."},
+"Écosse":{g:"C",niv:2,surnom:"La Tartan Army",leaders:"Scott McTominay, héros national depuis ses exploits à Naples. Liste annoncée par Steve Clarke.",surveiller:"Les supporters écossais : les plus bruyants et joyeux du tournoi, kilts inclus.",histoire:"Premier Mondial depuis 1998 ! L'Écosse n'a JAMAIS passé un premier tour de son histoire. Dans le groupe du Brésil et d'Haïti — bonne chance les gars."},
+"Paraguay":{g:"D",niv:2,surnom:"L'Albirroja",leaders:"Miguel Almirón et la grinta sud-américaine classique.",surveiller:"Leur défense : le Paraguay ne prend jamais de but facilement.",histoire:"Premier Mondial depuis 2010. Une qualification arrachée qui a fait pleurer Asunción."},
+"Australie":{g:"D",niv:2,surnom:"Les Socceroos",leaders:"Une équipe de guerriers sans stars mais sans peur.",surveiller:"Leur mental : 8es de finale en 2022 en sortant le Danemark.",histoire:"L'Australie surperforme toujours. Croisent les USA chez eux le 19 juin : choc anglo-saxon."},
+"Turquie":{g:"D",niv:3,surnom:"Ay-Yıldızlılar",leaders:"Hakan Çalhanoğlu le chef d'orchestre, Arda Güler le joyau du Real Madrid. Attention : Kenan Yildiz, l'autre pépite, est forfait pour le début du tournoi.",surveiller:"Güler : le « petit prince » du Real, prêt à exploser aux yeux du monde.",histoire:"Premier Mondial depuis 2002 (où ils avaient fini 3es !). La Turquie a une génération dorée et des supporters volcaniques. L'outsider piquant du tournoi."},
+"Côte d'Ivoire":{g:"E",niv:3,surnom:"Les Éléphants",leaders:"Les champions d'Afrique 2024, emmenés par Sébastien Haller, héros de la CAN après avoir vaincu le cancer.",surveiller:"L'Allemagne a déclaré publiquement qu'elle « craint la Côte d'Ivoire ». C'est dire.",histoire:"Champions d'Afrique en titre, dans le groupe de l'Allemagne et de Curaçao. Si les Éléphants sortent l'Allemagne, c'est le séisme du tournoi. Possible."},
+"Équateur":{g:"E",niv:3,surnom:"La Tri",leaders:"Moisés Caicedo, le milieu le plus cher de l'histoire de la Premier League.",surveiller:"Une génération jeune, physique, qui a terrorisé les qualifications sud-américaines.",histoire:"L'Équateur monte en puissance depuis des années. Personne ne veut les jouer, pas même l'Allemagne qui les croise le 25 juin."},
+"Suède":{g:"F",niv:2,surnom:"Blågult",leaders:"Alexander Isak et Viktor Gyökeres : le duo d'attaquants le plus chaud d'Europe... sur le papier.",surveiller:"Gyökeres-Isak : si ça clique, ça peut marquer 3 buts par match.",histoire:"Retour au Mondial porté par deux buteurs de classe mondiale. Avec un mystère : la pépite Roony Bardghji absente pour des « raisons fracassantes » selon la presse. Drama suédois."},
+"Tunisie":{g:"F",niv:2,surnom:"Les Aigles de Carthage",leaders:"Une équipe collective et accrocheuse, fierté du Maghreb.",surveiller:"Leur capacité à faire tomber un gros : ils ont battu la France en 2022 (1-0, on s'en souvient).",histoire:"La Tunisie ne passe jamais les poules mais gâche toujours la fête de quelqu'un. Les Pays-Bas sont prévenus."},
+"Égypte":{g:"G",niv:3,surnom:"Les Pharaons",leaders:"Mohamed Salah, la superstar de Liverpool, ENFIN dans une Coupe du monde à son sommet.",surveiller:"Salah : il a porté l'Égypte toute sa carrière, c'est son moment.",histoire:"L'Égypte de Salah contre la Belgique de De Bruyne le 15 juin : duel de légendes de Liverpool... pardon, de Premier League. Salah mérite SON Mondial."},
+"Iran":{g:"G",niv:2,surnom:"Team Melli",leaders:"Mehdi Taremi, le renard des surfaces.",surveiller:"Une équipe soudée qui joue toujours mieux que prévu.",histoire:"Sixième Mondial d'affilée pour l'Iran, dont la participation a fait des vagues diplomatiques jusqu'au bout (visas, conditions posées à la FIFA...). Sur le terrain : accrocheurs, jamais ridicules."},
+"Nouvelle-Zélande":{g:"G",niv:1,surnom:"Les All Whites",leaders:"Chris Wood, le buteur de Premier League, et même un joueur de Saint-Étienne dans la liste.",surveiller:"Leur invincibilité statistique : en 2010, la NZ est restée INVAINCUE (3 nuls)... et éliminée quand même.",histoire:"Le pays du rugby vient jouer au foot. Personne ne les attend, c'est exactement comme ça qu'ils aiment."},
+"Cap-Vert":{g:"H",niv:1,surnom:"Les Requins Bleus",leaders:"Une sélection de la diaspora, pleine de joueurs nés au Portugal et en France.",surveiller:"L'exploit possible contre l'Arabie Saoudite : leur vrai match pour l'histoire.",histoire:"PREMIÈRE participation : 500 000 habitants, des îles, comme nous ! Et ils tombent... contre l'Espagne d'entrée. Les archipels au Mondial : Cap-Vert, Curaçao — l'année des îles."},
+"Arabie Saoudite":{g:"H",niv:2,surnom:"Les Faucons Verts",leaders:"L'équipe qui a battu l'Argentine de Messi en ouverture 2022 — personne n'a oublié.",surveiller:"Leur match de préparation a été arrêté 2h pour des orages — ils sont prêts à tout.",histoire:"Auteurs du plus grand exploit de 2022 (victoire sur l'Argentine future championne). Capables du pire comme du miracle."},
+"Irak":{g:"I",niv:1,surnom:"Les Lions de Mésopotamie",leaders:"Une équipe de combattants, champions d'Asie 2007 — la plus belle histoire du foot asiatique.",surveiller:"Leur match contre la France le 22 juin : à 17h heure Martinique.",histoire:"Premier Mondial depuis 1986. Le foot irakien a survécu à tout — cette qualification est déjà une victoire immense. Adversaire « facile » des Bleus sur le papier, mais l'histoire est belle."},
+"Algérie":{g:"J",niv:3,surnom:"Les Fennecs",leaders:"Riyad Mahrez et une génération qui a faim, avec des renforts de la diaspora française.",surveiller:"« Si le Maroc a pu le faire... » : les Fennecs visent ouvertement l'exploit à la marocaine de 2022.",histoire:"Premier Mondial depuis 2014, et un tirage de feu : l'ARGENTINE DE MESSI d'entrée, le 16 juin à 21h heure Martinique. Toute la diaspora algérienne de France sera en fusion. Match événement."},
+"Autriche":{g:"J",niv:3,surnom:"Das Team",leaders:"David Alaba le vétéran et Ralf Rangnick, l'entraîneur-professeur qui a révolutionné l'équipe.",surveiller:"Le pressing autrichien : l'équipe qui court le plus d'Europe.",histoire:"Premier Mondial depuis 1998. L'Autriche de Rangnick a impressionné tout le monde à l'Euro 2024. L'outsider sérieux du groupe de Messi."},
+"Jordanie":{g:"J",niv:1,surnom:"Les Nashama",leaders:"Musa Al-Taamari, le dribbleur passé par Montpellier.",surveiller:"Coup dur avant le tournoi (un « énorme coup dur » selon la presse) mais l'envie reste intacte.",histoire:"PREMIÈRE participation, finalistes surprise de la Coupe d'Asie 2024. Et ils croisent... Messi le 27 juin. Le selfie du siècle pour tout un pays."},
+"RD Congo":{g:"K",niv:2,surnom:"Les Léopards",leaders:"Cédric Bakambu et une diaspora énorme (beaucoup de joueurs formés en France et Belgique).",surveiller:"Leur premier match... contre le Portugal de Ronaldo le 17 juin.",histoire:"Premier Mondial depuis 1974 (à l'époque sous le nom du Zaïre) ! Un retour historique pour le géant africain endormi. Kinshasa va trembler."},
+"Ouzbékistan":{g:"K",niv:1,surnom:"Les Loups Blancs",leaders:"Abdukodir Khusanov, le défenseur de Manchester City, premier Ouzbek star de Premier League.",surveiller:"Khusanov contre Ronaldo le 23 juin : le duel des extrêmes.",histoire:"PREMIÈRE participation. L'Asie centrale entre dans la cour des grands. Quatrième petit nouveau du tournoi avec Haïti... pardon, avec Curaçao, Cap-Vert et la Jordanie."},
+"Ghana":{g:"L",niv:2,surnom:"Les Black Stars",leaders:"Mohammed Kudus, le joyau technique, et Thomas Partey.",surveiller:"Kudus : sur un bon jour, il fait gagner n'importe quel match.",histoire:"Le Ghana 2010 reste le quart de finaliste au but volé (la main de Suárez, les anciens s'en souviennent). Toujours dangereux, jamais prévisible. Croisent l'Angleterre le 23 juin."},
+"Panama":{g:"L",niv:1,surnom:"La Marea Roja",leaders:"Amir Murillo (l'ex-Marseillais) capitaine d'une équipe sans complexe.",surveiller:"Leur grinta : le Panama a éliminé les USA en demi-finale de la zone CONCACAF. Personne ne l'avait vu venir.",histoire:"Deuxième Mondial de l'histoire. Petit pays, grande gueule, zéro pression : le trouble-fête parfait dans le groupe de l'Angleterre."}
+};
+delete EQUIPES["Maroc2"]; delete EQUIPES["Sénégal2"];
+
 /* ============ POTINS DE DÉPART ============ */
 const POTINS_BASE = [
  {titre:"Haïti est au Mondial 🇭🇹", contenu:"Première Coupe du monde depuis 1974 pour nos voisins ! Et déjà du croustillant : la FIFA leur a demandé de modifier leurs maillots, jugés trop « politiques ». Ils affrontent le Brésil de Neymar dans le groupe C — David contre Goliath version Caraïbe.", tag:"Groupe C"},
- {titre:"Les larmes de Neymar", contenu:"À l'annonce de la liste du Brésil, Neymar a craqué en larmes devant les caméras. À 34 ans, après des années de blessures, c'est sa dernière chance de soulever la Coupe que tout le Brésil attend depuis 2002. Véro, prépare les mouchoirs.", tag:"Brésil"},
+ {titre:"Les larmes de Neymar", contenu:"À l'annonce de la liste du Brésil, Neymar a craqué en larmes devant les caméras. Après des années de blessures, c'est sa dernière chance de soulever la Coupe que tout le Brésil attend depuis 2002. Véro, prépare les mouchoirs.", tag:"Brésil"},
  {titre:"France–Sénégal, le choc d'entrée", contenu:"Les Bleus démarrent le 16 juin à 15h (heure de chez nous) contre le Sénégal — un match classé à haut risque, entre deux équipes qui se connaissent par cœur. La moitié des joueurs sont coéquipiers ou copains en club. Ambiance famille... qui se déchire.", tag:"16 juin · Groupe I"},
  {titre:"L'Italie n'est PAS là", contenu:"Incroyable mais vrai : l'Italie, quadruple championne du monde, rate sa TROISIÈME Coupe du monde d'affilée. Toute une génération d'Italiens n'a jamais vu la Squadra Azzurra en Coupe du monde.", tag:"Scandale"},
  {titre:"La Norvège a apporté 300 kg de poisson", contenu:"Véridique : la délégation norvégienne a débarqué avec 300 kg de poisson et 116 kg de fromage dans ses valises pour nourrir l'équipe. Et surtout, elle débarque avec Haaland, le buteur-cyborg, que la France affronte le 26 juin. Premier Mondial de la Norvège depuis 1998.", tag:"Norvège"},
  {titre:"La dernière danse de Messi", contenu:"À 39 ans, Messi remet son titre en jeu avec l'Argentine, championne en titre. Tout le monde sait que c'est la dernière. Chaque match de l'Argentine peut être le dernier match en Coupe du monde du plus grand joueur de l'histoire.", tag:"Argentine"},
- {titre:"Curaçao et Cap-Vert, les petits nouveaux", contenu:"Quatre pays disputent la première Coupe du monde de leur histoire : Curaçao (voisin caribéen !), le Cap-Vert, la Jordanie et l'Ouzbékistan. Curaçao, c'est environ 150 000 habitants — l'île entière tiendrait dans un stade ou presque.", tag:"Premières"},
+ {titre:"L'année des îles", contenu:"Quatre pays disputent la première Coupe du monde de leur histoire : Curaçao (voisin caribéen, 150 000 habitants !), le Cap-Vert, la Jordanie et l'Ouzbékistan. La Caraïbe a DEUX représentants avec Haïti. On a nos équipes de cœur toutes trouvées.", tag:"Premières"},
  {titre:"La France a perdu son trône", contenu:"Juste avant le tournoi, la France a perdu sa place de n°1 au classement FIFA. Vexation ou motivation ? Réponse sur le terrain. Elle reste co-favorite avec l'Espagne, qui régale tout le monde avec le petit génie Lamine Yamal (18 ans).", tag:"Les favoris"}
 ];
 
 /* ============ ÉTAT ============ */
-let pseudo = null, admin = false, filtreMatchs = 'venir';
+let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null, ficheOuverte = null;
 let pronos = {}, resultats = {}, participants = {}, potinsCloud = [];
 try { pseudo = localStorage.getItem('mf_pseudo') || null; admin = localStorage.getItem('mf_admin') === '1'; } catch(e){}
 
@@ -321,14 +416,14 @@ async function chargerTout() {
   toutAfficher();
 }
 
-/* ============ AFFICHAGE ============ */
+/* ============ OUTILS ============ */
 const $ = id => document.getElementById(id);
-function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2200); }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2400); }
 const fmtHeure = d => d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Martinique'});
 const fmtJour = d => d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
+const fmtJourCourt = d => d.toLocaleDateString('fr-FR',{day:'numeric',month:'short',timeZone:'America/Martinique'});
 const joue = m => !!resultats[m.id];
 const commence = m => Date.now() >= m.dt.getTime();
-
 function points(pr, re){
   if(!pr || !re) return null;
   if(pr.score_a === re.score_a && pr.score_b === re.score_b) return 3;
@@ -336,25 +431,64 @@ function points(pr, re){
   return s(pr) === s(re) ? 1 : 0;
 }
 
-function pastilles(){
-  $('pastilles').innerHTML = PARTICIPANTS.map(p =>
-    `<button class="pastille ${p===pseudo?'actif':''}" onclick="choisirPseudo('${p}')">${p}</button>`).join('');
+/* ============ IDENTITÉ + PIN ============ */
+function blocIdentite(){
+  const bi = $('bloc-identite'), bm = $('bloc-moi');
+  if(pseudo){
+    bi.style.display = 'none'; bm.style.display = '';
+    const eq = participants[pseudo] && participants[pseudo].equipe_ecurie;
+    bm.innerHTML = `<span class="f">${eq ? (F[eq]||'⚽') : '👋'}</span>
+      <span class="txt">Tu joues en tant que <b>${pseudo}</b>${eq ? ' · écurie '+eq : ''}${admin ? ' · 🔓 commissaire' : ''}</span>
+      <button onclick="changerJoueur()">Changer</button>`;
+  } else {
+    bi.style.display = ''; bm.style.display = 'none';
+    $('pastilles').innerHTML = PARTICIPANTS.map(p =>
+      `<button class="pastille" onclick="demanderPin('${p}')">${p}</button>`).join('');
+  }
   $('bloc-admin').style.display = (pseudo===ADMIN_PSEUDO && !admin) ? '' : 'none';
   $('admin-potin').style.display = admin ? '' : 'none';
 }
-function choisirPseudo(p){
-  pseudo = p;
+function changerJoueur(){
+  pseudo = null; admin = false;
+  try{ localStorage.removeItem('mf_pseudo'); localStorage.removeItem('mf_admin'); }catch(e){}
+  toutAfficher();
+}
+function demanderPin(p){
+  pseudoEnAttente = p;
+  const existe = participants[p] && participants[p].code;
+  $('pin-zone').classList.add('visible');
+  $('pin-question').innerHTML = existe
+    ? `Salut <b>${p}</b> ! Ton code à 4 chiffres :`
+    : `Première visite, <b>${p}</b> ! Choisis ton code secret à 4 chiffres (retiens-le bien) :`;
+  $('pin-input').value=''; $('pin-input').focus();
+}
+async function validerPin(){
+  const code = $('pin-input').value.trim();
+  if(!/^\d{4}$/.test(code)){ toast('4 chiffres, pas plus pas moins'); return; }
+  const p = pseudoEnAttente;
+  const existant = participants[p] && participants[p].code;
+  if(existant){
+    if(code !== existant){ toast('Mauvais code ! Petit tricheur 👀'); return; }
+  } else {
+    try{
+      await sb('mondial_participants?on_conflict=pseudo', {method:'POST',
+        prefer:'resolution=merge-duplicates',
+        body: JSON.stringify({pseudo:p, code})});
+      participants[p] = {...(participants[p]||{}), pseudo:p, code};
+      toast('Code créé — bienvenue '+p+' ! 🎉');
+    }catch(e){ toast('Échec de la création du code'); return; }
+  }
+  pseudo = p; $('pin-zone').classList.remove('visible');
   try{ localStorage.setItem('mf_pseudo', p); }catch(e){}
-  sb('mondial_participants?on_conflict=pseudo', {method:'POST', prefer:'resolution=merge-duplicates',
-     body: JSON.stringify({pseudo:p})}).catch(()=>{});
   toutAfficher();
 }
 function activerAdmin(){
   if($('code-admin').value === ADMIN_CODE){ admin = true; try{localStorage.setItem('mf_admin','1');}catch(e){}
-    toast('Mode admin activé 🔓'); toutAfficher();
+    toast('Mode commissaire activé 🔓'); toutAfficher();
   } else toast('Mauvais code');
 }
 
+/* ============ HERO ============ */
 function hero(){
   const prochain = M.find(m => !joue(m) && !commence(m));
   const h = $('hero');
@@ -362,16 +496,22 @@ function hero(){
   h.style.display='';
   const diff = prochain.dt.getTime() - Date.now();
   const hh = Math.floor(diff/3.6e6), mm = Math.floor((diff%3.6e6)/6e4);
-  const compte = diff < 8.64e7 ? `dans ${hh}h${String(mm).padStart(2,'0')}` : fmtJour(prochain.dt);
+  const compte = diff < 8.64e7 ? `dans ${hh}h${String(mm).padStart(2,'0')}` : '';
+  const monPr = pseudo && pronos[pseudo] ? pronos[pseudo][prochain.id] : null;
+  const rappel = !pseudo ? '' : (monPr
+    ? `<div class="rappel-prono ok">✓ Ton prono est posé : ${monPr.score_a}–${monPr.score_b}</div>`
+    : `<div class="rappel-prono manque">⚠️ Tu n'as pas encore pronostiqué ce match !</div>`);
   h.innerHTML = `<div class="eti">Prochain match · Groupe ${prochain.g}</div>
     <div class="duel">
       <div class="eq"><div class="drapeau">${F[prochain.a]}</div><div class="nom">${prochain.a}</div></div>
       <div class="vs">VS</div>
       <div class="eq"><div class="drapeau">${F[prochain.b]}</div><div class="nom">${prochain.b}</div></div>
     </div>
-    <div class="quand">${fmtJour(prochain.dt)} · ${fmtHeure(prochain.dt)} <span class="compte">(${compte})</span></div>`;
+    <div class="quand">${fmtJour(prochain.dt)} · ${fmtHeure(prochain.dt)} ${compte?`<span class="compte">(${compte})</span>`:''}</div>
+    ${rappel}`;
 }
 
+/* ============ MATCHS ============ */
 function carteMatch(m, modePronos){
   const re = resultats[m.id];
   const monPr = pseudo && pronos[pseudo] ? pronos[pseudo][m.id] : null;
@@ -379,7 +519,7 @@ function carteMatch(m, modePronos){
   let score;
   if(re) score = `<span class="score">${re.score_a} – ${re.score_b}</span>`;
   else if(verrou) score = `<span class="score attente">en cours / à valider</span>`;
-  else score = `<span class="score attente">${fmtHeure(m.dt)}</span>`;
+  else score = `<span class="score attente">vs</span>`;
 
   let bas = '';
   if(modePronos && pseudo && !verrou){
@@ -389,7 +529,7 @@ function carteMatch(m, modePronos){
       <span>–</span>
       <input type="number" min="0" max="20" id="pb-${m.id}" value="${vb}" inputmode="numeric">
       <button class="btn" onclick="sauverProno(${m.id})">${monPr ? 'Modifier' : 'Valider'}</button>
-      ${monPr ? '<span class="ok">✓ enregistré</span>' : ''}
+      ${monPr ? '<span class="ok">✓</span>' : ''}
     </div>`;
   } else if(monPr){
     const pts = points(monPr, re);
@@ -413,7 +553,6 @@ function carteMatch(m, modePronos){
       <div class="eq dr"><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
     </div>${bas}</div>`;
 }
-
 function listeMatchs(){
   let liste = M;
   if(filtreMatchs==='venir') liste = M.filter(m=>!joue(m));
@@ -426,7 +565,6 @@ function listeMatchs(){
   });
   $('liste-matchs').innerHTML = html || '<p class="note">Rien à afficher ici pour le moment.</p>';
 }
-
 function listePronos(){
   if(!pseudo){ $('liste-pronos').innerHTML = '<p class="note">Choisis d\'abord qui tu es, en haut de la page 👆</p>'; return; }
   const aVenir = M.filter(m=>!commence(m));
@@ -438,7 +576,6 @@ function listePronos(){
   });
   $('liste-pronos').innerHTML = html || '<p class="note">Plus aucun match ouvert aux pronos — la phase de poules est finie !</p>';
 }
-
 async function sauverProno(id){
   const a = parseInt($(`pa-${id}`).value), b = parseInt($(`pb-${id}`).value);
   if(isNaN(a)||isNaN(b)){ toast('Mets un score complet'); return; }
@@ -449,10 +586,9 @@ async function sauverProno(id){
       prefer:'resolution=merge-duplicates',
       body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b})});
     (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b};
-    toast(`Prono ${a}–${b} enregistré ✓`); listePronos();
+    toast(`Prono ${a}–${b} enregistré ✓`); listePronos(); hero();
   }catch(e){ toast("Échec de l'enregistrement, réessaie"); }
 }
-
 async function validerScore(id){
   const a = parseInt($(`ra-${id}`).value), b = parseInt($(`rb-${id}`).value);
   if(isNaN(a)||isNaN(b)){ toast('Score incomplet'); return; }
@@ -465,6 +601,7 @@ async function validerScore(id){
   }catch(e){ toast('Échec de la validation'); }
 }
 
+/* ============ CLASSEMENT ============ */
 function classement(){
   const lignes = PARTICIPANTS.map(p=>{
     let total=0, exacts=0, bons=0, n=0;
@@ -482,9 +619,51 @@ function classement(){
       <div class="total">${l.total}</div>
     </div>`).join('');
   const total = Object.keys(resultats).length;
-  $('note-classement').textContent = total===0 ? 'Le classement démarre dès le premier score validé par Bidou.' : `${total} match${total>1?'s':''} validé${total>1?'s':''} sur 72.`;
+  $('note-classement').textContent = total===0 ? 'Le classement démarre dès le premier score validé.' : `${total} match${total>1?'s':''} validé${total>1?'s':''} sur 72.`;
 }
 
+/* ============ FICHES ÉQUIPES ============ */
+function etoiles(n){ return '★'.repeat(n)+'☆'.repeat(5-n); }
+function zoneEquipes(){
+  const z = $('zone-equipes');
+  if(ficheOuverte){
+    const e = EQUIPES[ficheOuverte];
+    const mEq = M.filter(m=>m.a===ficheOuverte||m.b===ficheOuverte);
+    const matchsHtml = mEq.map(m=>{
+      const r = resultats[m.id];
+      return `<div class="match"><div class="ligne1"><span class="grp">GR. ${m.g} · ${fmtJourCourt(m.dt)}</span><span class="heure">${r?'TERMINÉ':fmtHeure(m.dt)+' 🇲🇶'}</span></div>
+        <div class="duel">
+          <div class="eq"><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
+          ${r?`<span class="score">${r.score_a} – ${r.score_b}</span>`:'<span class="score attente">vs</span>'}
+          <div class="eq dr"><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
+        </div></div>`;
+    }).join('');
+    const dejaMonEcurie = pseudo && participants[pseudo] && participants[pseudo].equipe_ecurie === ficheOuverte;
+    z.innerHTML = `<div class="fiche">
+      <button class="retour" onclick="fermerFiche()">← Toutes les équipes</button>
+      <div class="tete"><span class="f">${F[ficheOuverte]}</span>
+        <div><h3>${ficheOuverte}</h3><div class="surnom">${e.surnom} · Groupe ${e.g}</div>
+        <div class="etoiles">${etoiles(e.niv)}</div></div></div>
+      <div class="bloc"><div class="eti">Les leaders</div><p>${e.leaders}</p></div>
+      <div class="bloc"><div class="eti">À surveiller</div><p>${e.surveiller}</p></div>
+      <div class="bloc"><div class="eti">La belle histoire</div><p>${e.histoire}</p></div>
+      <div class="ses-matchs"><div class="eti" style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:6px">Ses matchs de poules</div>${matchsHtml}</div>
+      ${pseudo ? `<button class="btn" onclick="sauverEcurie('${ficheOuverte.replace(/'/g,"\\'")}')" ${dejaMonEcurie?'disabled':''}>${dejaMonEcurie?'✓ C\'est déjà ton écurie':'🐎 J\'en fais mon écurie'}</button>` : ''}
+    </div>`;
+  } else {
+    const noms = Object.keys(EQUIPES).sort((a,b)=> EQUIPES[b].niv-EQUIPES[a].niv || a.localeCompare(b,'fr'));
+    z.innerHTML = `<div class="eq-grille">` + noms.map(n=>`
+      <div class="eq-tuile" onclick="ouvrirFiche('${n.replace(/'/g,"\\'")}')">
+        <div class="f">${F[n]}</div><div class="nom">${n}</div>
+        <div class="etoiles">${'★'.repeat(EQUIPES[n].niv)}</div>
+        <div class="grp-mini">Groupe ${EQUIPES[n].g}</div>
+      </div>`).join('') + `</div>`;
+  }
+}
+function ouvrirFiche(n){ ficheOuverte = n; zoneEquipes(); window.scrollTo({top:0}); }
+function fermerFiche(){ ficheOuverte = null; zoneEquipes(); }
+
+/* ============ ÉCURIES ============ */
 function ecuries(){
   let html = '';
   PARTICIPANTS.forEach(p=>{
@@ -499,30 +678,25 @@ function ecuries(){
     html += `<div class="ecurie">
       <div class="tete"><span class="f">${F[eq]||'🏳️'}</span>
       <span><span class="qui">${p}</span> mise sur <span class="equipe">${eq}</span></span></div>
-      <div class="etat">Bilan : ${v}V ${n}N ${d}D${proch ? ` · Prochain : ${proch.a===eq?'contre '+proch.b:'contre '+proch.a} le ${fmtJour(proch.dt)} à ${fmtHeure(proch.dt)}` : ' · Phase de poules terminée pour cette écurie'}</div>
+      <div class="etat">Bilan : ${v}V ${n}N ${d}D${proch ? ` · Prochain : contre ${proch.a===eq?proch.b:proch.a} le ${fmtJour(proch.dt)} à ${fmtHeure(proch.dt)}` : ' · Phase de poules terminée pour cette écurie'}</div>
     </div>`;
   });
   $('liste-ecuries').innerHTML = html;
-  const bloc = $('choix-ecurie');
-  if(pseudo && !(participants[pseudo] && participants[pseudo].equipe_ecurie)){
-    bloc.style.display='';
-    const equipes = Object.keys(F).sort((a,b)=>a.localeCompare(b,'fr'));
-    $('select-ecurie').innerHTML = equipes.map(e=>`<option value="${e}">${F[e]} ${e}</option>`).join('');
-  } else bloc.style.display='none';
 }
-async function sauverEcurie(){
-  const eq = $('select-ecurie').value;
+async function sauverEcurie(eq){
+  if(!pseudo){ toast('Choisis d\'abord qui tu es'); return; }
   try{
     await sb('mondial_participants?on_conflict=pseudo', {method:'POST',
       prefer:'resolution=merge-duplicates',
       body: JSON.stringify({pseudo, equipe_ecurie:eq})});
     participants[pseudo] = {...(participants[pseudo]||{}), pseudo, equipe_ecurie:eq};
-    toast(`${eq}, c'est noté ! ${F[eq]||''}`); ecuries(); classement();
+    toast(`${eq}, c'est noté ! ${F[eq]||''}`); toutAfficher();
   }catch(e){ toast('Échec, réessaie'); }
 }
 
+/* ============ POTINS ============ */
 function potins(){
-  const cloud = potinsCloud.map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div>${p.match_id?'':''}<span class="tag">Potin frais · Bidou</span></div>`).join('');
+  const cloud = potinsCloud.map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">Potin frais</span></div>`).join('');
   const base = POTINS_BASE.map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${p.tag}</span></div>`).join('');
   $('liste-potins').innerHTML = cloud + base;
 }
@@ -533,13 +707,12 @@ async function ajouterPotin(){
     await sb('mondial_potins', {method:'POST', body: JSON.stringify({titre, contenu})});
     $('potin-titre').value=''; $('potin-contenu').value='';
     toast('Potin publié 🍿'); await chargerTout();
-    document.querySelector('[data-sec=potins]').click();
   }catch(e){ toast('Échec de la publication'); }
 }
 
-function toutAfficher(){ pastilles(); hero(); listeMatchs(); listePronos(); classement(); ecuries(); potins(); }
+/* ============ ORCHESTRATION ============ */
+function toutAfficher(){ blocIdentite(); hero(); listeMatchs(); listePronos(); classement(); zoneEquipes(); ecuries(); potins(); }
 
-/* navigation */
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('nav button').forEach(x=>x.classList.remove('actif'));
   document.querySelectorAll('section').forEach(x=>x.classList.remove('actif'));
