@@ -149,9 +149,10 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 </head>
 <body>
 <div class="madras"></div>
+<div id="maj-banniere" style="display:none;background:var(--corail);color:#fff;text-align:center;padding:10px;font-weight:700;font-size:13px;cursor:pointer" onclick="location.reload()">🔄 Nouvelle version de l'app disponible — touche ici pour recharger</div>
 <header>
   <h1>Mondial <span class="or">en Famille</span></h1>
-  <div class="sous">Coupe du Monde 2026 · heures Martinique 🇲🇶</div>
+  <div class="sous">Coupe du Monde 2026 · heures Martinique 🇲🇶 · <span id="num-version"></span></div>
 </header>
 
 <div class="wrap">
@@ -250,6 +251,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
+const APP_VERSION = '7.0';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -675,6 +677,16 @@ function carteMatch(m, modePronos){
   if(re && re.buteurs) infosResultat += `<div class="monprono">⚽ <b>${re.buteurs}</b></div>`;
   if(re && re.cartons) infosResultat += `<div class="monprono">🟥 ${re.cartons}</div>`;
 
+  /* statut famille : avant le coup d'envoi on voit qui a parié (pas quoi) ; après, tout est révélé */
+  const famille = PARTICIPANTS.map(p => {
+    const pr = pronos[p] && pronos[p][m.id];
+    if(!verrou) return pr ? `${p} ✓` : `<span style="color:var(--corail)">${p} —</span>`;
+    if(!pr) return `<span style="color:var(--gris)">${p} —</span>`;
+    const t = ptsTotal(pr, re);
+    return `${p} <b>${pr.score_a}-${pr.score_b}</b>${pr.buteur?' ⚽'+pr.buteur:''}${pr.en_or?' 🌟':''}${t!==null?` <span class="pts p${t>=3?3:t>=1?1:0}">(${t>0?'+':''}${t})</span>`:''}`;
+  }).join(' · ');
+  const ligneFamille = `<div class="monprono" style="border-top:1px dashed var(--ligne);margin-top:8px;padding-top:6px">${verrou?'Les pronos de la famille : ':'Qui a parié ? '}${famille}</div>`;
+
   let bas = '';
   if(modePronos && pseudo && !verrou){
     const va = monPr ? monPr.score_a : '', vb = monPr ? monPr.score_b : '';
@@ -745,7 +757,7 @@ function carteMatch(m, modePronos){
       <div class="eq" ${eqClic(m.a)}><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
       ${score}
       <div class="eq dr" ${eqClic(m.b)}><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
-    </div>${infosResultat}${bas}${boutonAvm}</div>`;
+    </div>${infosResultat}${bas}${ligneFamille}${boutonAvm}</div>`;
 }
 function listeMatchs(){
   let liste = M;
@@ -1036,10 +1048,22 @@ document.querySelectorAll('.filtres button').forEach(b=>b.addEventListener('clic
   b.classList.add('actif'); filtreMatchs=b.dataset.f; listeMatchs();
 }));
 
+async function verifierVersion(){
+  try{
+    const r = await fetch(location.pathname + '?maj=' + Date.now(), {cache:'no-store'});
+    const t = await r.text();
+    const m = t.match(/APP_VERSION = '([^']+)'/);
+    if(m && m[1] !== APP_VERSION) $('maj-banniere').style.display = '';
+  }catch(e){}
+}
+
+$('num-version').textContent = 'v' + APP_VERSION;
 toutAfficher();
 chargerTout();
+verifierVersion();
 setInterval(hero, 60000);
 setInterval(chargerTout, 120000);
+setInterval(verifierVersion, 600000);
 </script>
 </body>
 </html>
