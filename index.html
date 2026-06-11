@@ -426,7 +426,7 @@ const JOUEURS_BASE = {
 "France":"Mbappé [A], Dembélé [A], Barcola [A], Doué [A], Cherki [A], Akliouche [A], M. Thuram [A], Mateta [A], Olise [A], Zaïre-Emery [M], Rabiot [M], Tchouaméni [M], Koné [M], Kanté [M], Saliba [D], Konaté [D], Upamecano [D], Koundé [D], Lacroix [D], Digne [D], Gusto [D], L. Hernandez [D], T. Hernandez [D], Maignan [G], Samba [G], Risser [G]",
 "Sénégal":"Mané [A], Jackson [A], I. Ndiaye [A], H. Diarra [M], I. Gueye [M], P. Gueye [M], Koulibaly [D], Niakhate [D], Diatta [D], E.M. Diouf [D], É. Mendy [G]"
 };
-const POSTES = {G:['🧤','Gardien'], D:['🛡️','Défenseur'], M:['⚙️','Milieu'], A:['🎯','Attaquant']};
+const POSTES = {G:'G', D:'DÉF', M:'MIL', A:'ATT'};
 function parseJoueur(s){
   const m = String(s).match(/^(.*?)\s*\[([GDMAgdma])\]\s*$/);
   return m ? {nom:m[1].trim(), pos:m[2].toUpperCase()} : {nom:String(s).trim(), pos:null};
@@ -436,7 +436,7 @@ function joueursPoste(equipe){
   return joueursDe(equipe).map(parseJoueur)
     .sort((x,y)=>((x.pos in ordre)?ordre[x.pos]:4)-((y.pos in ordre)?ordre[y.pos]:4));
 }
-const labelJoueur = j => j.pos ? `${POSTES[j.pos][0]} ${j.nom} · ${POSTES[j.pos][1]}` : j.nom;
+const labelJoueur = j => j.pos ? `${j.nom}\u2002·\u2002${POSTES[j.pos]}` : j.nom;
 
 /* ============ ÉTAT ============ */
 let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null, ficheOuverte = null, avmOuvert = null;
