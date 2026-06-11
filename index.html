@@ -197,6 +197,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     <h2>Classement <small>Qui est le meilleur pronostiqueur de la famille ?</small></h2>
     <div class="classement" id="tableau-classement"></div>
     <p class="note" id="note-classement"></p>
+    <p class="note">📐 Barème : score exact <b>3</b> · bon vainqueur/nul <b>1</b> · bonus buteur <b>+2</b> · bonus « les 2 équipes marquent » <b>+1</b> — maximum 6 pts par match.</p>
   </section>
 
   <section id="sec-equipes">
@@ -344,7 +345,7 @@ const EQUIPES = {
 "Maroc":{g:"C",niv:4,surnom:"Les Lions de l'Atlas",leaders:"Achraf Hakimi, le capitaine du PSG, et Brahim Díaz. Demi-finalistes historiques en 2022.",surveiller:"La défense marocaine : la plus dure à jouer du tournoi, et le soutien de TOUT le continent africain plus la diaspora.",histoire:"Premier pays africain en demi-finale d'une Coupe du monde (2022). Le Maroc n'est plus une surprise, c'est un cador. Dans le groupe du Brésil et d'Haïti : ce groupe C est un feuilleton à lui tout seul."},
 "Haïti":{g:"C",niv:1,surnom:"Les Grenadiers",leaders:"Une équipe de battants nourrie par la diaspora, avec des joueurs qui évoluent en France, en Amérique du Nord et dans la Caraïbe.",surveiller:"Tout le pays — première Coupe du monde depuis 1974 ! Et déjà du croustillant : la FIFA a obligé Haïti à modifier ses maillots jugés à « caractère politique ».",histoire:"LE petit poucet du cœur pour nous, Caribéens. Haïti traverse des années terribles, et cette qualification est un miracle sportif qui fait pleurer tout un peuple. Ils affrontent le BRÉSIL le 19 juin. David contre Goliath, version créole. On regarde en famille, et on chante."},
 "Curaçao":{g:"E",niv:1,surnom:"La Vibe Bleue",leaders:"Des joueurs formés aux Pays-Bas (héritage colonial oblige) pleins d'envie.",surveiller:"Le pays entier : environ 150 000 habitants — l'île tiendrait presque dans un stade ! Plus petit pays de l'histoire en Coupe du monde.",histoire:"Première participation de l'histoire, et un deuxième représentant caribéen avec Haïti ! Ils héritent de l'Allemagne dans leur groupe. Quoi qu'il arrive, c'est déjà la plus belle histoire de l'île. Solidarité caribéenne obligatoire."},
-"Mexique":{g:"A",niv:3,surnom:"El Tri",leaders:"La ferveur de tout un peuple à domicile, et l'expérience d'un pays qui dispute sa 18e Coupe du monde.",surveiller:"Le facteur stade Azteca : 87 000 personnes en fusion à 2 200 m d'altitude. L'ouverture du tournoi s'y est jouée.",histoire:"Pays co-hôte, le Mexique a ouvert le bal le 11 juin contre l'Afrique du Sud — comme en 2010, même affiche. La malédiction mexicaine : éliminé en 8es SEPT fois de suite. À domicile, c'est maintenant ou jamais."},
+"Mexique":{g:"A",niv:3,surnom:"El Tri",leaders:"Guillermo « Memo » Ochoa, 40 ans, 153 sélections — l'éternel gardien à la tignasse bouclée, ex-AC Ajaccio, dont le portrait orne les murs de Mexico. Javier Aguirre sur le banc, et la ferveur de tout un peuple à domicile.",surveiller:"L'HISTOIRE : Ochoa devient au match d'ouverture le premier joueur à disputer SIX Coupes du monde (2006→2026), record qu'il partage désormais avec Messi et Ronaldo. Même s'il n'est plus titulaire indiscutable, tout le stade Aztèque joue pour lui.",histoire:"Pays co-hôte, le Mexique a ouvert le bal le 11 juin contre l'Afrique du Sud au mythique stade Aztèque (87 000 places, 2 200 m d'altitude) — même affiche qu'en 2010. La malédiction mexicaine : éliminé en 8es SEPT fois de suite. À domicile, avec Memo dans l'histoire, c'est maintenant ou jamais."},
 "États-Unis":{g:"D",niv:3,surnom:"Team USA",leaders:"Christian Pulisic, le capitaine, Timothy Weah et Folarin Balogun (deux noms bien connus de la Ligue 1).",surveiller:"La pression du pays hôte : tout le sport US les regarde, et le foot veut conquérir l'Amérique.",histoire:"Co-hôtes et morts de faim de réussir LEUR Mondial. Une élimination précoce serait un fiasco national. Groupe piégeux avec la Turquie et l'Australie."},
 "Canada":{g:"B",niv:2,surnom:"Les Rouges",leaders:"Alphonso Davies, la fusée du Bayern, et Jonathan David, le buteur passé par la Ligue 1.",surveiller:"Davies : un des joueurs les plus rapides du monde, à domicile.",histoire:"Co-hôte, jamais passé un premier tour. Avec Davies et David, cette génération canadienne est la meilleure de l'histoire du pays. Le moment ou jamais."},
 "Croatie":{g:"L",niv:3,surnom:"Les Vatreni",leaders:"Luka Modrić, 40 ans, l'éternel magicien, pour une dernière (encore une légende en tournée d'adieu !).",surveiller:"Modrić : chaque touche de balle est une leçon de football.",histoire:"Finaliste 2018, 3e en 2022 : la petite Croatie (moins de 4 millions d'habitants) surperforme TOUJOURS. Et tant que Modrić est là, personne ne veut les croiser. Dans le groupe de l'Angleterre : choc immédiat le 17 juin."},
@@ -422,6 +423,7 @@ const JOUEURS_BASE = {
 let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null, ficheOuverte = null, avmOuvert = null;
 let avmCloud = {};
 let joueursCloud = {};
+let fichesCloud = {};
 let pronos = {}, resultats = {}, participants = {}, potinsCloud = [];
 try { pseudo = localStorage.getItem('mf_pseudo') || null; admin = localStorage.getItem('mf_admin') === '1'; } catch(e){}
 
@@ -439,13 +441,14 @@ async function sb(path, opts = {}) {
 }
 async function chargerTout() {
   try {
-    const [p, r, pa, po, av, jo] = await Promise.all([
+    const [p, r, pa, po, av, jo, fi] = await Promise.all([
       sb('mondial_pronostics?select=*'),
       sb('mondial_resultats?select=*'),
       sb('mondial_participants?select=*'),
       sb('mondial_potins?select=*&order=created_at.desc'),
       sb('mondial_avantmatch?select=*').catch(()=>[]),
-      sb('mondial_joueurs?select=*').catch(()=>[])
+      sb('mondial_joueurs?select=*').catch(()=>[]),
+      sb('mondial_fiches?select=*').catch(()=>[])
     ]);
     pronos = {}; (p||[]).forEach(x => { (pronos[x.pseudo] = pronos[x.pseudo] || {})[x.match_id] = x; });
     resultats = {}; (r||[]).forEach(x => resultats[x.match_id] = x);
@@ -453,6 +456,7 @@ async function chargerTout() {
     potinsCloud = po || [];
     avmCloud = {}; (av||[]).forEach(x => avmCloud[x.match_id] = x);
     joueursCloud = {}; (jo||[]).forEach(x => joueursCloud[x.equipe] = x.joueurs);
+    fichesCloud = {}; (fi||[]).forEach(x => fichesCloud[x.equipe] = x);
   } catch(e) {
     console.error(e);
     toast("Connexion à la base impossible — réessaie dans un instant");
@@ -786,11 +790,16 @@ function classement(){
 }
 
 /* ============ FICHES ÉQUIPES ============ */
+function eqData(n){
+  const base = EQUIPES[n] || {};
+  const cloud = fichesCloud[n] || {};
+  return {...base, ...Object.fromEntries(Object.entries(cloud).filter(([k,v])=>v!==null&&v!==''&&k!=='equipe'))};
+}
 function etoiles(n){ return '★'.repeat(n)+'☆'.repeat(5-n); }
 function zoneEquipes(){
   const z = $('zone-equipes');
   if(ficheOuverte){
-    const e = EQUIPES[ficheOuverte];
+    const e = eqData(ficheOuverte);
     const mEq = M.filter(m=>m.a===ficheOuverte||m.b===ficheOuverte);
     const matchsHtml = mEq.map(m=>{
       const r = resultats[m.id];
@@ -801,7 +810,13 @@ function zoneEquipes(){
           <div class="eq dr"><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
         </div></div>`;
     }).join('');
-    const dejaMonEcurie = pseudo && participants[pseudo] && participants[pseudo].equipe_ecurie === ficheOuverte;
+    const monEcurie = pseudo && participants[pseudo] && participants[pseudo].equipe_ecurie;
+    let boutonEcurie = '';
+    if(pseudo){
+      if(monEcurie === ficheOuverte) boutonEcurie = `<button class="btn" disabled>✓ C'est ton écurie</button>`;
+      else if(monEcurie) boutonEcurie = `<button class="btn" disabled>🔒 Ton écurie est déjà choisie : ${monEcurie}</button>`;
+      else boutonEcurie = `<button class="btn" onclick="sauverEcurie('${ficheOuverte.replace(/'/g,"\\'")}')">🐎 J'en fais mon écurie</button>`;
+    }
     z.innerHTML = `<div class="fiche">
       <button class="retour" onclick="fermerFiche()">← Toutes les équipes</button>
       <div class="tete"><span class="f">${F[ficheOuverte]}</span>
@@ -811,15 +826,15 @@ function zoneEquipes(){
       <div class="bloc"><div class="eti">À surveiller</div><p>${e.surveiller}</p></div>
       <div class="bloc"><div class="eti">La belle histoire</div><p>${e.histoire}</p></div>
       <div class="ses-matchs"><div class="eti" style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:6px">Ses matchs de poules</div>${matchsHtml}</div>
-      ${pseudo ? `<button class="btn" onclick="sauverEcurie('${ficheOuverte.replace(/'/g,"\\'")}')" ${dejaMonEcurie?'disabled':''}>${dejaMonEcurie?'✓ C\'est déjà ton écurie':'🐎 J\'en fais mon écurie'}</button>` : ''}
+      ${boutonEcurie}
     </div>`;
   } else {
-    const noms = Object.keys(EQUIPES).sort((a,b)=> EQUIPES[b].niv-EQUIPES[a].niv || a.localeCompare(b,'fr'));
+    const noms = Object.keys(EQUIPES).sort((a,b)=> eqData(b).niv-eqData(a).niv || a.localeCompare(b,'fr'));
     z.innerHTML = `<div class="eq-grille">` + noms.map(n=>`
       <div class="eq-tuile" onclick="ouvrirFiche('${n.replace(/'/g,"\\'")}')">
         <div class="f">${F[n]}</div><div class="nom">${n}</div>
-        <div class="etoiles">${'★'.repeat(EQUIPES[n].niv)}</div>
-        <div class="grp-mini">Groupe ${EQUIPES[n].g}</div>
+        <div class="etoiles">${'★'.repeat(eqData(n).niv)}</div>
+        <div class="grp-mini">Groupe ${eqData(n).g}</div>
       </div>`).join('') + `</div>`;
   }
 }
@@ -848,6 +863,11 @@ function ecuries(){
 }
 async function sauverEcurie(eq){
   if(!pseudo){ toast('Choisis d\'abord qui tu es'); return; }
+  const actuelle = participants[pseudo] && participants[pseudo].equipe_ecurie;
+  if(actuelle && actuelle !== eq){
+    toast(`🔒 Trop tard ! Ton écurie est ${actuelle} — on ne change pas de cheval en pleine course`);
+    return;
+  }
   try{
     await sb('mondial_participants?on_conflict=pseudo', {method:'POST',
       prefer:'resolution=merge-duplicates',
@@ -906,6 +926,20 @@ async function appliquerMajJour(){
         ok++;
       }catch(e){ ko++; }
     }
+    for(const po of (data.potins||[])){
+      try{
+        await sb('mondial_potins', {method:'POST',
+          body: JSON.stringify({titre:po.titre, contenu:po.contenu})});
+        ok++;
+      }catch(e){ ko++; }
+    }
+    for(const f of (data.fiches||[])){
+      try{
+        await sb('mondial_fiches?on_conflict=equipe', {method:'POST', prefer:'resolution=merge-duplicates',
+          body: JSON.stringify({equipe:f.equipe, niv:f.niv||null, surnom:f.surnom||null, leaders:f.leaders||null, surveiller:f.surveiller||null, histoire:f.histoire||null})});
+        ok++;
+      }catch(e){ ko++; }
+    }
     $('maj-jour').value='';
     toast(`Mise à jour appliquée : ${ok} élément${ok>1?'s':''}${ko?` · ${ko} échec(s)`:''} ✓`);
     await chargerTout();
@@ -916,6 +950,7 @@ document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()
   document.querySelectorAll('nav button').forEach(x=>x.classList.remove('actif'));
   document.querySelectorAll('section').forEach(x=>x.classList.remove('actif'));
   b.classList.add('actif'); $('sec-'+b.dataset.sec).classList.add('actif');
+  ficheOuverte = null; avmOuvert = null; renduAvm(); zoneEquipes();
   window.scrollTo({top:0});
 }));
 document.querySelectorAll('.filtres button').forEach(b=>b.addEventListener('click',()=>{
