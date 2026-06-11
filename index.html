@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mondial en Famille · Coupe du Monde 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Public+Sans:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nuit:#0E1B2C; --panneau:#16263B; --panneau2:#1D3049;
+  --or:#F5B43C; --corail:#FF6B5E; --lagon:#2EC4A9;
+  --creme:#F4EFE6; --gris:#8FA3B8; --ligne:#26405E;
+  --madras:repeating-linear-gradient(90deg,#F5B43C 0 14px,#FF6B5E 14px 22px,#0E1B2C 22px 30px,#2EC4A9 30px 38px,#0E1B2C 38px 44px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--nuit);color:var(--creme);font-family:'Public Sans',system-ui,sans-serif;min-height:100vh;padding-bottom:84px}
+.madras{height:8px;background:var(--madras)}
+header{padding:18px 16px 10px;text-align:center}
+header h1{font-family:'Archivo Black',sans-serif;font-size:clamp(22px,6vw,34px);letter-spacing:.5px;line-height:1.05;text-transform:uppercase}
+header h1 .or{color:var(--or)}
+header .sous{color:var(--gris);font-size:13px;margin-top:4px}
+.wrap{max-width:680px;margin:0 auto;padding:0 14px}
+/* hero prochain match */
+.hero{background:var(--panneau);border:1px solid var(--ligne);border-radius:16px;padding:16px;margin:14px 0;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:var(--madras)}
+.hero .eti{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:10px}
+.hero .duel{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hero .eq{flex:1;text-align:center}
+.hero .eq .drapeau{font-size:38px;line-height:1}
+.hero .eq .nom{font-weight:700;font-size:15px;margin-top:4px}
+.hero .vs{font-family:'Archivo Black',sans-serif;color:var(--gris);font-size:14px}
+.hero .quand{text-align:center;margin-top:12px;font-family:'Space Grotesk',monospace;color:var(--creme)}
+.hero .quand .compte{color:var(--corail);font-weight:700}
+/* identité */
+.identite{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin:14px 0}
+.identite label{display:block;font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.pastilles{display:flex;gap:8px;flex-wrap:wrap}
+.pastille{flex:1;min-width:90px;padding:12px 8px;border-radius:10px;border:1px solid var(--ligne);background:var(--panneau2);color:var(--creme);font-weight:700;font-size:15px;cursor:pointer;text-align:center}
+.pastille.actif{background:var(--or);color:var(--nuit);border-color:var(--or)}
+/* onglets bas */
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--panneau);border-top:1px solid var(--ligne);display:flex;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:none;color:var(--gris);padding:10px 2px 8px;font-family:'Public Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer}
+nav button .ico{display:block;font-size:20px;margin-bottom:2px}
+nav button.actif{color:var(--or)}
+/* sections */
+section{display:none;padding-top:4px}
+section.actif{display:block}
+h2{font-family:'Archivo Black',sans-serif;font-size:18px;text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px}
+h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transform:none;letter-spacing:0;font-weight:400;display:block;margin-top:2px}
+/* cartes match */
+.jour{font-family:'Space Grotesk',monospace;color:var(--or);font-size:13px;font-weight:700;margin:16px 0 8px;text-transform:capitalize;border-bottom:1px solid var(--ligne);padding-bottom:4px}
+.match{background:var(--panneau);border:1px solid var(--ligne);border-radius:12px;padding:12px;margin-bottom:8px}
+.match .ligne1{display:flex;align-items:center;gap:8px}
+.match .grp{font-size:10px;background:var(--panneau2);color:var(--gris);border-radius:4px;padding:2px 6px;font-weight:700;white-space:nowrap}
+.match .heure{font-family:'Space Grotesk',monospace;font-size:13px;color:var(--lagon);font-weight:700;margin-left:auto;white-space:nowrap}
+.match .duel{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:6px}
+.match .eq{display:flex;align-items:center;gap:7px;flex:1;min-width:0}
+.match .eq.dr{flex-direction:row-reverse;text-align:right}
+.match .eq .nom{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.match .eq .f{font-size:22px}
+.match .score{font-family:'Space Grotesk',monospace;font-size:18px;font-weight:700;color:var(--or);white-space:nowrap;padding:0 6px}
+.match .score.attente{color:var(--gris);font-size:13px}
+.match .monprono{margin-top:8px;font-size:12px;color:var(--gris)}
+.match .monprono b{color:var(--creme)}
+.match .pts{font-weight:700}
+.pts.p3{color:var(--lagon)} .pts.p1{color:var(--or)} .pts.p0{color:var(--corail)}
+/* prono inputs */
+.prono-saisie{display:flex;align-items:center;gap:8px;margin-top:10px}
+.prono-saisie input{width:52px;padding:8px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Space Grotesk',monospace;font-size:16px;font-weight:700;text-align:center}
+.prono-saisie input:focus{outline:2px solid var(--or);border-color:var(--or)}
+.btn{padding:9px 14px;border-radius:8px;border:none;background:var(--or);color:var(--nuit);font-weight:700;font-family:'Public Sans';font-size:13px;cursor:pointer}
+.btn.corail{background:var(--corail);color:#fff}
+.btn.fantome{background:transparent;border:1px solid var(--ligne);color:var(--gris)}
+.btn:disabled{opacity:.45;cursor:default}
+.ok{color:var(--lagon);font-size:12px;font-weight:700}
+/* classement */
+.classement{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;overflow:hidden}
+.classement .rang{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--ligne)}
+.classement .rang:last-child{border-bottom:none}
+.classement .pos{font-family:'Archivo Black';font-size:20px;width:30px;text-align:center;color:var(--gris)}
+.classement .rang:first-child .pos{color:var(--or)}
+.classement .qui{font-weight:700;font-size:16px;flex:1}
+.classement .detail{font-size:11px;color:var(--gris)}
+.classement .total{font-family:'Space Grotesk',monospace;font-size:22px;font-weight:700;color:var(--or)}
+/* écuries */
+.ecurie{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:14px;margin-bottom:10px}
+.ecurie .tete{display:flex;align-items:center;gap:10px}
+.ecurie .tete .f{font-size:30px}
+.ecurie .tete .qui{font-weight:700}
+.ecurie .tete .equipe{color:var(--or);font-weight:700}
+.ecurie .etat{font-size:12px;color:var(--gris);margin-top:6px}
+select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Public Sans';font-size:14px;margin-top:8px}
+/* potins */
+.potin{background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--corail);border-radius:12px;padding:14px;margin-bottom:10px}
+.potin .titre{font-weight:700;margin-bottom:4px}
+.potin .texte{font-size:14px;color:#cfd9e4;line-height:1.45}
+.potin .tag{display:inline-block;margin-top:8px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--or);font-weight:700}
+textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Public Sans';font-size:14px;min-height:70px;margin-top:8px}
+input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Public Sans';font-size:14px;margin-top:8px}
+/* admin */
+.admin-bloc{border:1px dashed var(--or);border-radius:12px;padding:12px;margin:12px 0;background:rgba(245,180,60,.05)}
+.admin-bloc .eti{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);font-weight:700}
+.note{font-size:12px;color:var(--gris);margin:8px 0;line-height:1.4}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--lagon);color:var(--nuit);font-weight:700;padding:10px 18px;border-radius:24px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:99}
+.toast.visible{opacity:1}
+.filtres{display:flex;gap:6px;margin:10px 0}
+.filtres button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--ligne);background:var(--panneau2);color:var(--gris);font-weight:600;font-size:12px;cursor:pointer}
+.filtres button.actif{background:var(--or);color:var(--nuit);border-color:var(--or)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="madras"></div>
+<header>
+  <h1>Mondial <span class="or">en Famille</span></h1>
+  <div class="sous">Coupe du Monde 2026 · heures Martinique 🇲🇶</div>
+</header>
+
+<div class="wrap">
+  <div class="identite" id="bloc-identite">
+    <label>Qui regarde ?</label>
+    <div class="pastilles" id="pastilles"></div>
+  </div>
+  <div class="hero" id="hero" style="display:none"></div>
+
+  <section id="sec-matchs" class="actif">
+    <h2>La grille <small>72 matchs de poules, validés par Bidou au fil du tournoi</small></h2>
+    <div class="filtres">
+      <button data-f="venir" class="actif">À venir</button>
+      <button data-f="joues">Joués</button>
+      <button data-f="tous">Tous</button>
+    </div>
+    <div id="liste-matchs"></div>
+  </section>
+
+  <section id="sec-pronos">
+    <h2>Mes pronostics <small>Score exact = 3 pts · Bon vainqueur ou nul = 1 pt · Verrouillé au coup d'envoi</small></h2>
+    <div id="liste-pronos"></div>
+  </section>
+
+  <section id="sec-classement">
+    <h2>Classement <small>Qui est le meilleur pronostiqueur de la famille ?</small></h2>
+    <div class="classement" id="tableau-classement"></div>
+    <p class="note" id="note-classement"></p>
+  </section>
+
+  <section id="sec-ecuries">
+    <h2>Les écuries <small>Chacun son équipe de cœur — on la suit jusqu'au bout (ou pas)</small></h2>
+    <div id="liste-ecuries"></div>
+    <div class="ecurie" id="choix-ecurie" style="display:none">
+      <b>Choisis ton écurie</b>
+      <select id="select-ecurie"></select>
+      <button class="btn" style="margin-top:10px" onclick="sauverEcurie()">C'est mon équipe !</button>
+    </div>
+  </section>
+
+  <section id="sec-potins">
+    <h2>Les potins <small>Ce qu'il faut savoir pour briller devant la télé</small></h2>
+    <div id="liste-potins"></div>
+    <div class="admin-bloc" id="admin-potin" style="display:none">
+      <div class="eti">Ajouter un potin (admin)</div>
+      <input type="text" id="potin-titre" placeholder="Titre du potin">
+      <textarea id="potin-contenu" placeholder="Le potin..."></textarea>
+      <button class="btn corail" style="margin-top:8px" onclick="ajouterPotin()">Publier</button>
+    </div>
+  </section>
+
+  <div class="admin-bloc" id="bloc-admin" style="display:none">
+    <div class="eti">Mode admin</div>
+    <p class="note">Réservé au commissaire du tournoi. Permet de valider les scores et publier des potins.</p>
+    <input type="password" id="code-admin" placeholder="Code admin">
+    <button class="btn" style="margin-top:8px" onclick="activerAdmin()">Déverrouiller</button>
+  </div>
+</div>
+
+<nav>
+  <button data-sec="matchs" class="actif"><span class="ico">📅</span>Matchs</button>
+  <button data-sec="pronos"><span class="ico">🎲</span>Pronos</button>
+  <button data-sec="classement"><span class="ico">🏆</span>Classement</button>
+  <button data-sec="ecuries"><span class="ico">🐎</span>Écuries</button>
+  <button data-sec="potins"><span class="ico">🍿</span>Potins</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ CONFIGURATION (à modifier ici) ============ */
+const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
+const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
+const PARTICIPANTS = ['Bidou','Ginou','Véro'];
+const ADMIN_PSEUDO = 'Bidou';
+
+/* ============ ÉQUIPES & DRAPEAUX ============ */
+const F = {"Mexique":"🇲🇽","Afrique du Sud":"🇿🇦","Corée du Sud":"🇰🇷","Tchéquie":"🇨🇿","Canada":"🇨🇦","Bosnie":"🇧🇦","Qatar":"🇶🇦","Suisse":"🇨🇭","Brésil":"🇧🇷","Maroc":"🇲🇦","Haïti":"🇭🇹","Écosse":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","États-Unis":"🇺🇸","Paraguay":"🇵🇾","Australie":"🇦🇺","Turquie":"🇹🇷","Allemagne":"🇩🇪","Curaçao":"🇨🇼","Côte d'Ivoire":"🇨🇮","Équateur":"🇪🇨","Pays-Bas":"🇳🇱","Japon":"🇯🇵","Suède":"🇸🇪","Tunisie":"🇹🇳","Belgique":"🇧🇪","Égypte":"🇪🇬","Iran":"🇮🇷","Nouvelle-Zélande":"🇳🇿","Espagne":"🇪🇸","Cap-Vert":"🇨🇻","Arabie Saoudite":"🇸🇦","Uruguay":"🇺🇾","France":"🇫🇷","Sénégal":"🇸🇳","Irak":"🇮🇶","Norvège":"🇳🇴","Argentine":"🇦🇷","Algérie":"🇩🇿","Autriche":"🇦🇹","Jordanie":"🇯🇴","Portugal":"🇵🇹","RD Congo":"🇨🇩","Ouzbékistan":"🇺🇿","Colombie":"🇨🇴","Angleterre":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croatie":"🇭🇷","Ghana":"🇬🇭","Panama":"🇵🇦"};
+
+/* ============ LES 72 MATCHS — heure Martinique (UTC-4) ============ */
+/* Source : calendrier officiel (footmercato), horaires France convertis -6h */
+const M = [
+ [1,"A","Mexique","Afrique du Sud","2026-06-11T15:00:00-04:00"],
+ [2,"A","Corée du Sud","Tchéquie","2026-06-11T22:00:00-04:00"],
+ [7,"B","Canada","Bosnie","2026-06-12T15:00:00-04:00"],
+ [19,"D","États-Unis","Paraguay","2026-06-12T21:00:00-04:00"],
+ [8,"B","Qatar","Suisse","2026-06-13T15:00:00-04:00"],
+ [13,"C","Brésil","Maroc","2026-06-13T18:00:00-04:00"],
+ [14,"C","Haïti","Écosse","2026-06-13T21:00:00-04:00"],
+ [20,"D","Australie","Turquie","2026-06-14T00:00:00-04:00"],
+ [25,"E","Allemagne","Curaçao","2026-06-14T13:00:00-04:00"],
+ [31,"F","Pays-Bas","Japon","2026-06-14T16:00:00-04:00"],
+ [26,"E","Côte d'Ivoire","Équateur","2026-06-14T19:00:00-04:00"],
+ [32,"F","Suède","Tunisie","2026-06-14T22:00:00-04:00"],
+ [43,"H","Espagne","Cap-Vert","2026-06-15T12:00:00-04:00"],
+ [37,"G","Belgique","Égypte","2026-06-15T15:00:00-04:00"],
+ [44,"H","Arabie Saoudite","Uruguay","2026-06-15T18:00:00-04:00"],
+ [38,"G","Iran","Nouvelle-Zélande","2026-06-15T21:00:00-04:00"],
+ [49,"I","France","Sénégal","2026-06-16T15:00:00-04:00"],
+ [50,"I","Irak","Norvège","2026-06-16T18:00:00-04:00"],
+ [55,"J","Argentine","Algérie","2026-06-16T21:00:00-04:00"],
+ [56,"J","Autriche","Jordanie","2026-06-17T00:00:00-04:00"],
+ [61,"K","Portugal","RD Congo","2026-06-17T13:00:00-04:00"],
+ [67,"L","Angleterre","Croatie","2026-06-17T16:00:00-04:00"],
+ [68,"L","Ghana","Panama","2026-06-17T19:00:00-04:00"],
+ [62,"K","Ouzbékistan","Colombie","2026-06-17T22:00:00-04:00"],
+ [3,"A","Tchéquie","Afrique du Sud","2026-06-18T12:00:00-04:00"],
+ [9,"B","Suisse","Bosnie","2026-06-18T15:00:00-04:00"],
+ [10,"B","Canada","Qatar","2026-06-18T18:00:00-04:00"],
+ [4,"A","Mexique","Corée du Sud","2026-06-18T21:00:00-04:00"],
+ [21,"D","États-Unis","Australie","2026-06-19T15:00:00-04:00"],
+ [15,"C","Écosse","Maroc","2026-06-19T18:00:00-04:00"],
+ [16,"C","Brésil","Haïti","2026-06-19T20:30:00-04:00"],
+ [22,"D","Turquie","Paraguay","2026-06-19T23:00:00-04:00"],
+ [33,"F","Pays-Bas","Suède","2026-06-20T13:00:00-04:00"],
+ [27,"E","Allemagne","Côte d'Ivoire","2026-06-20T16:00:00-04:00"],
+ [28,"E","Équateur","Curaçao","2026-06-20T20:00:00-04:00"],
+ [34,"F","Tunisie","Japon","2026-06-21T00:00:00-04:00"],
+ [45,"H","Espagne","Arabie Saoudite","2026-06-21T12:00:00-04:00"],
+ [39,"G","Belgique","Iran","2026-06-21T15:00:00-04:00"],
+ [46,"H","Uruguay","Cap-Vert","2026-06-21T18:00:00-04:00"],
+ [40,"G","Nouvelle-Zélande","Égypte","2026-06-21T21:00:00-04:00"],
+ [57,"J","Argentine","Autriche","2026-06-22T13:00:00-04:00"],
+ [51,"I","France","Irak","2026-06-22T17:00:00-04:00"],
+ [52,"I","Norvège","Sénégal","2026-06-22T20:00:00-04:00"],
+ [58,"J","Jordanie","Algérie","2026-06-22T23:00:00-04:00"],
+ [63,"K","Portugal","Ouzbékistan","2026-06-23T13:00:00-04:00"],
+ [69,"L","Angleterre","Ghana","2026-06-23T16:00:00-04:00"],
+ [70,"L","Panama","Croatie","2026-06-23T19:00:00-04:00"],
+ [64,"K","Colombie","RD Congo","2026-06-23T22:00:00-04:00"],
+ [11,"B","Bosnie","Qatar","2026-06-24T15:00:00-04:00"],
+ [12,"B","Suisse","Canada","2026-06-24T15:00:00-04:00"],
+ [17,"C","Maroc","Haïti","2026-06-24T18:00:00-04:00"],
+ [18,"C","Écosse","Brésil","2026-06-24T18:00:00-04:00"],
+ [5,"A","Tchéquie","Mexique","2026-06-24T21:00:00-04:00"],
+ [6,"A","Afrique du Sud","Corée du Sud","2026-06-24T21:00:00-04:00"],
+ [29,"E","Curaçao","Côte d'Ivoire","2026-06-25T16:00:00-04:00"],
+ [30,"E","Équateur","Allemagne","2026-06-25T16:00:00-04:00"],
+ [35,"F","Japon","Suède","2026-06-25T19:00:00-04:00"],
+ [36,"F","Tunisie","Pays-Bas","2026-06-25T19:00:00-04:00"],
+ [23,"D","Turquie","États-Unis","2026-06-25T22:00:00-04:00"],
+ [24,"D","Paraguay","Australie","2026-06-25T22:00:00-04:00"],
+ [53,"I","Sénégal","Irak","2026-06-26T15:00:00-04:00"],
+ [54,"I","Norvège","France","2026-06-26T15:00:00-04:00"],
+ [47,"H","Uruguay","Espagne","2026-06-26T20:00:00-04:00"],
+ [48,"H","Cap-Vert","Arabie Saoudite","2026-06-26T20:00:00-04:00"],
+ [41,"G","Égypte","Iran","2026-06-26T23:00:00-04:00"],
+ [42,"G","Nouvelle-Zélande","Belgique","2026-06-26T23:00:00-04:00"],
+ [71,"L","Panama","Angleterre","2026-06-27T17:00:00-04:00"],
+ [72,"L","Croatie","Ghana","2026-06-27T17:00:00-04:00"],
+ [65,"K","Colombie","Portugal","2026-06-27T19:30:00-04:00"],
+ [66,"K","RD Congo","Ouzbékistan","2026-06-27T19:30:00-04:00"],
+ [59,"J","Jordanie","Argentine","2026-06-27T22:00:00-04:00"],
+ [60,"J","Algérie","Autriche","2026-06-27T22:00:00-04:00"]
+].map(([id,g,a,b,dt])=>({id,g,a,b,dt:new Date(dt)}));
+M.sort((x,y)=>x.dt-y.dt);
+
+/* ============ POTINS DE DÉPART ============ */
+const POTINS_BASE = [
+ {titre:"Haïti est au Mondial 🇭🇹", contenu:"Première Coupe du monde depuis 1974 pour nos voisins ! Et déjà du croustillant : la FIFA leur a demandé de modifier leurs maillots, jugés trop « politiques ». Ils affrontent le Brésil de Neymar dans le groupe C — David contre Goliath version Caraïbe.", tag:"Groupe C"},
+ {titre:"Les larmes de Neymar", contenu:"À l'annonce de la liste du Brésil, Neymar a craqué en larmes devant les caméras. À 34 ans, après des années de blessures, c'est sa dernière chance de soulever la Coupe que tout le Brésil attend depuis 2002. Véro, prépare les mouchoirs.", tag:"Brésil"},
+ {titre:"France–Sénégal, le choc d'entrée", contenu:"Les Bleus démarrent le 16 juin à 15h (heure de chez nous) contre le Sénégal — un match classé à haut risque, entre deux équipes qui se connaissent par cœur. La moitié des joueurs sont coéquipiers ou copains en club. Ambiance famille... qui se déchire.", tag:"16 juin · Groupe I"},
+ {titre:"L'Italie n'est PAS là", contenu:"Incroyable mais vrai : l'Italie, quadruple championne du monde, rate sa TROISIÈME Coupe du monde d'affilée. Toute une génération d'Italiens n'a jamais vu la Squadra Azzurra en Coupe du monde.", tag:"Scandale"},
+ {titre:"La Norvège a apporté 300 kg de poisson", contenu:"Véridique : la délégation norvégienne a débarqué avec 300 kg de poisson et 116 kg de fromage dans ses valises pour nourrir l'équipe. Et surtout, elle débarque avec Haaland, le buteur-cyborg, que la France affronte le 26 juin. Premier Mondial de la Norvège depuis 1998.", tag:"Norvège"},
+ {titre:"La dernière danse de Messi", contenu:"À 39 ans, Messi remet son titre en jeu avec l'Argentine, championne en titre. Tout le monde sait que c'est la dernière. Chaque match de l'Argentine peut être le dernier match en Coupe du monde du plus grand joueur de l'histoire.", tag:"Argentine"},
+ {titre:"Curaçao et Cap-Vert, les petits nouveaux", contenu:"Quatre pays disputent la première Coupe du monde de leur histoire : Curaçao (voisin caribéen !), le Cap-Vert, la Jordanie et l'Ouzbékistan. Curaçao, c'est environ 150 000 habitants — l'île entière tiendrait dans un stade ou presque.", tag:"Premières"},
+ {titre:"La France a perdu son trône", contenu:"Juste avant le tournoi, la France a perdu sa place de n°1 au classement FIFA. Vexation ou motivation ? Réponse sur le terrain. Elle reste co-favorite avec l'Espagne, qui régale tout le monde avec le petit génie Lamine Yamal (18 ans).", tag:"Les favoris"}
+];
+
+/* ============ ÉTAT ============ */
+let pseudo = null, admin = false, filtreMatchs = 'venir';
+let pronos = {}, resultats = {}, participants = {}, potinsCloud = [];
+try { pseudo = localStorage.getItem('mf_pseudo') || null; admin = localStorage.getItem('mf_admin') === '1'; } catch(e){}
+
+/* ============ SUPABASE REST ============ */
+async function sb(path, opts = {}) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json', 'Prefer': opts.prefer || 'return=representation',
+      ...(opts.headers||{}) }
+  });
+  if (!r.ok) throw new Error(`Supabase ${r.status}`);
+  const t = await r.text();
+  return t ? JSON.parse(t) : null;
+}
+async function chargerTout() {
+  try {
+    const [p, r, pa, po] = await Promise.all([
+      sb('mondial_pronostics?select=*'),
+      sb('mondial_resultats?select=*'),
+      sb('mondial_participants?select=*'),
+      sb('mondial_potins?select=*&order=created_at.desc')
+    ]);
+    pronos = {}; (p||[]).forEach(x => { (pronos[x.pseudo] = pronos[x.pseudo] || {})[x.match_id] = x; });
+    resultats = {}; (r||[]).forEach(x => resultats[x.match_id] = x);
+    participants = {}; (pa||[]).forEach(x => participants[x.pseudo] = x);
+    potinsCloud = po || [];
+  } catch(e) {
+    console.error(e);
+    toast("Connexion à la base impossible — réessaie dans un instant");
+  }
+  toutAfficher();
+}
+
+/* ============ AFFICHAGE ============ */
+const $ = id => document.getElementById(id);
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2200); }
+const fmtHeure = d => d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Martinique'});
+const fmtJour = d => d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
+const joue = m => !!resultats[m.id];
+const commence = m => Date.now() >= m.dt.getTime();
+
+function points(pr, re){
+  if(!pr || !re) return null;
+  if(pr.score_a === re.score_a && pr.score_b === re.score_b) return 3;
+  const s = x => Math.sign(x.score_a - x.score_b);
+  return s(pr) === s(re) ? 1 : 0;
+}
+
+function pastilles(){
+  $('pastilles').innerHTML = PARTICIPANTS.map(p =>
+    `<button class="pastille ${p===pseudo?'actif':''}" onclick="choisirPseudo('${p}')">${p}</button>`).join('');
+  $('bloc-admin').style.display = (pseudo===ADMIN_PSEUDO && !admin) ? '' : 'none';
+  $('admin-potin').style.display = admin ? '' : 'none';
+}
+function choisirPseudo(p){
+  pseudo = p;
+  try{ localStorage.setItem('mf_pseudo', p); }catch(e){}
+  sb('mondial_participants?on_conflict=pseudo', {method:'POST', prefer:'resolution=merge-duplicates',
+     body: JSON.stringify({pseudo:p})}).catch(()=>{});
+  toutAfficher();
+}
+function activerAdmin(){
+  if($('code-admin').value === ADMIN_CODE){ admin = true; try{localStorage.setItem('mf_admin','1');}catch(e){}
+    toast('Mode admin activé 🔓'); toutAfficher();
+  } else toast('Mauvais code');
+}
+
+function hero(){
+  const prochain = M.find(m => !joue(m) && !commence(m));
+  const h = $('hero');
+  if(!prochain){ h.style.display='none'; return; }
+  h.style.display='';
+  const diff = prochain.dt.getTime() - Date.now();
+  const hh = Math.floor(diff/3.6e6), mm = Math.floor((diff%3.6e6)/6e4);
+  const compte = diff < 8.64e7 ? `dans ${hh}h${String(mm).padStart(2,'0')}` : fmtJour(prochain.dt);
+  h.innerHTML = `<div class="eti">Prochain match · Groupe ${prochain.g}</div>
+    <div class="duel">
+      <div class="eq"><div class="drapeau">${F[prochain.a]}</div><div class="nom">${prochain.a}</div></div>
+      <div class="vs">VS</div>
+      <div class="eq"><div class="drapeau">${F[prochain.b]}</div><div class="nom">${prochain.b}</div></div>
+    </div>
+    <div class="quand">${fmtJour(prochain.dt)} · ${fmtHeure(prochain.dt)} <span class="compte">(${compte})</span></div>`;
+}
+
+function carteMatch(m, modePronos){
+  const re = resultats[m.id];
+  const monPr = pseudo && pronos[pseudo] ? pronos[pseudo][m.id] : null;
+  const verrou = commence(m);
+  let score;
+  if(re) score = `<span class="score">${re.score_a} – ${re.score_b}</span>`;
+  else if(verrou) score = `<span class="score attente">en cours / à valider</span>`;
+  else score = `<span class="score attente">${fmtHeure(m.dt)}</span>`;
+
+  let bas = '';
+  if(modePronos && pseudo && !verrou){
+    const va = monPr ? monPr.score_a : '', vb = monPr ? monPr.score_b : '';
+    bas = `<div class="prono-saisie">
+      <input type="number" min="0" max="20" id="pa-${m.id}" value="${va}" inputmode="numeric">
+      <span>–</span>
+      <input type="number" min="0" max="20" id="pb-${m.id}" value="${vb}" inputmode="numeric">
+      <button class="btn" onclick="sauverProno(${m.id})">${monPr ? 'Modifier' : 'Valider'}</button>
+      ${monPr ? '<span class="ok">✓ enregistré</span>' : ''}
+    </div>`;
+  } else if(monPr){
+    const pts = points(monPr, re);
+    bas = `<div class="monprono">Ton prono : <b>${monPr.score_a}–${monPr.score_b}</b>` +
+      (pts===null ? '' : ` · <span class="pts p${pts}">${pts===3?'+3 pts, score exact ! 🎯':pts===1?'+1 pt, bon flair':'0 pt, raté 😅'}</span>`) + `</div>`;
+  }
+  if(admin && verrou && !modePronos){
+    const ra = re?re.score_a:'', rb = re?re.score_b:'';
+    bas += `<div class="prono-saisie">
+      <input type="number" min="0" max="20" id="ra-${m.id}" value="${ra}" inputmode="numeric">
+      <span>–</span>
+      <input type="number" min="0" max="20" id="rb-${m.id}" value="${rb}" inputmode="numeric">
+      <button class="btn corail" onclick="validerScore(${m.id})">${re ? 'Corriger' : 'Valider le score'}</button>
+    </div>`;
+  }
+  return `<div class="match">
+    <div class="ligne1"><span class="grp">GR. ${m.g}</span><span class="heure">${joue(m)?'TERMINÉ':fmtHeure(m.dt)+' 🇲🇶'}</span></div>
+    <div class="duel">
+      <div class="eq"><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
+      ${score}
+      <div class="eq dr"><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
+    </div>${bas}</div>`;
+}
+
+function listeMatchs(){
+  let liste = M;
+  if(filtreMatchs==='venir') liste = M.filter(m=>!joue(m));
+  if(filtreMatchs==='joues') liste = M.filter(m=>joue(m));
+  let html = '', jourCourant = '';
+  liste.forEach(m=>{
+    const j = fmtJour(m.dt);
+    if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">${j}</div>`; }
+    html += carteMatch(m, false);
+  });
+  $('liste-matchs').innerHTML = html || '<p class="note">Rien à afficher ici pour le moment.</p>';
+}
+
+function listePronos(){
+  if(!pseudo){ $('liste-pronos').innerHTML = '<p class="note">Choisis d\'abord qui tu es, en haut de la page 👆</p>'; return; }
+  const aVenir = M.filter(m=>!commence(m));
+  let html = '', jourCourant = '';
+  aVenir.forEach(m=>{
+    const j = fmtJour(m.dt);
+    if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">${j}</div>`; }
+    html += carteMatch(m, true);
+  });
+  $('liste-pronos').innerHTML = html || '<p class="note">Plus aucun match ouvert aux pronos — la phase de poules est finie !</p>';
+}
+
+async function sauverProno(id){
+  const a = parseInt($(`pa-${id}`).value), b = parseInt($(`pb-${id}`).value);
+  if(isNaN(a)||isNaN(b)){ toast('Mets un score complet'); return; }
+  const m = M.find(x=>x.id===id);
+  if(commence(m)){ toast('Trop tard, le match a commencé !'); listePronos(); return; }
+  try{
+    await sb('mondial_pronostics?on_conflict=pseudo,match_id', {method:'POST',
+      prefer:'resolution=merge-duplicates',
+      body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b})});
+    (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b};
+    toast(`Prono ${a}–${b} enregistré ✓`); listePronos();
+  }catch(e){ toast("Échec de l'enregistrement, réessaie"); }
+}
+
+async function validerScore(id){
+  const a = parseInt($(`ra-${id}`).value), b = parseInt($(`rb-${id}`).value);
+  if(isNaN(a)||isNaN(b)){ toast('Score incomplet'); return; }
+  try{
+    await sb('mondial_resultats?on_conflict=match_id', {method:'POST',
+      prefer:'resolution=merge-duplicates',
+      body: JSON.stringify({match_id:id, score_a:a, score_b:b})});
+    resultats[id] = {match_id:id, score_a:a, score_b:b};
+    toast('Score validé — classement mis à jour 🏆'); toutAfficher();
+  }catch(e){ toast('Échec de la validation'); }
+}
+
+function classement(){
+  const lignes = PARTICIPANTS.map(p=>{
+    let total=0, exacts=0, bons=0, n=0;
+    Object.values(pronos[p]||{}).forEach(pr=>{
+      const pts = points(pr, resultats[pr.match_id]);
+      if(pts!==null){ total+=pts; n++; if(pts===3)exacts++; if(pts===1)bons++; }
+    });
+    return {p,total,exacts,bons,n};
+  }).sort((x,y)=>y.total-x.total || y.exacts-x.exacts);
+  $('tableau-classement').innerHTML = lignes.map((l,i)=>`
+    <div class="rang">
+      <div class="pos">${i===0&&l.total>0?'👑':i+1}</div>
+      <div><div class="qui">${l.p}${participants[l.p]&&participants[l.p].equipe_ecurie?' · '+(F[participants[l.p].equipe_ecurie]||''):''}</div>
+      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances</div></div>
+      <div class="total">${l.total}</div>
+    </div>`).join('');
+  const total = Object.keys(resultats).length;
+  $('note-classement').textContent = total===0 ? 'Le classement démarre dès le premier score validé par Bidou.' : `${total} match${total>1?'s':''} validé${total>1?'s':''} sur 72.`;
+}
+
+function ecuries(){
+  let html = '';
+  PARTICIPANTS.forEach(p=>{
+    const eq = participants[p] && participants[p].equipe_ecurie;
+    if(!eq){ html += `<div class="ecurie"><div class="tete"><span class="f">❓</span><span><span class="qui">${p}</span> n'a pas encore choisi son écurie</span></div></div>`; return; }
+    const mEq = M.filter(m=>m.a===eq||m.b===eq);
+    let v=0,n=0,d=0;
+    mEq.forEach(m=>{ const r=resultats[m.id]; if(!r)return;
+      const moi = m.a===eq ? r.score_a : r.score_b, lui = m.a===eq ? r.score_b : r.score_a;
+      if(moi>lui)v++; else if(moi===lui)n++; else d++; });
+    const proch = mEq.find(m=>!joue(m));
+    html += `<div class="ecurie">
+      <div class="tete"><span class="f">${F[eq]||'🏳️'}</span>
+      <span><span class="qui">${p}</span> mise sur <span class="equipe">${eq}</span></span></div>
+      <div class="etat">Bilan : ${v}V ${n}N ${d}D${proch ? ` · Prochain : ${proch.a===eq?'contre '+proch.b:'contre '+proch.a} le ${fmtJour(proch.dt)} à ${fmtHeure(proch.dt)}` : ' · Phase de poules terminée pour cette écurie'}</div>
+    </div>`;
+  });
+  $('liste-ecuries').innerHTML = html;
+  const bloc = $('choix-ecurie');
+  if(pseudo && !(participants[pseudo] && participants[pseudo].equipe_ecurie)){
+    bloc.style.display='';
+    const equipes = Object.keys(F).sort((a,b)=>a.localeCompare(b,'fr'));
+    $('select-ecurie').innerHTML = equipes.map(e=>`<option value="${e}">${F[e]} ${e}</option>`).join('');
+  } else bloc.style.display='none';
+}
+async function sauverEcurie(){
+  const eq = $('select-ecurie').value;
+  try{
+    await sb('mondial_participants?on_conflict=pseudo', {method:'POST',
+      prefer:'resolution=merge-duplicates',
+      body: JSON.stringify({pseudo, equipe_ecurie:eq})});
+    participants[pseudo] = {...(participants[pseudo]||{}), pseudo, equipe_ecurie:eq};
+    toast(`${eq}, c'est noté ! ${F[eq]||''}`); ecuries(); classement();
+  }catch(e){ toast('Échec, réessaie'); }
+}
+
+function potins(){
+  const cloud = potinsCloud.map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div>${p.match_id?'':''}<span class="tag">Potin frais · Bidou</span></div>`).join('');
+  const base = POTINS_BASE.map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${p.tag}</span></div>`).join('');
+  $('liste-potins').innerHTML = cloud + base;
+}
+async function ajouterPotin(){
+  const titre = $('potin-titre').value.trim(), contenu = $('potin-contenu').value.trim();
+  if(!titre || !contenu){ toast('Titre + contenu obligatoires'); return; }
+  try{
+    await sb('mondial_potins', {method:'POST', body: JSON.stringify({titre, contenu})});
+    $('potin-titre').value=''; $('potin-contenu').value='';
+    toast('Potin publié 🍿'); await chargerTout();
+    document.querySelector('[data-sec=potins]').click();
+  }catch(e){ toast('Échec de la publication'); }
+}
+
+function toutAfficher(){ pastilles(); hero(); listeMatchs(); listePronos(); classement(); ecuries(); potins(); }
+
+/* navigation */
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('actif'));
+  document.querySelectorAll('section').forEach(x=>x.classList.remove('actif'));
+  b.classList.add('actif'); $('sec-'+b.dataset.sec).classList.add('actif');
+  window.scrollTo({top:0});
+}));
+document.querySelectorAll('.filtres button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.filtres button').forEach(x=>x.classList.remove('actif'));
+  b.classList.add('actif'); filtreMatchs=b.dataset.f; listeMatchs();
+}));
+
+toutAfficher();
+chargerTout();
+setInterval(hero, 60000);
+setInterval(chargerTout, 120000);
+</script>
+</body>
+</html>
