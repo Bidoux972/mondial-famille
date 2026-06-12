@@ -145,6 +145,19 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .filtres button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--ligne);background:var(--panneau2);color:var(--gris);font-weight:600;font-size:12px;cursor:pointer;font-family:'Public Sans'}
 .filtres button.actif{background:var(--or);color:var(--nuit);border-color:var(--or)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+/* récap cinématique */
+.reveal{position:fixed;inset:0;background:rgba(10,18,30,.97);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;cursor:pointer}
+.reveal::before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:var(--madras)}
+.reveal .eti-r{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:18px}
+.reveal h3{font-family:'Archivo Black';font-size:clamp(22px,7vw,40px);text-transform:uppercase;line-height:1.1;margin-bottom:10px}
+.reveal .grand-score{font-family:'Archivo Black';font-size:clamp(48px,18vw,96px);color:var(--or);line-height:1}
+.reveal .drapeaux{font-size:44px;margin:10px 0}
+.reveal .ligne-r{font-size:15px;margin:7px 0;line-height:1.5}
+.reveal .ligne-r b{color:var(--or)}
+.reveal .punch{font-style:italic;color:#cfd9e4;font-size:15px;margin-top:14px;max-width:480px;line-height:1.5}
+.reveal .suite{position:absolute;bottom:26px;left:0;right:0;color:var(--gris);font-size:12px;letter-spacing:1px}
+.reveal .etape{animation:apparait .45s ease}
+@keyframes apparait{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -259,7 +272,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '8.4';
+const APP_VERSION = '9.0';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -495,6 +508,7 @@ async function chargerTout() {
   }
   toutAfficher();
   signalerPresence();
+  detecterReveals();
 }
 
 /* ============ OUTILS ============ */
@@ -762,6 +776,7 @@ function carteMatch(m, modePronos){
     <input type="text" id="rca-${m.id}" placeholder="🟥 Cartons rouges (facultatif)" value="${re&&re.cartons?String(re.cartons).replace(/"/g,'&quot;'):''}">`;
   }
   const boutonAvm = (!re && (avmDispo(m.id)||admin)) ? `<button class="btn" style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--or);color:var(--or)" onclick="ouvrirAvm(${m.id});window.scrollTo({top:0,behavior:'smooth'})">AVANT-MATCH · forces, faiblesses, sélections</button>` : '';
+  const boutonRecap = re ? `<div class="monprono" style="margin-top:8px"><a href="javascript:void(0)" onclick="ouvrirReveal(${m.id})" style="color:var(--or);font-weight:700;text-decoration:none">🎬 Revoir le récap</a></div>` : '';
   const eqClic = n => `onclick="voirEquipe('${n.replace(/'/g,"\\'")}')" style="cursor:pointer"`;
   return `<div class="match">
     <div class="ligne1"><span class="grp">GR. ${m.g}</span><span class="heure">${joue(m)?'TERMINÉ':fmtHeure(m.dt)+' 🇲🇶'}</span></div>
@@ -769,7 +784,7 @@ function carteMatch(m, modePronos){
       <div class="eq" ${eqClic(m.a)}><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
       ${score}
       <div class="eq dr" ${eqClic(m.b)}><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
-    </div>${infosResultat}${bas}${ligneFamille}${boutonAvm}</div>`;
+    </div>${infosResultat}${bas}${ligneFamille}${boutonAvm}${boutonRecap}</div>`;
 }
 function listeMatchs(){
   let liste = M;
@@ -1235,6 +1250,89 @@ async function jugerDuel(id, verdict){
     toast('Verdict rendu — points transférés ⚔️');
     toutAfficher();
   }catch(e){ toast('Échec du verdict'); }
+}
+
+/* ============ RÉCAP CINÉMATIQUE 🎬 ============ */
+let revealQueue = [], revealEtape = 0;
+function vusReveal(){ try{ return JSON.parse(localStorage.getItem('mf_reveals')||'[]'); }catch(e){ return []; } }
+function marquerVu(id){ try{ const v = vusReveal(); if(!v.includes(id)){ v.push(id); localStorage.setItem('mf_reveals', JSON.stringify(v)); } }catch(e){} }
+function detecterReveals(){
+  if(!pseudo) return;
+  const vus = vusReveal();
+  const nouveaux = M.filter(m => resultats[m.id] && !vus.includes(m.id));
+  if(!nouveaux.length) return;
+  /* on ne théâtralise que les 3 plus récents, le reste est marqué vu */
+  const aJouer = nouveaux.slice(-3);
+  nouveaux.slice(0, -3).forEach(m => marquerVu(m.id));
+  revealQueue = aJouer.map(m => m.id);
+  ouvrirReveal(revealQueue.shift());
+}
+function etapesReveal(id){
+  const m = M.find(x=>x.id===id), re = resultats[id];
+  const lignesParis = PARTICIPANTS.map(p=>{
+    const pr = pronos[p] && pronos[p][id];
+    if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">n'a pas parié 🙈</span></div>`;
+    const extras = [pr.buteur?`⚽ ${pr.buteur}`:'', pr.btts===true?'🥅 oui':pr.btts===false?'🥅 non':'', pr.en_or?'🌟 EN OR':''].filter(Boolean).join(' · ');
+    return `<div class="ligne-r">${p} : <b>${pr.score_a}–${pr.score_b}</b>${extras?' · '+extras:''}</div>`;
+  }).join('');
+  const lignesComptes = PARTICIPANTS.map(p=>{
+    const pr = pronos[p] && pronos[p][id];
+    if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">0 pt (spectateur)</span></div>`;
+    const t = ptsTotal(pr, re);
+    const emo = t>=4?'🔥':t===3?'🎯':t>0?'👍':t===0?'😬':'💀';
+    return `<div class="ligne-r">${p} : <b class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t} pt${Math.abs(t)>1?'s':''}</b> ${emo}${pr.en_or?' (EN OR ×2 !)':''}</div>`;
+  }).join('');
+  const cl = calculTotaux(null);
+  const lignesClassement = cl.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
+  const scores = PARTICIPANTS.map(p=>({p, t: pronos[p]&&pronos[p][id] ? ptsTotal(pronos[p][id], re) : null})).filter(x=>x.t!==null);
+  let punch = "Le commissaire rappelle que les réclamations se font par écrit. Et qu'elles finissent à la poubelle.";
+  if(scores.length){
+    const max = scores.reduce((a,b)=>b.t>a.t?b:a), min = scores.reduce((a,b)=>b.t<a.t?b:a);
+    if(scores.every(s=>s.t<=0)){
+      punch = "Personne n'a vu venir ce match. Le football 1 — la famille 0.";
+    } else if(scores.length>1 && scores.every(s=>s.t===scores[0].t)){
+      punch = 'Égalité parfaite. Quelle famille soudée. Quel ennui, aussi.';
+    } else if(max.t>min.t){
+      const punchs = [
+        `${max.p} encaisse, ${min.p} encaisse… le coup. C'est le jeu, ma pauvre Lucette.`,
+        `Belle opération pour ${max.p}. Pour ${min.p}, on parlera plutôt d'expérience formatrice.`,
+        `${max.p} avait vu juste. ${min.p} avait vu… quelque chose, en tout cas.`,
+        `Le flair de ${max.p} contre l'optimisme de ${min.p}. Le flair a gagné.`
+      ];
+      punch = punchs[(id + scores.length) % punchs.length];
+    }
+  }
+  return [
+    `<div class="etape"><div class="eti-r">🎬 Le récap du match</div><div class="drapeaux">${F[m.a]} ${F[m.b]}</div><h3>${m.a}<br>${m.b}</h3><div class="ligne-r" style="color:var(--gris)">Groupe ${m.g} · terminé</div></div>`,
+    `<div class="etape"><div class="eti-r">Les paris étaient posés…</div>${lignesParis}</div>`,
+    `<div class="etape"><div class="eti-r">Le verdict du terrain</div><div class="grand-score">${re.score_a} – ${re.score_b}</div>${re.buteurs?`<div class="ligne-r">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`,
+    `<div class="etape"><div class="eti-r">Les comptes sont bons</div>${lignesComptes}</div>`,
+    `<div class="etape"><div class="eti-r">Le classement</div>${lignesClassement}<div class="punch">🎙️ ${punch}</div></div>`
+  ];
+}
+function ouvrirReveal(id){
+  if(!resultats[id]) return;
+  revealEtape = 0;
+  const etapes = etapesReveal(id);
+  let div = document.getElementById('reveal-overlay');
+  if(!div){
+    div = document.createElement('div');
+    div.id = 'reveal-overlay'; div.className = 'reveal';
+    document.body.appendChild(div);
+  }
+  div.style.display = 'flex';
+  const rendre = () => {
+    div.innerHTML = etapes[revealEtape] + `<div class="suite">${revealEtape < etapes.length-1 ? 'Touche pour la suite ('+(revealEtape+1)+'/'+etapes.length+')' : 'Touche pour fermer'}</div>`;
+  };
+  div.onclick = () => {
+    revealEtape++;
+    if(revealEtape >= etapes.length){
+      marquerVu(id);
+      if(revealQueue.length){ ouvrirReveal(revealQueue.shift()); }
+      else { div.style.display = 'none'; }
+    } else rendre();
+  };
+  rendre();
 }
 
 function toutAfficher(){ blocIdentite(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none'; }
