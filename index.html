@@ -168,6 +168,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   </div>
   <div class="moi" id="bloc-moi" style="display:none"></div>
   <div class="mini-cl" id="mini-classement" style="display:none" onclick="goTab('classement')"></div>
+  <div id="alerte-duel"></div>
 
   <div class="hero" id="hero" style="display:none"></div>
   <div id="avm"></div>
@@ -205,8 +206,11 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   <section id="sec-classement">
     <h2>Classement <small>Qui est le meilleur pronostiqueur de la famille ?</small></h2>
     <div class="classement" id="tableau-classement"></div>
+    <p class="note" id="commentaire-jour" style="display:none;font-size:13px;color:var(--creme);background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--or);border-radius:10px;padding:12px"></p>
     <p class="note" id="note-classement"></p>
     <p class="note">📐 Barème : score exact <b>3</b> · tendance <b>1</b> · buteur <b>+2/−1</b> · « les 2 marquent » <b>+1/−1</b> · 🌟 Match en Or = tout ×2 (de −4 à +12).</p>
+    <h2>⚔️ Les duels <small>Pendant un match en direct, défie quelqu'un avec une question OUI/NON sur la fin du match. S'il répond juste, il TE vole 1 point. S'il se trompe ou ne répond pas avant la fin, tu lui voles 1 point. Un duel lancé par jour et par personne — le commissaire tranche le verdict.</small></h2>
+    <div id="zone-duels"></div>
   </section>
 
   <section id="sec-equipes">
@@ -251,7 +255,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '7.3';
+const APP_VERSION = '8.0';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -445,6 +449,7 @@ let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null
 let avmCloud = {};
 let joueursCloud = {};
 let fichesCloud = {};
+let duelsCloud = [];
 let pronos = {}, resultats = {}, participants = {}, potinsCloud = [];
 try { pseudo = localStorage.getItem('mf_pseudo') || null; admin = localStorage.getItem('mf_admin') === '1'; } catch(e){}
 
@@ -462,14 +467,15 @@ async function sb(path, opts = {}) {
 }
 async function chargerTout() {
   try {
-    const [p, r, pa, po, av, jo, fi] = await Promise.all([
+    const [p, r, pa, po, av, jo, fi, du] = await Promise.all([
       sb('mondial_pronostics?select=*'),
       sb('mondial_resultats?select=*'),
       sb('mondial_participants?select=*'),
       sb('mondial_potins?select=*&order=created_at.desc'),
       sb('mondial_avantmatch?select=*').catch(()=>[]),
       sb('mondial_joueurs?select=*').catch(()=>[]),
-      sb('mondial_fiches?select=*').catch(()=>[])
+      sb('mondial_fiches?select=*').catch(()=>[]),
+      sb('mondial_duels?select=*&order=created_at.desc').catch(()=>[])
     ]);
     pronos = {}; (p||[]).forEach(x => { (pronos[x.pseudo] = pronos[x.pseudo] || {})[x.match_id] = x; });
     resultats = {}; (r||[]).forEach(x => resultats[x.match_id] = x);
@@ -478,6 +484,7 @@ async function chargerTout() {
     avmCloud = {}; (av||[]).forEach(x => avmCloud[x.match_id] = x);
     joueursCloud = {}; (jo||[]).forEach(x => joueursCloud[x.equipe] = x.joueurs);
     fichesCloud = {}; (fi||[]).forEach(x => fichesCloud[x.equipe] = x);
+    duelsCloud = du || [];
   } catch(e) {
     console.error(e);
     toast("Connexion à la base impossible — réessaie dans un instant");
@@ -831,10 +838,21 @@ async function validerScore(id){
 }
 
 /* ============ CLASSEMENT ============ */
-function classement(){
-  const lignes = PARTICIPANTS.map(p=>{
+function calculTotaux(filtreMatch){
+  const deltaDuels = p => duelsCloud.reduce((s,d)=>{
+    if(d.statut!=='juge' || !d.verdict) return s;
+    const m = M.find(x=>x.id===d.match_id);
+    if(filtreMatch && m && !filtreMatch(m)) return s;
+    const juste = d.reponse === d.verdict;
+    if(d.lanceur===p) return s + (juste ? -1 : 1);
+    if(d.cible===p) return s + (juste ? 1 : -1);
+    return s;
+  }, 0);
+  return PARTICIPANTS.map(p=>{
     let total=0, exacts=0, bons=0, buts=0, butsKo=0, ors=0, n=0;
     Object.values(pronos[p]||{}).forEach(pr=>{
+      const m = M.find(x=>x.id===pr.match_id);
+      if(filtreMatch && m && !filtreMatch(m)) return;
       const re = resultats[pr.match_id];
       const base = points(pr, re);
       if(base!==null){
@@ -845,17 +863,51 @@ function classement(){
         if(pr.en_or)ors++;
       }
     });
-    return {p,total,exacts,bons,buts,butsKo,ors,n};
+    const duels = deltaDuels(p);
+    total += duels;
+    return {p,total,exacts,bons,buts,butsKo,ors,duels,n};
   }).sort((x,y)=>y.total-x.total || y.exacts-x.exacts);
-  $('tableau-classement').innerHTML = lignes.map((l,i)=>`
+}
+const COMMENTAIRES = [
+  l => `${l[0].p} en tête. Profite, la gloire des pronostiqueurs est plus fragile qu'une défense panaméenne.`,
+  l => `${l[l.length-1].p} ferme la marche. C'est une stratégie, paraît-il. Une stratégie audacieuse.`,
+  l => `Écart de ${l[0].total - l[l.length-1].total} point${(l[0].total-l[l.length-1].total)>1?'s':''} entre la tête et la lanterne rouge. Tout reste possible. Surtout le pire.`,
+  l => `${l[0].p} domine, mais rappelons qu'en 2022 personne n'avait vu l'Arabie Saoudite battre Messi. L'humilité, toujours.`,
+  l => `Le comité d'organisation signale que ${l[l.length-1].p} a encore le droit de rêver. C'est à peu près tout ce qui lui reste.`,
+  l => `Classement provisoire. Très provisoire. ${l[0].p} ferait bien de ne pas imprimer de t-shirt tout de suite.`,
+  l => `${l[0].p} en tête — coïncidence ? Les statisticiens de la famille mènent l'enquête. 🤨`,
+  l => `Un Match en Or mal placé et tout s'effondre. Demandez aux traders. Ou à ${l[l.length-1].p}.`
+];
+function classement(){
+  const lignes = calculTotaux(null);
+  const aujourdhui = jourCle({dt: new Date()});
+  const lignesHier = calculTotaux(m => jourCle(m) !== aujourdhui);
+  const aDesPointsHier = lignesHier.some(l=>l.total!==0);
+  const posHier = {}; lignesHier.forEach((l,i)=>posHier[l.p]=i);
+  $('tableau-classement').innerHTML = lignes.map((l,i)=>{
+    let fleche = '';
+    if(aDesPointsHier){
+      const d = posHier[l.p] - i;
+      fleche = d>0 ? `<span style="color:var(--lagon);font-size:13px"> ▲${d}</span>`
+             : d<0 ? `<span style="color:var(--corail);font-size:13px"> ▼${-d}</span>`
+             : `<span style="color:var(--gris);font-size:13px"> ＝</span>`;
+    }
+    return `
     <div class="rang">
       <div class="pos">${i===0&&l.total>0?'👑':i+1}</div>
-      <div><div class="qui">${l.p}${participants[l.p]&&participants[l.p].equipe_ecurie?' · '+(F[participants[l.p].equipe_ecurie]||''):''}</div>
-      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances · buteurs ${l.buts}⚽/${l.butsKo}❌ · ${l.ors} 🌟</div></div>
+      <div><div class="qui">${l.p}${participants[l.p]&&participants[l.p].equipe_ecurie?' · '+(F[participants[l.p].equipe_ecurie]||''):''}${fleche}</div>
+      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances · buteurs ${l.buts}⚽/${l.butsKo}❌ · ${l.ors} 🌟${l.duels!==0?` · duels ${l.duels>0?'+':''}${l.duels}⚔️`:''}</div></div>
       <div class="total">${l.total}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   const total = Object.keys(resultats).length;
-  $('note-classement').textContent = total===0 ? 'Le classement démarre dès le premier score validé.' : `${total} match${total>1?'s':''} validé${total>1?'s':''} sur 72.`;
+  $('note-classement').textContent = total===0 ? 'Le classement démarre dès le premier score validé.' : `${total} match${total>1?'s':''} validé${total>1?'s':''} sur 72. Flèches : évolution depuis hier.`;
+  const c = $('commentaire-jour');
+  if(total>0 && lignes.some(l=>l.total!==0)){
+    const graine = new Date().getDate() + total;
+    c.style.display='';
+    c.innerHTML = `🎙️ <i>${COMMENTAIRES[graine % COMMENTAIRES.length](lignes)}</i>`;
+  } else c.style.display='none';
 }
 
 /* ============ FICHES ÉQUIPES ============ */
@@ -981,7 +1033,111 @@ function miniClassement(){
     `<span class="fleche">détail ›</span>`;
 }
 
-function toutAfficher(){ blocIdentite(); miniClassement(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none'; }
+/* ============ DUELS ⚔️ ============ */
+const echap = t => String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const matchsEnDirect = () => M.filter(m => commence(m) && !resultats[m.id]);
+const duelDejaLance = p => duelsCloud.some(d => d.lanceur===p &&
+  new Date(d.created_at).toLocaleDateString('fr-FR',{timeZone:'America/Martinique'}) === new Date().toLocaleDateString('fr-FR',{timeZone:'America/Martinique'}));
+const duelEnAttentePour = p => duelsCloud.find(d => d.cible===p && d.statut==='lance' && !resultats[d.match_id]);
+
+function alerteDuel(){
+  const z = $('alerte-duel');
+  const d = pseudo ? duelEnAttentePour(pseudo) : null;
+  if(!d){ z.innerHTML=''; return; }
+  const m = M.find(x=>x.id===d.match_id);
+  z.innerHTML = `<div class="fiche" style="border-color:var(--corail)">
+    <div class="eti" style="color:var(--corail);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700">⚔️ ${d.lanceur} te défie ! (${m?m.a+' – '+m.b:''})</div>
+    <p style="margin:10px 0;font-size:15px;font-weight:700">« ${echap(d.question)} »</p>
+    <p class="note">Réponds avant la fin du match. Juste : tu lui voles 1 point. Faux ou silence : il t'en vole un.</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn" style="flex:1" onclick="repondreDuel(${d.id},'oui')">OUI</button>
+      <button class="btn corail" style="flex:1" onclick="repondreDuel(${d.id},'non')">NON</button>
+    </div></div>`;
+}
+
+function renduDuels(){
+  const z = $('zone-duels');
+  let html = '';
+  /* formulaire de lancement */
+  if(pseudo){
+    const lives = matchsEnDirect();
+    if(duelDejaLance(pseudo)){
+      html += `<p class="note">⚔️ Tu as déjà lancé ton duel du jour — retour demain, gladiateur.</p>`;
+    } else if(!lives.length){
+      html += `<p class="note">⚔️ Un duel se lance pendant un match EN DIRECT. Reviens au coup d'envoi du prochain match.</p>`;
+    } else {
+      const adversaires = PARTICIPANTS.filter(p=>p!==pseudo);
+      html += `<div class="match" style="border-left:4px solid var(--corail)">
+        <b style="font-size:13px">Lancer ton duel du jour</b>
+        <select id="duel-cible">${adversaires.map(p=>`<option value="${p}">${p}</option>`).join('')}</select>
+        <select id="duel-match">${lives.map(m=>`<option value="${m.id}">${m.a} – ${m.b} (en direct)</option>`).join('')}</select>
+        <input type="text" id="duel-question" placeholder="Question OUI/NON sur la fin du match (ex : un but sera marqué ?)">
+        <button class="btn corail" style="margin-top:8px;width:100%" onclick="lancerDuel()">⚔️ Défier</button>
+      </div>`;
+    }
+  }
+  /* historique */
+  const recents = duelsCloud.slice(0,10);
+  if(recents.length){
+    html += recents.map(d=>{
+      const m = M.find(x=>x.id===d.match_id);
+      let etat;
+      if(d.statut==='juge' && d.verdict){
+        const juste = d.reponse===d.verdict;
+        etat = `${d.cible} a dit ${d.reponse?d.reponse.toUpperCase():'(rien)'} · verdict ${d.verdict.toUpperCase()} → <b class="pts ${juste?'p3':'p0'}">${juste?d.cible+' vole 1 pt à '+d.lanceur:d.lanceur+' vole 1 pt à '+d.cible}</b>`;
+      } else if(d.statut==='repondu'){
+        etat = `${d.cible} a répondu — en attente du verdict du commissaire`;
+      } else {
+        etat = `en attente de la réponse de ${d.cible}`;
+      }
+      let adminBtns = '';
+      if(admin && d.statut!=='juge'){
+        adminBtns = `<div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn" style="flex:1" onclick="jugerDuel(${d.id},'oui')">Verdict : OUI</button>
+          <button class="btn corail" style="flex:1" onclick="jugerDuel(${d.id},'non')">Verdict : NON</button>
+        </div>`;
+      }
+      return `<div class="match"><div class="monprono"><b>⚔️ ${d.lanceur} → ${d.cible}</b> · ${m?m.a+' – '+m.b:''}<br>« ${echap(d.question)} »<br>${etat}</div>${adminBtns}</div>`;
+    }).join('');
+  } else if(pseudo){
+    html += `<p class="note">Aucun duel pour l'instant. Le premier qui dégaine entre dans la légende familiale.</p>`;
+  }
+  z.innerHTML = html;
+}
+
+async function lancerDuel(){
+  const cible = $('duel-cible').value, matchId = parseInt($('duel-match').value), question = $('duel-question').value.trim();
+  if(!question){ toast('Écris ta question OUI/NON'); return; }
+  if(duelDejaLance(pseudo)){ toast('Un seul duel par jour !'); return; }
+  try{
+    await sb('mondial_duels', {method:'POST',
+      body: JSON.stringify({lanceur:pseudo, cible, match_id:matchId, question, statut:'lance'})});
+    toast(`⚔️ Duel lancé contre ${cible} !`);
+    await chargerTout();
+  }catch(e){ toast('Échec — la table mondial_duels existe-t-elle ?'); }
+}
+async function repondreDuel(id, rep){
+  try{
+    await sb(`mondial_duels?id=eq.${id}`, {method:'PATCH',
+      body: JSON.stringify({reponse:rep, statut:'repondu'})});
+    const d = duelsCloud.find(x=>x.id===id);
+    if(d){ d.reponse=rep; d.statut='repondu'; }
+    toast(`Réponse « ${rep.toUpperCase()} » enregistrée — verdict en fin de match`);
+    alerteDuel(); renduDuels();
+  }catch(e){ toast('Échec de la réponse'); }
+}
+async function jugerDuel(id, verdict){
+  try{
+    await sb(`mondial_duels?id=eq.${id}`, {method:'PATCH',
+      body: JSON.stringify({verdict, statut:'juge'})});
+    const d = duelsCloud.find(x=>x.id===id);
+    if(d){ d.verdict=verdict; d.statut='juge'; }
+    toast('Verdict rendu — points transférés ⚔️');
+    toutAfficher();
+  }catch(e){ toast('Échec du verdict'); }
+}
+
+function toutAfficher(){ blocIdentite(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none'; }
 
 function goTab(sec){ document.querySelector(`nav button[data-sec=${sec}]`).click(); }
 function voirEquipe(n){
