@@ -251,11 +251,11 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '7.0';
+const APP_VERSION = '7.3';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
-const PARTICIPANTS = ['Bidou','Ginou','Véro'];
+const PARTICIPANTS = ['Bidou','Ginou','Véro','Alex'];
 const ADMIN_PSEUDO = 'Bidou';
 
 /* ============ DRAPEAUX ============ */
@@ -881,11 +881,11 @@ function zoneEquipes(){
     }).join('');
     const monEcurie = pseudo && participants[pseudo] && participants[pseudo].equipe_ecurie;
     let boutonEcurie = '';
-    if(pseudo){
-      if(monEcurie === ficheOuverte) boutonEcurie = `<button class="btn" disabled>✓ C'est ton écurie</button>`;
-      else if(monEcurie) boutonEcurie = `<button class="btn" disabled>🔒 Ton écurie est déjà choisie : ${monEcurie}</button>`;
-      else boutonEcurie = `<button class="btn" onclick="sauverEcurie('${ficheOuverte.replace(/'/g,"\\'")}')">🐎 J'en fais mon écurie</button>`;
-    }
+    if(!pseudo){
+      boutonEcurie = `<button class="btn" style="background:var(--panneau2);color:var(--gris);border:1px dashed var(--or)" onclick="window.scrollTo({top:0,behavior:'smooth'});toast('Choisis ton prénom en haut de la page 👆')">Connecte-toi en haut pour adopter cette écurie</button>`;
+    } else if(monEcurie === ficheOuverte) boutonEcurie = `<button class="btn" disabled>✓ C'est ton écurie</button>`;
+    else if(monEcurie) boutonEcurie = `<button class="btn" disabled>🔒 Ton écurie est déjà choisie : ${monEcurie}</button>`;
+    else boutonEcurie = `<button class="btn" onclick="sauverEcurie('${ficheOuverte.replace(/'/g,"\\'")}')">🐎 J'en fais mon écurie</button>`;
     z.innerHTML = `<div class="fiche">
       <button class="retour" onclick="fermerFiche()">← Toutes les équipes</button>
       <div class="tete"><span class="f">${F[ficheOuverte]}</span>
@@ -948,8 +948,10 @@ async function sauverEcurie(eq){
 
 /* ============ POTINS ============ */
 function potins(){
-  const cloud = potinsCloud.map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">Potin frais</span></div>`).join('');
-  const base = POTINS_BASE.map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${p.tag}</span></div>`).join('');
+  const vus = new Set();
+  const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
+  const cloud = potinsCloud.filter(unique).map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">Potin frais</span></div>`).join('');
+  const base = POTINS_BASE.filter(unique).map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${p.tag}</span></div>`).join('');
   $('liste-potins').innerHTML = cloud + base;
 }
 async function ajouterPotin(){
@@ -1016,10 +1018,13 @@ async function appliquerMajJour(){
         ok++;
       }catch(e){ ko++; }
     }
+    const titresExistants = new Set(potinsCloud.map(p=>String(p.titre||'').trim().toLowerCase()));
     for(const po of (data.potins||[])){
       try{
+        if(titresExistants.has(String(po.titre||'').trim().toLowerCase())) continue;
         await sb('mondial_potins', {method:'POST',
           body: JSON.stringify({titre:po.titre, contenu:po.contenu})});
+        titresExistants.add(String(po.titre||'').trim().toLowerCase());
         ok++;
       }catch(e){ ko++; }
     }
