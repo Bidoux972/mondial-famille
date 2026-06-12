@@ -209,12 +209,16 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     <p class="note" id="commentaire-jour" style="display:none;font-size:13px;color:var(--creme);background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--or);border-radius:10px;padding:12px"></p>
     <p class="note" id="note-classement"></p>
     <p class="note">📐 Barème : score exact <b>3</b> · tendance <b>1</b> · buteur <b>+2/−1</b> · « les 2 marquent » <b>+1/−1</b> · 🌟 Match en Or = tout ×2 (de −4 à +12).</p>
-    <h2>⚔️ Les duels <small>Pendant un match en direct, défie quelqu'un avec une question OUI/NON sur la fin du match. S'il répond juste, il TE vole 1 point. S'il se trompe ou ne répond pas avant la fin, tu lui voles 1 point. Un duel lancé par jour et par personne — le commissaire tranche le verdict.</small></h2>
+    <h2>⚔️ Les duels <small>Pendant un match en direct : défie quelqu'un avec une question construite (but, buteur, carton — par mi-temps ou fin de match). Il a 10 minutes chrono pour répondre OUI ou NON. Juste : il TE vole 1 point. Faux : tu lui voles 1 point. Esquive (silence) : duel annulé mais REMBOURSÉ — tu peux redéfier aussitôt, et chaque esquive est comptée publiquement. Seuls les événements survenus APRÈS la réponse comptent — tout est horodaté, le commissaire tranche.</small></h2>
     <div id="zone-duels"></div>
   </section>
 
   <section id="sec-equipes">
     <h2>Les équipes <small>48 fiches : les leaders, le joueur à surveiller, la belle histoire</small></h2>
+    <div class="filtres" id="filtres-equipes">
+      <button data-vue="fiches" class="actif">Les fiches</button>
+      <button data-vue="groupes">Classements des groupes</button>
+    </div>
     <div id="zone-equipes"></div>
   </section>
 
@@ -255,7 +259,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '8.0';
+const APP_VERSION = '8.3';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -911,6 +915,37 @@ function classement(){
 }
 
 /* ============ FICHES ÉQUIPES ============ */
+function classementGroupe(g){
+  const equipes = [...new Set(M.filter(m=>m.g===g).flatMap(m=>[m.a,m.b]))];
+  const t = {}; equipes.forEach(e=>t[e]={e,j:0,v:0,n:0,d:0,bp:0,bc:0,pts:0});
+  M.filter(m=>m.g===g).forEach(m=>{
+    const r = resultats[m.id]; if(!r) return;
+    const A=t[m.a], B=t[m.b];
+    A.j++; B.j++; A.bp+=r.score_a; A.bc+=r.score_b; B.bp+=r.score_b; B.bc+=r.score_a;
+    if(r.score_a>r.score_b){ A.v++; B.d++; A.pts+=3; }
+    else if(r.score_a<r.score_b){ B.v++; A.d++; B.pts+=3; }
+    else { A.n++; B.n++; A.pts++; B.pts++; }
+  });
+  return Object.values(t).sort((x,y)=> y.pts-x.pts || (y.bp-y.bc)-(x.bp-x.bc) || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
+}
+function vueGroupes(){
+  return 'ABCDEFGHIJKL'.split('').map(g=>{
+    const lignes = classementGroupe(g);
+    return `<div class="match" style="margin-bottom:12px">
+      <b style="font-size:13px;color:var(--or)">GROUPE ${g}</b>
+      <div class="monprono" style="display:flex;justify-content:flex-end;gap:14px;border:none;margin-top:6px;padding:0;color:var(--gris);font-size:10px"><span style="width:24px;text-align:center">J</span><span style="width:48px;text-align:center">V-N-D</span><span style="width:30px;text-align:center">Diff</span><span style="width:24px;text-align:center">Pts</span></div>
+      ${lignes.map((l,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--ligne)">
+        <span style="color:${i<2?'var(--lagon)':'var(--gris)'};font-family:'Space Grotesk',monospace;font-size:12px;width:14px">${i+1}</span>
+        <span style="cursor:pointer;flex:1;font-weight:600;font-size:13px" onclick="voirEquipe('${l.e.replace(/'/g,"\\'")}')">${F[l.e]} ${l.e}</span>
+        <span style="width:24px;text-align:center;font-size:12px;color:var(--gris)">${l.j}</span>
+        <span style="width:48px;text-align:center;font-size:12px;color:var(--gris)">${l.v}-${l.n}-${l.d}</span>
+        <span style="width:30px;text-align:center;font-size:12px;font-family:'Space Grotesk',monospace">${(l.bp-l.bc)>0?'+':''}${l.bp-l.bc}</span>
+        <span style="width:24px;text-align:center;font-weight:700;color:var(--or);font-family:'Space Grotesk',monospace">${l.pts}</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+let vueEquipes = 'fiches';
 function eqData(n){
   const base = EQUIPES[n] || {};
   const cloud = fichesCloud[n] || {};
@@ -949,6 +984,8 @@ function zoneEquipes(){
       <div class="ses-matchs"><div class="eti" style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:6px">Ses matchs de poules</div>${matchsHtml}</div>
       ${boutonEcurie}
     </div>`;
+  } else if(vueEquipes === 'groupes'){
+    z.innerHTML = vueGroupes();
   } else {
     const noms = Object.keys(EQUIPES).sort((a,b)=> eqData(b).niv-eqData(a).niv || a.localeCompare(b,'fr'));
     z.innerHTML = `<div class="eq-grille">` + noms.map(n=>`
@@ -1002,9 +1039,19 @@ async function sauverEcurie(eq){
 function potins(){
   const vus = new Set();
   const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
-  const cloud = potinsCloud.filter(unique).map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">Potin frais</span></div>`).join('');
-  const base = POTINS_BASE.filter(unique).map(p=>`<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${p.tag}</span></div>`).join('');
-  $('liste-potins').innerHTML = cloud + base;
+  const potinHtml = (p, tag) => `<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
+  let html = '', jourCourant = '';
+  potinsCloud.filter(unique).forEach(p=>{
+    const j = p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'}) : 'Récents';
+    if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">${j}</div>`; }
+    html += potinHtml(p, 'Potin frais');
+  });
+  const baseU = POTINS_BASE.filter(unique);
+  if(baseU.length){
+    html += `<div class="jour">Avant le tournoi</div>`;
+    baseU.forEach(p=>{ html += potinHtml(p, p.tag); });
+  }
+  $('liste-potins').innerHTML = html;
 }
 async function ajouterPotin(){
   const titre = $('potin-titre').value.trim(), contenu = $('potin-contenu').value.trim();
@@ -1034,31 +1081,57 @@ function miniClassement(){
 }
 
 /* ============ DUELS ⚔️ ============ */
+const DUEL_DELAI = 10 * 60 * 1000; /* 10 minutes pour répondre */
 const echap = t => String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const heurePrecise = d => new Date(d).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'America/Martinique'});
 const matchsEnDirect = () => M.filter(m => commence(m) && !resultats[m.id]);
-const duelDejaLance = p => duelsCloud.some(d => d.lanceur===p &&
-  new Date(d.created_at).toLocaleDateString('fr-FR',{timeZone:'America/Martinique'}) === new Date().toLocaleDateString('fr-FR',{timeZone:'America/Martinique'}));
-const duelEnAttentePour = p => duelsCloud.find(d => d.cible===p && d.statut==='lance' && !resultats[d.match_id]);
+const duelExpire = d => d.statut==='lance' && (Date.now() - new Date(d.created_at).getTime()) > DUEL_DELAI;
+const duelDejaLance = p => duelsCloud.some(d => d.lanceur===p
+  && d.statut!=='annule' && !duelExpire(d)
+  && new Date(d.created_at).toLocaleDateString('fr-FR',{timeZone:'America/Martinique'}) === new Date().toLocaleDateString('fr-FR',{timeZone:'America/Martinique'}));
+const nbEsquives = p => duelsCloud.filter(d => d.cible===p && (d.statut==='annule' || duelExpire(d))).length;
+const duelEnAttentePour = p => duelsCloud.find(d => d.cible===p && d.statut==='lance' && !duelExpire(d) && !resultats[d.match_id]);
 
 function alerteDuel(){
   const z = $('alerte-duel');
   const d = pseudo ? duelEnAttentePour(pseudo) : null;
   if(!d){ z.innerHTML=''; return; }
   const m = M.find(x=>x.id===d.match_id);
+  const reste = Math.max(0, DUEL_DELAI - (Date.now() - new Date(d.created_at).getTime()));
+  const mm = Math.floor(reste/60000), ss = String(Math.floor((reste%60000)/1000)).padStart(2,'0');
   z.innerHTML = `<div class="fiche" style="border-color:var(--corail)">
     <div class="eti" style="color:var(--corail);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700">⚔️ ${d.lanceur} te défie ! (${m?m.a+' – '+m.b:''})</div>
     <p style="margin:10px 0;font-size:15px;font-weight:700">« ${echap(d.question)} »</p>
-    <p class="note">Réponds avant la fin du match. Juste : tu lui voles 1 point. Faux ou silence : il t'en vole un.</p>
+    <p class="note">⏱ <b style="color:var(--corail)">${mm}:${ss}</b> pour répondre — sinon le duel est annulé. Seuls les événements survenus APRÈS ta réponse compteront pour le verdict.</p>
     <div style="display:flex;gap:8px">
       <button class="btn" style="flex:1" onclick="repondreDuel(${d.id},'oui')">OUI</button>
       <button class="btn corail" style="flex:1" onclick="repondreDuel(${d.id},'non')">NON</button>
     </div></div>`;
 }
 
+function optionsJoueursDuel(matchId){
+  const m = M.find(x=>x.id===matchId);
+  if(!m) return '';
+  const liste = [...joueursPoste(m.a), ...joueursPoste(m.b)];
+  return liste.map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}">${labelJoueur(j)}</option>`).join('');
+}
+function majFormDuel(){
+  const type = $('duel-type').value;
+  $('duel-joueur').style.display = type==='joueur' ? '' : 'none';
+  if(type==='joueur') $('duel-joueur').innerHTML = optionsJoueursDuel(parseInt($('duel-match').value));
+}
+function construireQuestion(){
+  const periode = $('duel-periode').value;
+  const type = $('duel-type').value;
+  if(type==='but') return `Un but sera marqué ${periode} ?`;
+  if(type==='joueur') return `${$('duel-joueur').value} va marquer ${periode} ?`;
+  if(type==='carton') return `Un carton rouge sera distribué ${periode} ?`;
+  return `Le score va encore changer ${periode} ?`;
+}
+
 function renduDuels(){
   const z = $('zone-duels');
   let html = '';
-  /* formulaire de lancement */
   if(pseudo){
     const lives = matchsEnDirect();
     if(duelDejaLance(pseudo)){
@@ -1069,15 +1142,29 @@ function renduDuels(){
       const adversaires = PARTICIPANTS.filter(p=>p!==pseudo);
       html += `<div class="match" style="border-left:4px solid var(--corail)">
         <b style="font-size:13px">Lancer ton duel du jour</b>
-        <select id="duel-cible">${adversaires.map(p=>`<option value="${p}">${p}</option>`).join('')}</select>
-        <select id="duel-match">${lives.map(m=>`<option value="${m.id}">${m.a} – ${m.b} (en direct)</option>`).join('')}</select>
-        <input type="text" id="duel-question" placeholder="Question OUI/NON sur la fin du match (ex : un but sera marqué ?)">
+        <select id="duel-cible">${adversaires.map(p=>`<option value="${p}">Défier ${p}</option>`).join('')}</select>
+        <select id="duel-match" onchange="majFormDuel()">${lives.map(m=>`<option value="${m.id}">${m.a} – ${m.b} (en direct)</option>`).join('')}</select>
+        <select id="duel-type" onchange="majFormDuel()">
+          <option value="but">Un but sera marqué… ?</option>
+          <option value="joueur">Tel joueur va marquer… ?</option>
+          <option value="carton">Un carton rouge… ?</option>
+          <option value="score">Le score va encore changer… ?</option>
+        </select>
+        <select id="duel-joueur" style="display:none">${optionsJoueursDuel(lives[0].id)}</select>
+        <select id="duel-periode">
+          <option value="d'ici la mi-temps">d'ici la mi-temps</option>
+          <option value="avant la fin du match">avant la fin du match</option>
+        </select>
         <button class="btn corail" style="margin-top:8px;width:100%" onclick="lancerDuel()">⚔️ Défier</button>
+        <p class="note" style="margin-bottom:0">Ta cible a 10 minutes pour répondre. Seuls les événements après sa réponse comptent — l'app horodate tout.</p>
       </div>`;
     }
   }
-  /* historique */
   const recents = duelsCloud.slice(0,10);
+  const esquiveurs = PARTICIPANTS.map(p=>({p, n:nbEsquives(p)})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+  if(esquiveurs.length){
+    html += `<p class="note" style="background:var(--panneau);border:1px solid var(--ligne);border-radius:10px;padding:10px">🙈 <b>Tableau des esquives</b> (tout se sait) : ${esquiveurs.map(x=>`${x.p} ${x.n}`).join(' · ')}</p>`;
+  }
   if(recents.length){
     html += recents.map(d=>{
       const m = M.find(x=>x.id===d.match_id);
@@ -1085,19 +1172,21 @@ function renduDuels(){
       if(d.statut==='juge' && d.verdict){
         const juste = d.reponse===d.verdict;
         etat = `${d.cible} a dit ${d.reponse?d.reponse.toUpperCase():'(rien)'} · verdict ${d.verdict.toUpperCase()} → <b class="pts ${juste?'p3':'p0'}">${juste?d.cible+' vole 1 pt à '+d.lanceur:d.lanceur+' vole 1 pt à '+d.cible}</b>`;
+      } else if(d.statut==='annule' || duelExpire(d)){
+        etat = `<span style="color:var(--gris)">🙈 ${d.cible} a esquivé (pas de réponse en 10 min) — duel annulé et REMBOURSÉ à ${d.lanceur}, qui peut redéfier immédiatement.</span>`;
       } else if(d.statut==='repondu'){
-        etat = `${d.cible} a répondu — en attente du verdict du commissaire`;
+        etat = `${d.cible} a répondu à ${d.reponse_at?heurePrecise(d.reponse_at):'?'} — en attente du verdict du commissaire (seuls les événements après la réponse comptent)`;
       } else {
-        etat = `en attente de la réponse de ${d.cible}`;
+        etat = `en attente de la réponse de ${d.cible} (chrono en cours)`;
       }
       let adminBtns = '';
-      if(admin && d.statut!=='juge'){
+      if(admin && d.statut!=='juge' && d.statut!=='annule' && !duelExpire(d)){
         adminBtns = `<div style="display:flex;gap:6px;margin-top:8px">
           <button class="btn" style="flex:1" onclick="jugerDuel(${d.id},'oui')">Verdict : OUI</button>
           <button class="btn corail" style="flex:1" onclick="jugerDuel(${d.id},'non')">Verdict : NON</button>
         </div>`;
       }
-      return `<div class="match"><div class="monprono"><b>⚔️ ${d.lanceur} → ${d.cible}</b> · ${m?m.a+' – '+m.b:''}<br>« ${echap(d.question)} »<br>${etat}</div>${adminBtns}</div>`;
+      return `<div class="match"><div class="monprono"><b>⚔️ ${d.lanceur} → ${d.cible}</b> · ${m?m.a+' – '+m.b:''} · posé à ${heurePrecise(d.created_at)}<br>« ${echap(d.question)} »<br>${etat}</div>${adminBtns}</div>`;
     }).join('');
   } else if(pseudo){
     html += `<p class="note">Aucun duel pour l'instant. Le premier qui dégaine entre dans la légende familiale.</p>`;
@@ -1106,23 +1195,28 @@ function renduDuels(){
 }
 
 async function lancerDuel(){
-  const cible = $('duel-cible').value, matchId = parseInt($('duel-match').value), question = $('duel-question').value.trim();
-  if(!question){ toast('Écris ta question OUI/NON'); return; }
+  const cible = $('duel-cible').value, matchId = parseInt($('duel-match').value);
+  const question = construireQuestion();
   if(duelDejaLance(pseudo)){ toast('Un seul duel par jour !'); return; }
   try{
     await sb('mondial_duels', {method:'POST',
       body: JSON.stringify({lanceur:pseudo, cible, match_id:matchId, question, statut:'lance'})});
-    toast(`⚔️ Duel lancé contre ${cible} !`);
+    toast(`⚔️ Duel lancé contre ${cible} ! Chrono de 10 min déclenché`);
     await chargerTout();
   }catch(e){ toast('Échec — la table mondial_duels existe-t-elle ?'); }
 }
 async function repondreDuel(id, rep){
+  const d = duelsCloud.find(x=>x.id===id);
+  if(d && duelExpire(d)){
+    try{ await sb(`mondial_duels?id=eq.${id}`, {method:'PATCH', body: JSON.stringify({statut:'annule'})}); d.statut='annule'; }catch(e){}
+    toast('⏱ Trop tard — duel annulé'); alerteDuel(); renduDuels(); return;
+  }
   try{
+    const reponse_at = new Date().toISOString();
     await sb(`mondial_duels?id=eq.${id}`, {method:'PATCH',
-      body: JSON.stringify({reponse:rep, statut:'repondu'})});
-    const d = duelsCloud.find(x=>x.id===id);
-    if(d){ d.reponse=rep; d.statut='repondu'; }
-    toast(`Réponse « ${rep.toUpperCase()} » enregistrée — verdict en fin de match`);
+      body: JSON.stringify({reponse:rep, statut:'repondu', reponse_at})});
+    if(d){ d.reponse=rep; d.statut='repondu'; d.reponse_at=reponse_at; }
+    toast(`Réponse « ${rep.toUpperCase()} » enregistrée à ${heurePrecise(reponse_at)}`);
     alerteDuel(); renduDuels();
   }catch(e){ toast('Échec de la réponse'); }
 }
@@ -1204,9 +1298,13 @@ document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()
   ficheOuverte = null; avmOuvert = null; renduAvm(); zoneEquipes();
   window.scrollTo({top:0});
 }));
-document.querySelectorAll('.filtres button').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.filtres button').forEach(x=>x.classList.remove('actif'));
+document.querySelectorAll('#sec-matchs .filtres button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#sec-matchs .filtres button').forEach(x=>x.classList.remove('actif'));
   b.classList.add('actif'); filtreMatchs=b.dataset.f; listeMatchs();
+}));
+document.querySelectorAll('#filtres-equipes button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#filtres-equipes button').forEach(x=>x.classList.remove('actif'));
+  b.classList.add('actif'); vueEquipes = b.dataset.vue; ficheOuverte = null; zoneEquipes();
 }));
 
 async function verifierVersion(){
@@ -1223,6 +1321,7 @@ toutAfficher();
 chargerTout();
 verifierVersion();
 setInterval(hero, 60000);
+setInterval(alerteDuel, 10000);
 setInterval(chargerTout, 120000);
 setInterval(verifierVersion, 600000);
 </script>
