@@ -209,7 +209,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     <p class="note" id="commentaire-jour" style="display:none;font-size:13px;color:var(--creme);background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--or);border-radius:10px;padding:12px"></p>
     <p class="note" id="note-classement"></p>
     <p class="note">📐 Barème : score exact <b>3</b> · tendance <b>1</b> · buteur <b>+2/−1</b> · « les 2 marquent » <b>+1/−1</b> · 🌟 Match en Or = tout ×2 (de −4 à +12).</p>
-    <h2>⚔️ Les duels <small>Pendant un match en direct : défie quelqu'un avec une question construite (but, buteur, carton — par mi-temps ou fin de match). Il a 10 minutes chrono pour répondre OUI ou NON. Juste : il TE vole 1 point. Faux : tu lui voles 1 point. Esquive (silence) : duel annulé mais REMBOURSÉ — tu peux redéfier aussitôt, et chaque esquive est comptée publiquement. Seuls les événements survenus APRÈS la réponse comptent — tout est horodaté, le commissaire tranche.</small></h2>
+    <h2>⚔️ Les duels <small>Pendant un match en direct : défie quelqu'un EN LIGNE 🟢 avec une question construite (but, buteur, carton — par mi-temps ou fin de match). Il a 10 minutes chrono pour répondre OUI ou NON. Juste : il TE vole 1 point. Faux : tu lui voles 1 point. Pas de réponse : duel expiré sans conséquence et remboursé. Seuls les événements survenus APRÈS la réponse comptent — tout est horodaté, le commissaire tranche.</small></h2>
     <div id="zone-duels"></div>
   </section>
 
@@ -259,7 +259,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '8.3';
+const APP_VERSION = '8.4';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -494,6 +494,7 @@ async function chargerTout() {
     toast("Connexion à la base impossible — réessaie dans un instant");
   }
   toutAfficher();
+  signalerPresence();
 }
 
 /* ============ OUTILS ============ */
@@ -1089,7 +1090,14 @@ const duelExpire = d => d.statut==='lance' && (Date.now() - new Date(d.created_a
 const duelDejaLance = p => duelsCloud.some(d => d.lanceur===p
   && d.statut!=='annule' && !duelExpire(d)
   && new Date(d.created_at).toLocaleDateString('fr-FR',{timeZone:'America/Martinique'}) === new Date().toLocaleDateString('fr-FR',{timeZone:'America/Martinique'}));
-const nbEsquives = p => duelsCloud.filter(d => d.cible===p && (d.statut==='annule' || duelExpire(d))).length;
+const nbEsquives = p => 0; /* retiré : injuste sans notifications */
+const enLigne = p => participants[p] && participants[p].derniere_visite &&
+  (Date.now() - new Date(participants[p].derniere_visite).getTime()) < 5*60*1000;
+function signalerPresence(){
+  if(!pseudo) return;
+  sb('mondial_participants?on_conflict=pseudo', {method:'POST', prefer:'resolution=merge-duplicates',
+    body: JSON.stringify({pseudo, derniere_visite: new Date().toISOString()})}).catch(()=>{});
+}
 const duelEnAttentePour = p => duelsCloud.find(d => d.cible===p && d.statut==='lance' && !duelExpire(d) && !resultats[d.match_id]);
 
 function alerteDuel(){
@@ -1142,7 +1150,7 @@ function renduDuels(){
       const adversaires = PARTICIPANTS.filter(p=>p!==pseudo);
       html += `<div class="match" style="border-left:4px solid var(--corail)">
         <b style="font-size:13px">Lancer ton duel du jour</b>
-        <select id="duel-cible">${adversaires.map(p=>`<option value="${p}">Défier ${p}</option>`).join('')}</select>
+        <select id="duel-cible">${adversaires.map(p=>`<option value="${p}">Défier ${p} ${enLigne(p)?'· 🟢 en ligne':'· ⚪ pas en ligne (risque de ne pas voir ton défi)'}</option>`).join('')}</select>
         <select id="duel-match" onchange="majFormDuel()">${lives.map(m=>`<option value="${m.id}">${m.a} – ${m.b} (en direct)</option>`).join('')}</select>
         <select id="duel-type" onchange="majFormDuel()">
           <option value="but">Un but sera marqué… ?</option>
@@ -1161,10 +1169,6 @@ function renduDuels(){
     }
   }
   const recents = duelsCloud.slice(0,10);
-  const esquiveurs = PARTICIPANTS.map(p=>({p, n:nbEsquives(p)})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
-  if(esquiveurs.length){
-    html += `<p class="note" style="background:var(--panneau);border:1px solid var(--ligne);border-radius:10px;padding:10px">🙈 <b>Tableau des esquives</b> (tout se sait) : ${esquiveurs.map(x=>`${x.p} ${x.n}`).join(' · ')}</p>`;
-  }
   if(recents.length){
     html += recents.map(d=>{
       const m = M.find(x=>x.id===d.match_id);
@@ -1173,7 +1177,7 @@ function renduDuels(){
         const juste = d.reponse===d.verdict;
         etat = `${d.cible} a dit ${d.reponse?d.reponse.toUpperCase():'(rien)'} · verdict ${d.verdict.toUpperCase()} → <b class="pts ${juste?'p3':'p0'}">${juste?d.cible+' vole 1 pt à '+d.lanceur:d.lanceur+' vole 1 pt à '+d.cible}</b>`;
       } else if(d.statut==='annule' || duelExpire(d)){
-        etat = `<span style="color:var(--gris)">🙈 ${d.cible} a esquivé (pas de réponse en 10 min) — duel annulé et REMBOURSÉ à ${d.lanceur}, qui peut redéfier immédiatement.</span>`;
+        etat = `<span style="color:var(--gris)">⏱ Expiré — ${d.cible} n'a pas vu le défi à temps (appli fermée ?). Duel annulé sans conséquence et remboursé à ${d.lanceur}.</span>`;
       } else if(d.statut==='repondu'){
         etat = `${d.cible} a répondu à ${d.reponse_at?heurePrecise(d.reponse_at):'?'} — en attente du verdict du commissaire (seuls les événements après la réponse comptent)`;
       } else {
@@ -1198,6 +1202,8 @@ async function lancerDuel(){
   const cible = $('duel-cible').value, matchId = parseInt($('duel-match').value);
   const question = construireQuestion();
   if(duelDejaLance(pseudo)){ toast('Un seul duel par jour !'); return; }
+  if(!enLigne(cible) && !confirm(`${cible} ne semble pas en ligne — ton défi risque d'expirer sans réponse (il sera alors remboursé). Défier quand même ?`)) return;
+  if(!confirm(`⚔️ Confirmer le duel ?\n\nTu défies ${cible} :\n« ${question} »\n\nIl/elle aura 10 minutes pour répondre.`)) return;
   try{
     await sb('mondial_duels', {method:'POST',
       body: JSON.stringify({lanceur:pseudo, cible, match_id:matchId, question, statut:'lance'})});
