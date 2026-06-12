@@ -272,7 +272,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.0';
+const APP_VERSION = '9.1';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1282,7 +1282,7 @@ function etapesReveal(id){
     const emo = t>=4?'🔥':t===3?'🎯':t>0?'👍':t===0?'😬':'💀';
     return `<div class="ligne-r">${p} : <b class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t} pt${Math.abs(t)>1?'s':''}</b> ${emo}${pr.en_or?' (EN OR ×2 !)':''}</div>`;
   }).join('');
-  const cl = calculTotaux(null);
+  const cl = calculTotaux(x => x.dt.getTime() <= m.dt.getTime());
   const lignesClassement = cl.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
   const scores = PARTICIPANTS.map(p=>({p, t: pronos[p]&&pronos[p][id] ? ptsTotal(pronos[p][id], re) : null})).filter(x=>x.t!==null);
   let punch = "Le commissaire rappelle que les réclamations se font par écrit. Et qu'elles finissent à la poubelle.";
@@ -1307,7 +1307,7 @@ function etapesReveal(id){
     `<div class="etape"><div class="eti-r">Les paris étaient posés…</div>${lignesParis}</div>`,
     `<div class="etape"><div class="eti-r">Le verdict du terrain</div><div class="grand-score">${re.score_a} – ${re.score_b}</div>${re.buteurs?`<div class="ligne-r">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`,
     `<div class="etape"><div class="eti-r">Les comptes sont bons</div>${lignesComptes}</div>`,
-    `<div class="etape"><div class="eti-r">Le classement</div>${lignesClassement}<div class="punch">🎙️ ${punch}</div></div>`
+    `<div class="etape"><div class="eti-r">Le classement après ce match</div>${lignesClassement}<div class="punch">🎙️ ${punch}</div></div>`
   ];
 }
 function ouvrirReveal(id){
