@@ -34,6 +34,14 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .mini-cl .item{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:13px;font-weight:600}
 .mini-cl .item b{color:var(--or);font-family:'Space Grotesk',monospace;font-size:15px}
 .mini-cl .fleche{margin-left:auto;color:var(--gris);font-size:12px}
+/* bannière écurie */
+.ecurie-banniere{display:flex;align-items:center;gap:12px;background:var(--panneau);border:1px solid var(--ligne);border-left-width:4px;border-radius:12px;padding:12px 14px;margin:10px 0;cursor:pointer}
+.ecurie-banniere.vide{border-left-color:var(--or);border-left-style:dashed}
+.ecurie-banniere .f{font-size:30px}
+.ecurie-banniere .ban-tete{font-size:14px;margin-bottom:3px}
+.ecurie-banniere .cri{font-size:12px;color:var(--or);font-weight:700;margin-left:6px}
+.ecurie-banniere .sub{font-size:11px;color:var(--gris);line-height:1.5}
+.ecurie-banniere .chev{color:var(--gris);font-size:20px}
 /* écran identité */
 .identite{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin:14px 0}
 .identite label{display:block;font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
@@ -180,6 +188,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     </div>
   </div>
   <div class="moi" id="bloc-moi" style="display:none"></div>
+  <div id="banniere-ecurie" style="display:none"></div>
   <div class="mini-cl" id="mini-classement" style="display:none" onclick="goTab('classement')"></div>
   <div id="alerte-duel"></div>
 
@@ -193,6 +202,11 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
       <p class="note">Colle ici le bloc quotidien préparé avec Claude (résultats + buteurs + cartons + joueurs + avant-matchs), puis Appliquer. Tout se met à jour d'un coup.</p>
       <textarea id="maj-jour" placeholder='{"resultats":[...], "joueurs":{...}, "avantmatchs":[...]}' style="min-height:90px;font-family:monospace;font-size:12px"></textarea>
       <button class="btn corail" style="margin-top:8px" onclick="appliquerMajJour()">Appliquer la mise à jour</button>
+      <div class="eti" style="margin-top:14px">🏆 Palmarès final (bonus écurie)</div>
+      <p class="note">À renseigner en fin de tournoi : le finaliste donne +5 et le vainqueur +10 à qui l'a en écurie.</p>
+      <input type="text" id="pal-finaliste" placeholder="Finaliste battu (nom exact de l'équipe)">
+      <input type="text" id="pal-vainqueur" placeholder="Vainqueur de la Coupe (nom exact)">
+      <button class="btn" style="margin-top:8px" onclick="sauverPalmares()">Enregistrer le palmarès</button>
     </div>
     <div class="filtres">
       <button data-f="venir" class="actif">À venir</button>
@@ -272,7 +286,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.2';
+const APP_VERSION = '9.3';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -467,6 +481,7 @@ let avmCloud = {};
 let joueursCloud = {};
 let fichesCloud = {};
 let duelsCloud = [];
+let palmares = null;
 let pronos = {}, resultats = {}, participants = {}, potinsCloud = [];
 try { pseudo = localStorage.getItem('mf_pseudo') || null; admin = localStorage.getItem('mf_admin') === '1'; } catch(e){}
 
@@ -502,6 +517,7 @@ async function chargerTout() {
     joueursCloud = {}; (jo||[]).forEach(x => joueursCloud[x.equipe] = x.joueurs);
     fichesCloud = {}; (fi||[]).forEach(x => fichesCloud[x.equipe] = x);
     duelsCloud = du || [];
+    try{ const pal = await sb('mondial_palmares?select=*'); palmares = (pal && pal[0]) ? pal[0] : null; }catch(e){ palmares = null; }
   } catch(e) {
     console.error(e);
     toast("Connexion à la base impossible — réessaie dans un instant");
@@ -885,7 +901,9 @@ function calculTotaux(filtreMatch){
     });
     const duels = deltaDuels(p);
     total += duels;
-    return {p,total,exacts,bons,buts,butsKo,ors,duels,n};
+    const bonusEc = bonusEcurie(p);
+    total += bonusEc;
+    return {p,total,exacts,bons,buts,butsKo,ors,duels,bonusEc,n};
   }).sort((x,y)=>y.total-x.total || y.exacts-x.exacts);
 }
 const COMMENTAIRES = [
@@ -916,7 +934,7 @@ function classement(){
     <div class="rang">
       <div class="pos">${i===0&&l.total>0?'👑':i+1}</div>
       <div><div class="qui">${l.p}${participants[l.p]&&participants[l.p].equipe_ecurie?' · '+(F[participants[l.p].equipe_ecurie]||''):''}${fleche}</div>
-      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances · buteurs ${l.buts}⚽/${l.butsKo}❌ · ${l.ors} 🌟${l.duels!==0?` · duels ${l.duels>0?'+':''}${l.duels}⚔️`:''}</div></div>
+      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances · buteurs ${l.buts}⚽/${l.butsKo}❌ · ${l.ors} 🌟${l.duels!==0?` · duels ${l.duels>0?'+':''}${l.duels}⚔️`:''}${l.bonusEc?` · écurie +${l.bonusEc}🏆`:''}</div></div>
       <div class="total">${l.total}</div>
     </div>`;
   }).join('');
@@ -1016,6 +1034,74 @@ function ouvrirFiche(n){ ficheOuverte = n; zoneEquipes(); window.scrollTo({top:0
 function fermerFiche(){ ficheOuverte = null; zoneEquipes(); }
 
 /* ============ ÉCURIES ============ */
+/* ============ IDENTITÉS D'ÉCURIE (accent + cri + bonus parcours) ============ */
+const ECURIES = {
+"Brésil":{c:"#FFD400", cri:"Seleção ! Rumo ao hexa ! 🇧🇷"},
+"Argentine":{c:"#6CB4E4", cri:"Vamos Argentina ! 🇦🇷"},
+"France":{c:"#3A6FF7", cri:"Allez les Bleus ! 🇫🇷"},
+"Espagne":{c:"#E03A3A", cri:"¡ Vamos La Roja ! 🇪🇸"},
+"Angleterre":{c:"#E8443B", cri:"It's coming home ! 🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
+"Portugal":{c:"#159C4C", cri:"Força Portugal ! 🇵🇹"},
+"Allemagne":{c:"#C8B560", cri:"Die Mannschaft ! 🇩🇪"},
+"Pays-Bas":{c:"#FF7A1A", cri:"Hup Holland Hup ! 🇳🇱"},
+"Belgique":{c:"#E6C200", cri:"Allez les Diables ! 🇧🇪"},
+"Maroc":{c:"#C1272D", cri:"Dima Maghrib ! 🇲🇦"},
+"Sénégal":{c:"#1FA84A", cri:"Allez les Lions ! 🇸🇳"},
+"Croatie":{c:"#E6403A", cri:"Vatreni ! 🇭🇷"},
+"Uruguay":{c:"#5CB8E6", cri:"Vamos Celeste ! 🇺🇾"},
+"Mexique":{c:"#1F9E54", cri:"¡ Vamos México ! 🇲🇽"},
+"Japon":{c:"#C0263A", cri:"Ganbare Nippon ! 🇯🇵"},
+"Corée du Sud":{c:"#3A7BD0", cri:"Daehan Minguk ! 🇰🇷"},
+"Haïti":{c:"#1A4FA3", cri:"Fyète Ayiti ! 🇭🇹"},
+"Curaçao":{c:"#1565C0", cri:"Dushi Kòrsou ! 🇨🇼"}
+};
+const ecurieDe = p => participants[p] && participants[p].equipe_ecurie;
+function appliquerAccent(){
+  const eq = pseudo ? ecurieDe(pseudo) : null;
+  const c = eq && ECURIES[eq] ? ECURIES[eq].c : '#F5B43C';
+  document.documentElement.style.setProperty('--or', c);
+}
+/* bonus parcours : +5 si l'écurie atteint la finale, +10 si elle gagne (saisi par le commissaire dans mondial_resultats id spéciaux 901=finaliste, 902=vainqueur via la table mondial_palmares) */
+function bonusEcurie(p){
+  const eq = ecurieDe(p);
+  if(!eq || !palmares) return 0;
+  if(palmares.vainqueur === eq) return 10;
+  if(palmares.finaliste === eq) return 5;
+  return 0;
+}
+function banniereEcurie(){
+  const z = $('banniere-ecurie');
+  if(!pseudo){ z.style.display='none'; return; }
+  const eq = ecurieDe(pseudo);
+  if(!eq){
+    z.style.display='';
+    z.innerHTML = `<div class="ecurie-banniere vide" onclick="goTab('equipes')">
+      <span class="f">🐎</span>
+      <div><b>Choisis ton écurie</b><div class="sub">Va dans Équipes, lis les histoires, et adopte une nation pour la vie. Bonus à la clé si elle va au bout.</div></div>
+      <span class="chev">›</span></div>`;
+    return;
+  }
+  const id = ECURIES[eq];
+  const mEq = M.filter(m=>m.a===eq||m.b===eq);
+  let v=0,nul=0,def=0;
+  mEq.forEach(m=>{ const r=resultats[m.id]; if(!r)return;
+    const moi=m.a===eq?r.score_a:r.score_b, lui=m.a===eq?r.score_b:r.score_a;
+    if(moi>lui)v++; else if(moi===lui)nul++; else def++; });
+  const proch = mEq.find(m=>!joue(m));
+  const grp = classementGroupe(eqData(eq).g);
+  const rang = grp.findIndex(x=>x.e===eq)+1;
+  const bonus = bonusEcurie(pseudo);
+  z.style.display='';
+  z.innerHTML = `<div class="ecurie-banniere" onclick="voirEquipe('${eq.replace(/'/g,"\\'")}')" style="border-color:${id?id.c:'var(--or)'}">
+    <span class="f">${F[eq]||'🏳️'}</span>
+    <div style="flex:1">
+      <div class="ban-tete"><b>${eq}</b> · ton écurie ${id?`<span class="cri">${id.cri}</span>`:''}</div>
+      <div class="sub">${rang?`${rang}${rang===1?'er':'e'} du groupe ${eqData(eq).g}`:`Groupe ${eqData(eq).g}`} · Bilan ${v}V-${nul}N-${def}D${proch?` · Prochain : ${proch.a===eq?proch.b:proch.a} ${fmtHeure(proch.dt)} 🇲🇶`:' · poules terminées'}</div>
+      <div class="sub" style="color:${id?id.c:'var(--or)'};font-weight:700">${bonus>0?`🏆 Bonus écurie acquis : +${bonus} pts !`:'🎯 Si elle va en finale : +5 · si elle gagne la Coupe : +10'}</div>
+    </div>
+    <span class="chev">›</span></div>`;
+}
+
 function ecuries(){
   let html = '';
   PARTICIPANTS.forEach(p=>{
@@ -1360,7 +1446,8 @@ function ouvrirReveal(id){
   rendre();
 }
 
-function toutAfficher(){ blocIdentite(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none'; }
+function toutAfficher(){ appliquerAccent(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none';
+  if(admin && palmares){ const pf=$('pal-finaliste'), pv=$('pal-vainqueur'); if(pf&&!pf.value)pf.value=palmares.finaliste||''; if(pv&&!pv.value)pv.value=palmares.vainqueur||''; } }
 
 function goTab(sec){ document.querySelector(`nav button[data-sec=${sec}]`).click(); }
 function voirEquipe(n){
@@ -1370,6 +1457,15 @@ function voirEquipe(n){
 }
 
 /* ============ MISE À JOUR QUOTIDIENNE (un seul collage) ============ */
+async function sauverPalmares(){
+  const finaliste = $('pal-finaliste').value.trim(), vainqueur = $('pal-vainqueur').value.trim();
+  try{
+    await sb('mondial_palmares?on_conflict=id', {method:'POST', prefer:'resolution=merge-duplicates',
+      body: JSON.stringify({id:1, finaliste:finaliste||null, vainqueur:vainqueur||null})});
+    palmares = {id:1, finaliste:finaliste||null, vainqueur:vainqueur||null};
+    toast('🏆 Palmarès enregistré — bonus écurie appliqués'); toutAfficher();
+  }catch(e){ toast('Échec — la table mondial_palmares existe-t-elle ?'); }
+}
 async function appliquerMajJour(){
   let data;
   try{ data = JSON.parse($('maj-jour').value); }
