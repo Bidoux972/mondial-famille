@@ -272,7 +272,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.1';
+const APP_VERSION = '9.2';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1288,18 +1288,43 @@ function etapesReveal(id){
   let punch = "Le commissaire rappelle que les réclamations se font par écrit. Et qu'elles finissent à la poubelle.";
   if(scores.length){
     const max = scores.reduce((a,b)=>b.t>a.t?b:a), min = scores.reduce((a,b)=>b.t<a.t?b:a);
-    if(scores.every(s=>s.t<=0)){
-      punch = "Personne n'a vu venir ce match. Le football 1 — la famille 0.";
-    } else if(scores.length>1 && scores.every(s=>s.t===scores[0].t)){
-      punch = 'Égalité parfaite. Quelle famille soudée. Quel ennui, aussi.';
+    const tousNuls = scores.every(s=>s.t<=0);
+    const exAequo = scores.length>1 && scores.every(s=>s.t===scores[0].t);
+    if(tousNuls){
+      const ratés = [
+        "Personne n'a vu venir ce match. Le football 1 — la famille 0.",
+        "Un sans-faute… dans la médiocrité. Bravo à tous, vraiment.",
+        "Ce match restera dans les annales : la famille au grand complet à côté de la plaque.",
+        "Aucun point distribué. Les bookmakers de la famille peuvent fermer boutique.",
+        "Collectivement, vous avez prouvé une chose : vous ne connaissez rien au foot. Et c'est beau."
+      ];
+      punch = ratés[(id*7 + scores.length) % ratés.length];
+    } else if(exAequo){
+      const egal = [
+        "Égalité parfaite. Quelle famille soudée. Quel ennui, aussi.",
+        "Tout le monde à égalité — la diplomatie suisse vous fait de l'œil.",
+        "Match nul au classement aussi. Personne ne se chambre ce soir, dommage."
+      ];
+      punch = egal[(id*3) % egal.length];
     } else if(max.t>min.t){
       const punchs = [
         `${max.p} encaisse, ${min.p} encaisse… le coup. C'est le jeu, ma pauvre Lucette.`,
         `Belle opération pour ${max.p}. Pour ${min.p}, on parlera plutôt d'expérience formatrice.`,
         `${max.p} avait vu juste. ${min.p} avait vu… quelque chose, en tout cas.`,
-        `Le flair de ${max.p} contre l'optimisme de ${min.p}. Le flair a gagné.`
+        `Le flair de ${max.p} contre l'optimisme de ${min.p}. Le flair a gagné.`,
+        `${max.p} encadre ce résultat dans le salon. ${min.p} le passe au broyeur.`,
+        `On notera la masterclass de ${max.p}. On oubliera vite la tentative de ${min.p}.`,
+        `${max.p} marche sur l'eau. ${min.p} cherche encore la piscine.`,
+        `Statistiquement, ${max.p} a été brillant. Statistiquement, ${min.p}, on n'en parle pas.`,
+        `${max.p} peut sourire. ${min.p} peut retourner réviser les règles du hors-jeu.`,
+        `Pendant que ${max.p} fête ça, ${min.p} explique déjà que « c'était imprévisible ».`,
+        `${max.p} : chirurgien. ${min.p} : témoin de la scène.`,
+        `Le talent de ${max.p}, la malchance de ${min.p}, et nous au milieu qui rigolons.`,
+        `${max.p} prend les points et la lumière. ${min.p} prend note.`,
+        `Respect à ${max.p}. Condoléances à ${min.p}.`,
+        `${max.p} avait le nez creux. ${min.p} avait surtout de l'imagination.`
       ];
-      punch = punchs[(id + scores.length) % punchs.length];
+      punch = punchs[(id*13 + scores.length*5) % punchs.length];
     }
   }
   return [
