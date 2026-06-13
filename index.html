@@ -170,6 +170,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 </head>
 <body>
 <div class="madras"></div>
+<div id="lisere-ecurie" style="height:3px;width:100%;display:none"></div>
 <div id="maj-banniere" style="display:none;background:var(--corail);color:#fff;text-align:center;padding:10px;font-weight:700;font-size:13px;cursor:pointer" onclick="location.reload()">🔄 Nouvelle version de l'app disponible — touche ici pour recharger</div>
 <header>
   <h1>Mondial <span class="or">en Famille</span></h1>
@@ -286,7 +287,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.3';
+const APP_VERSION = '9.4';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -794,13 +795,18 @@ function carteMatch(m, modePronos){
   const boutonAvm = (!re && (avmDispo(m.id)||admin)) ? `<button class="btn" style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--or);color:var(--or)" onclick="ouvrirAvm(${m.id});window.scrollTo({top:0,behavior:'smooth'})">AVANT-MATCH · forces, faiblesses, sélections</button>` : '';
   const boutonRecap = re ? `<div class="monprono" style="margin-top:8px"><a href="javascript:void(0)" onclick="ouvrirReveal(${m.id})" style="color:var(--or);font-weight:700;text-decoration:none">🎬 Revoir le récap</a></div>` : '';
   const eqClic = n => `onclick="voirEquipe('${n.replace(/'/g,"\\'")}')" style="cursor:pointer"`;
-  return `<div class="match">
+  const monEq = pseudo ? ecurieDe(pseudo) : null;
+  const cEq = pseudo ? couleurEcurie(pseudo) : null;
+  const estMonMatch = monEq && (m.a===monEq || m.b===monEq);
+  const styleCarte = estMonMatch && cEq ? ` style="border-left:3px solid ${cEq}"` : '';
+  const labelEcurie = estMonMatch ? `<div class="monprono" style="margin-top:8px;color:var(--gris)">${F[monEq]} Le match de ton écurie${re?'':' — n\'oublie pas ton prono !'}</div>` : '';
+  return `<div class="match"${styleCarte}>
     <div class="ligne1"><span class="grp">GR. ${m.g}</span><span class="heure">${joue(m)?'TERMINÉ':fmtHeure(m.dt)+' 🇲🇶'}</span></div>
     <div class="duel">
       <div class="eq" ${eqClic(m.a)}><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
       ${score}
       <div class="eq dr" ${eqClic(m.b)}><span class="f">${F[m.b]}</span><span class="nom">${m.b}</span></div>
-    </div>${infosResultat}${bas}${ligneFamille}${boutonAvm}${boutonRecap}</div>`;
+    </div>${labelEcurie}${infosResultat}${bas}${ligneFamille}${boutonAvm}${boutonRecap}</div>`;
 }
 function listeMatchs(){
   let liste = M;
@@ -1056,10 +1062,16 @@ const ECURIES = {
 "Curaçao":{c:"#1565C0", cri:"Dushi Kòrsou ! 🇨🇼"}
 };
 const ecurieDe = p => participants[p] && participants[p].equipe_ecurie;
-function appliquerAccent(){
-  const eq = pseudo ? ecurieDe(pseudo) : null;
-  const c = eq && ECURIES[eq] ? ECURIES[eq].c : '#F5B43C';
-  document.documentElement.style.setProperty('--or', c);
+function couleurEcurie(p){
+  const eq = ecurieDe(p);
+  return eq && ECURIES[eq] ? ECURIES[eq].c : null;
+}
+function lisereEcurie(){
+  const z = $('lisere-ecurie');
+  const c = pseudo ? couleurEcurie(pseudo) : null;
+  if(!c){ z.style.display='none'; return; }
+  z.style.display='';
+  z.style.background = `linear-gradient(90deg, transparent, ${c} 20%, ${c} 80%, transparent)`;
 }
 /* bonus parcours : +5 si l'écurie atteint la finale, +10 si elle gagne (saisi par le commissaire dans mondial_resultats id spéciaux 901=finaliste, 902=vainqueur via la table mondial_palmares) */
 function bonusEcurie(p){
@@ -1446,7 +1458,7 @@ function ouvrirReveal(id){
   rendre();
 }
 
-function toutAfficher(){ appliquerAccent(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none';
+function toutAfficher(){ lisereEcurie(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none';
   if(admin && palmares){ const pf=$('pal-finaliste'), pv=$('pal-vainqueur'); if(pf&&!pf.value)pf.value=palmares.finaliste||''; if(pv&&!pv.value)pv.value=palmares.vainqueur||''; } }
 
 function goTab(sec){ document.querySelector(`nav button[data-sec=${sec}]`).click(); }
