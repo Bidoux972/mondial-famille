@@ -161,8 +161,9 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 /* potins */
 .potin{background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--corail);border-radius:12px;padding:14px;margin-bottom:10px}
 .potin-neuf{border-left-color:var(--or);box-shadow:0 0 0 1px var(--or)}
-.pastille-neuf{background:var(--or);color:#0E1B2C;font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 6px;border-radius:6px;vertical-align:middle}
-.pastille-hier{background:var(--lagon);color:#0E1B2C}
+.pastille-neuf{background:var(--or);color:#0E1B2C;font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 7px;border-radius:6px;vertical-align:middle}
+.potin-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.potin-date{font-size:11px;color:var(--gris);font-family:'Space Grotesk',monospace}
 .bonus-zone{margin-top:10px;padding:11px 12px;background:var(--panneau2);border:1px dashed var(--or);border-radius:10px}
 .bonus-titre{font-size:12px;font-weight:800;color:var(--or);margin-bottom:8px}
 .bonus-l{display:block;font-size:12.5px;color:var(--creme);font-weight:600;margin:8px 0 3px}
@@ -319,7 +320,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.14';
+const APP_VERSION = '9.15';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -837,8 +838,7 @@ function carteMatch(m, modePronos){
       <input type="number" min="0" max="20" id="pa-${m.id}" value="${va}" inputmode="numeric">
       <span>–</span>
       <input type="number" min="0" max="20" id="pb-${m.id}" value="${vb}" inputmode="numeric">
-      <button class="btn" onclick="sauverProno(${m.id})">${monPr ? 'Modifier' : 'Valider'}</button>
-      ${monPr ? '<span class="ok">✓</span>' : ''}
+      ${monPr ? '<span class="ok">✓ enregistré</span>' : ''}
     </div>
     <div class="bonus-zone">
       <div class="bonus-titre">🎁 Paris bonus (facultatifs — à toi de voir si tu oses)</div>
@@ -861,7 +861,8 @@ function carteMatch(m, modePronos){
         <option value="">— Match normal —</option>
         <option value="or" ${monPr&&monPr.en_or?'selected':''}>🌟 OUI, je double tout sur ce match (gains ET pertes)</option>
       </select>
-    </div>`;
+    </div>
+    <button class="btn corail" style="width:100%;margin-top:10px;font-weight:700" onclick="sauverProno(${m.id})">${monPr ? '💾 Enregistrer mes modifications (score + bonus)' : '✅ Valider mon prono (score + bonus)'}</button>`;
   } else if(monPr){
     const base = points(monPr, re), bo = bonus(monPr, re), tot = ptsTotal(monPr, re);
     let detail = '';
@@ -1257,42 +1258,54 @@ async function sauverEcurie(eq){
 }
 
 /* ============ POTINS ============ */
+function derniereVisitePotins(){ try{ const v = localStorage.getItem('mf_potins_vu_le'); return v ? parseInt(v) : 0; }catch(e){ return 0; } }
+function marquerVisitePotins(){ try{ localStorage.setItem('mf_potins_vu_le', String(Date.now())); }catch(e){} }
+function estNouveauPotin(p){
+  if(!p.created_at) return false;
+  return new Date(p.created_at).getTime() > _refVisitePotins;
+}
+/* on fige la référence au chargement de la page : tout ce qui est créé après la dernière visite enregistrée est "nouveau" pour cette session, jusqu'à ce qu'on ouvre l'onglet */
+let _refVisitePotins = derniereVisitePotins();
 function freshLabel(created_at){
   if(!created_at) return null;
   const d = new Date(created_at);
   const auj = new Date().toLocaleDateString('fr-CA',{timeZone:'America/Martinique'});
   const jourP = d.toLocaleDateString('fr-CA',{timeZone:'America/Martinique'});
   const hier = new Date(Date.now()-864e5).toLocaleDateString('fr-CA',{timeZone:'America/Martinique'});
-  if(jourP===auj) return 'AUJOURD\'HUI';
-  if(jourP===hier) return 'HIER';
-  return null;
+  if(jourP===auj){
+    const h = d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Martinique'});
+    return 'Aujourd\'hui · '+h;
+  }
+  if(jourP===hier) return 'Hier';
+  return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
 }
 function nbPotinsNouveaux(){
   const titresUniques = new Set();
   return potinsCloud.filter(p=>{
     const t=String(p.titre||'').trim().toLowerCase();
     if(titresUniques.has(t))return false; titresUniques.add(t);
-    return freshLabel(p.created_at)==='AUJOURD\'HUI';
+    return estNouveauPotin(p);
   }).length;
 }
 function potins(){
   const vus = new Set();
   const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
-  const potinHtml = (p, tag, fresh) => `<div class="potin${fresh==='AUJOURD\'HUI'?' potin-neuf':''}"><div class="titre">${fresh?`<span class="pastille-neuf${fresh==='HIER'?' pastille-hier':''}">${fresh}</span> `:''}${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
+  const potinHtml = (p, tag, nouveau, dateLabel) => `<div class="potin${nouveau?' potin-neuf':''}">
+    <div class="potin-meta">${nouveau?'<span class="pastille-neuf">● NOUVEAU</span>':''}${dateLabel?`<span class="potin-date">${dateLabel}</span>`:''}</div>
+    <div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
   let html = '', jourCourant = '';
   potinsCloud.filter(unique).forEach(p=>{
     const d = p.created_at ? new Date(p.created_at) : null;
     const j = d ? d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'}) : 'Récents';
     if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">📅 ${j}</div>`; }
-    html += potinHtml(p, 'Potin', freshLabel(p.created_at));
+    html += potinHtml(p, 'Potin', estNouveauPotin(p), freshLabel(p.created_at));
   });
   const baseU = POTINS_BASE.filter(unique);
   if(baseU.length){
     html += `<div class="jour">📅 Avant le tournoi</div>`;
-    baseU.forEach(p=>{ html += potinHtml(p, p.tag, null); });
+    baseU.forEach(p=>{ html += potinHtml(p, p.tag, false, null); });
   }
   $('liste-potins').innerHTML = html;
-  /* badge sur l'onglet Potins = nombre de potins du jour */
   const onglet = document.querySelector('nav button[data-sec=potins]');
   if(onglet){
     const n = nbPotinsNouveaux();
@@ -1300,6 +1313,12 @@ function potins(){
     if(n>0){ if(!b){ b=document.createElement('span'); b.className='nav-badge'; onglet.appendChild(b);} b.textContent=n; }
     else if(b){ b.remove(); }
   }
+}
+/* appelé quand on ouvre l'onglet potins : on enregistre la visite, mais on garde _refVisitePotins figé pour cette session pour que le NOUVEAU reste visible pendant qu'on lit */
+function ouvrirOngletPotins(){
+  marquerVisitePotins();
+  /* on ne met PAS à jour _refVisitePotins tout de suite : les NOUVEAU restent affichés pendant la lecture.
+     À la prochaine ouverture de la page (ou prochain passage après rechargement), ils ne seront plus nouveaux. */
 }
 async function ajouterPotin(){
   const titre = $('potin-titre').value.trim(), contenu = $('potin-contenu').value.trim();
@@ -1886,6 +1905,7 @@ document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()
   document.querySelectorAll('section').forEach(x=>x.classList.remove('actif'));
   b.classList.add('actif'); $('sec-'+b.dataset.sec).classList.add('actif');
   ficheOuverte = null; avmOuvert = null; renduAvm(); zoneEquipes();
+  if(b.dataset.sec==='potins') ouvrirOngletPotins();
   window.scrollTo({top:0});
 }));
 document.querySelectorAll('#sec-matchs .filtres button').forEach(b=>b.addEventListener('click',()=>{
