@@ -42,6 +42,16 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .ecurie-banniere .cri{font-size:12px;color:var(--or);font-weight:700;margin-left:6px}
 .ecurie-banniere .sub{font-size:11px;color:var(--gris);line-height:1.5}
 .ecurie-banniere .chev{color:var(--gris);font-size:20px}
+/* badge EN DIRECT */
+.badge-direct{background:var(--corail);color:#fff;font-weight:800;font-size:11px;letter-spacing:.5px;padding:3px 9px;border-radius:20px;animation:pulse-direct 1.4s ease-in-out infinite}
+@keyframes pulse-direct{0%,100%{opacity:1}50%{opacity:.55}}
+@media (prefers-reduced-motion: reduce){.badge-direct{animation:none}}
+/* encadré paris famille */
+.bloc-famille{margin-top:10px;padding:9px 11px;background:var(--panneau2);border:1px solid var(--ligne);border-radius:10px;font-size:12.5px;line-height:1.8;color:var(--creme)}
+/* barre live au-dessus du hero */
+.live-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,107,94,.12);border:1px solid var(--corail);border-radius:12px;padding:11px 14px;margin-bottom:10px;cursor:pointer}
+.live-bar .live-match{font-weight:800;font-size:14px;color:var(--creme)}
+.live-bar .live-prono{margin-left:auto;font-size:12px;color:var(--gris)}
 /* écran identité */
 .identite{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin:14px 0}
 .identite label{display:block;font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
@@ -193,6 +203,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   <div class="mini-cl" id="mini-classement" style="display:none" onclick="goTab('classement')"></div>
   <div id="alerte-duel"></div>
 
+  <div id="hero-direct" style="display:none"></div>
   <div class="hero" id="hero" style="display:none"></div>
   <div id="avm"></div>
 
@@ -287,7 +298,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.4';
+const APP_VERSION = '9.5';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -633,6 +644,21 @@ function activerAdmin(){
 
 /* ============ HERO ============ */
 function hero(){
+  /* bannière des matchs EN DIRECT (commencés, pas encore validés) */
+  const lives = M.filter(m => commence(m) && !resultats[m.id]);
+  const hd = $('hero-direct');
+  if(lives.length){
+    hd.style.display='';
+    hd.innerHTML = lives.map(m=>{
+      const monPr = pseudo && pronos[pseudo] ? pronos[pseudo][m.id] : null;
+      return `<div class="live-bar" onclick="goTab('matchs')">
+        <span class="badge-direct">● EN DIRECT</span>
+        <span class="live-match">${F[m.a]} ${m.a} – ${m.b} ${F[m.b]}</span>
+        <span class="live-prono">${monPr?`ton prono : ${monPr.score_a}-${monPr.score_b}`:'tu n\'as pas parié'}</span>
+      </div>`;
+    }).join('');
+  } else hd.style.display='none';
+
   const prochain = M.find(m => !joue(m) && !commence(m));
   const h = $('hero');
   if(!prochain){ h.style.display='none'; return; }
@@ -728,7 +754,8 @@ function carteMatch(m, modePronos){
     const t = ptsTotal(pr, re);
     return `${p} <b>${pr.score_a}-${pr.score_b}</b>${pr.buteur?' ⚽'+pr.buteur:''}${pr.en_or?' 🌟':''}${t!==null?` <span class="pts p${t>=3?3:t>=1?1:0}">(${t>0?'+':''}${t})</span>`:''}`;
   }).join(' · ');
-  const ligneFamille = `<div class="monprono" style="border-top:1px dashed var(--ligne);margin-top:8px;padding-top:6px">${verrou?'Les pronos de la famille : ':'Qui a parié ? '}${famille}</div>`;
+  const titreFamille = re ? '🏁 Les paris de la famille' : (verrou ? '🔒 Les paris (match en cours)' : '✏️ Qui a déjà parié ?');
+  const ligneFamille = `<div class="bloc-famille">${titreFamille}<br>${famille}</div>`;
 
   let bas = '';
   if(modePronos && pseudo && !verrou){
@@ -800,8 +827,14 @@ function carteMatch(m, modePronos){
   const estMonMatch = monEq && (m.a===monEq || m.b===monEq);
   const styleCarte = estMonMatch && cEq ? ` style="border-left:3px solid ${cEq}"` : '';
   const labelEcurie = estMonMatch ? `<div class="monprono" style="margin-top:8px;color:var(--gris)">${F[monEq]} Le match de ton écurie${re?'':' — n\'oublie pas ton prono !'}</div>` : '';
+  const enDirect = verrou && !re;
+  const badgeStatut = re
+    ? `<span class="heure">TERMINÉ</span>`
+    : enDirect
+      ? `<span class="badge-direct">● EN DIRECT · paris fermés</span>`
+      : `<span class="heure">${fmtHeure(m.dt)} 🇲🇶</span>`;
   return `<div class="match"${styleCarte}>
-    <div class="ligne1"><span class="grp">GR. ${m.g}</span><span class="heure">${joue(m)?'TERMINÉ':fmtHeure(m.dt)+' 🇲🇶'}</span></div>
+    <div class="ligne1"><span class="grp">GR. ${m.g}</span>${badgeStatut}</div>
     <div class="duel">
       <div class="eq" ${eqClic(m.a)}><span class="f">${F[m.a]}</span><span class="nom">${m.a}</span></div>
       ${score}
