@@ -56,6 +56,7 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .fam-l .fam-no{font-size:12px;color:var(--corail);font-weight:600}
 .fam-l .pts{margin-left:auto;font-weight:800;font-family:'Space Grotesk',monospace}
 .fam-ch-l{font-size:11.5px;color:var(--gris);font-style:italic;margin:0 0 5px 62px}
+.fam-calc{font-size:11px;color:var(--gris);margin:1px 0 0 62px;font-family:'Space Grotesk',monospace}
 /* barre live au-dessus du hero */
 .live-bar{background:rgba(255,107,94,.12);border:1px solid var(--corail);border-radius:12px;padding:11px 14px;margin-bottom:10px}
 .live-bar .live-haut{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer}
@@ -88,7 +89,7 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .hero .rappel-prono.ok{color:var(--lagon)}
 /* nav */
 nav{position:fixed;bottom:0;left:0;right:0;background:var(--panneau);border-top:1px solid var(--ligne);display:flex;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;background:none;border:none;color:var(--gris);padding:9px 1px 7px;font-family:'Public Sans',sans-serif;font-size:10px;font-weight:600;cursor:pointer}
+nav button{position:relative;flex:1;background:none;border:none;color:var(--gris);padding:9px 1px 7px;font-family:'Public Sans',sans-serif;font-size:10px;font-weight:600;cursor:pointer}
 nav button .ico{display:block;font-size:19px;margin-bottom:2px}
 nav button.actif{color:var(--or)}
 section{display:none;padding-top:4px}
@@ -159,6 +160,9 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .fiche .btn{margin-top:14px;width:100%}
 /* potins */
 .potin{background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--corail);border-radius:12px;padding:14px;margin-bottom:10px}
+.potin-neuf{border-left-color:var(--or);box-shadow:0 0 0 1px var(--or)}
+.pastille-neuf{background:var(--or);color:#0E1B2C;font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 6px;border-radius:6px;vertical-align:middle}
+.nav-badge{position:absolute;top:2px;right:50%;transform:translateX(14px);background:var(--corail);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
 .potin .titre{font-weight:700;margin-bottom:4px}
 .potin .texte{font-size:14px;color:#cfd9e4;line-height:1.45}
 .potin .tag{display:inline-block;margin-top:8px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--or);font-weight:700}
@@ -255,6 +259,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   <section id="sec-classement">
     <h2>Classement <small>Qui est le meilleur pronostiqueur de la famille ?</small></h2>
     <div class="classement" id="tableau-classement"></div>
+    <div id="bouton-recap-jour"></div>
     <p class="note" id="commentaire-jour" style="display:none;font-size:13px;color:var(--creme);background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--or);border-radius:10px;padding:12px"></p>
     <p class="note" id="note-classement"></p>
     <p class="note">📐 Barème : score exact <b>3</b> · tendance <b>1</b> · buteur <b>+2/−1</b> · « les 2 marquent » <b>+1/−1</b> · 🌟 Match en Or = tout ×2 (de −4 à +12).</p>
@@ -308,7 +313,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.6';
+const APP_VERSION = '9.7';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -762,6 +767,18 @@ function chambrage(p, pr, re, t){
   if(base===0) return `😬 À côté de la plaque, ${p}.`;
   return '';
 }
+function detailCalcul(pr, re){
+  const base = points(pr, re);
+  if(base===null) return '';
+  const bo = bonus(pr, re);
+  const parts = [];
+  parts.push(base===3 ? 'score exact +3' : base===1 ? 'tendance +1' : 'score raté 0');
+  if(pr.buteur) parts.push(bo.but===2 ? `buteur ✓ +2` : `buteur ✗ −1`);
+  if(pr.btts===true||pr.btts===false) parts.push(bo.btts===1 ? `2 marquent ✓ +1` : `2 marquent ✗ −1`);
+  let txt = parts.join(' · ');
+  if(pr.en_or){ const t = ptsTotal(pr, re); txt = `(${txt}) ×2 🌟 = ${t>0?'+':''}${t}`; }
+  return txt;
+}
 function carteMatch(m, modePronos){
   const re = resultats[m.id];
   const monPr = pseudo && pronos[pseudo] ? pronos[pseudo][m.id] : null;
@@ -786,12 +803,13 @@ function carteMatch(m, modePronos){
     if(!pr) return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-no">n'a pas parié 🙈</span></div>`;
     const t = ptsTotal(pr, re);
     const detail = `${pr.score_a}-${pr.score_b}${pr.buteur?' · ⚽'+pr.buteur:''}${pr.btts===true?' · 🥅oui':pr.btts===false?' · 🥅non':''}${pr.en_or?' · 🌟':''}`;
-    let pts = '', chambre = '';
+    let pts = '', chambre = '', calcul = '';
     if(t!==null){
       pts = `<span class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t}</span>`;
-      chambre = `<span class="fam-ch">${chambrage(p, pr, re, t)}</span>`;
+      chambre = chambrage(p, pr, re, t);
+      calcul = detailCalcul(pr, re);
     }
-    return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-d">${detail}</span>${pts}</div>${chambre?`<div class="fam-ch-l">${chambre}</div>`:''}`;
+    return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-d">${detail}</span>${pts}</div>${calcul?`<div class="fam-calc">${calcul}</div>`:''}${chambre?`<div class="fam-ch-l">${chambre}</div>`:''}`;
   }).join('');
   const titreFamille = re ? '🏁 Les paris de la famille' : (verrou ? '🔒 Les paris (match en cours)' : '✏️ Qui a déjà parié ?');
   const ligneFamille = `<div class="bloc-famille"><div class="fam-titre">${titreFamille}</div>${lignesFamille}</div>`;
@@ -1024,6 +1042,7 @@ function classement(){
     c.style.display='';
     c.innerHTML = `🎙️ <i>${COMMENTAIRES[graine % COMMENTAIRES.length](lignes)}</i>`;
   } else c.style.display='none';
+  boutonRecapJour();
 }
 
 /* ============ FICHES ÉQUIPES ============ */
@@ -1222,22 +1241,45 @@ async function sauverEcurie(eq){
 }
 
 /* ============ POTINS ============ */
+function potinsVus(){ try{ return JSON.parse(localStorage.getItem('mf_potins_vus')||'[]'); }catch(e){ return []; } }
+function marquerPotinsVus(titres){ try{ const v = new Set(potinsVus()); titres.forEach(t=>v.add(t)); localStorage.setItem('mf_potins_vus', JSON.stringify([...v])); }catch(e){} }
+function nbPotinsNouveaux(){
+  const vus = new Set(potinsVus());
+  const titresUniques = new Set();
+  return potinsCloud.filter(p=>{ const t=String(p.titre||'').trim().toLowerCase(); if(titresUniques.has(t))return false; titresUniques.add(t); return !vus.has(t); }).length;
+}
 function potins(){
   const vus = new Set();
+  const dejaLus = new Set(potinsVus());
   const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
-  const potinHtml = (p, tag) => `<div class="potin"><div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
+  const potinHtml = (p, tag, nouveau) => `<div class="potin${nouveau?' potin-neuf':''}"><div class="titre">${nouveau?'<span class="pastille-neuf">NOUVEAU</span> ':''}${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
   let html = '', jourCourant = '';
+  const titresAffiches = [];
   potinsCloud.filter(unique).forEach(p=>{
-    const j = p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'}) : 'Récents';
-    if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">${j}</div>`; }
-    html += potinHtml(p, 'Potin frais');
+    const d = p.created_at ? new Date(p.created_at) : null;
+    const j = d ? d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'}) : 'Récents';
+    if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">📅 ${j}</div>`; }
+    const tl = String(p.titre||'').trim().toLowerCase();
+    const nouveau = !dejaLus.has(tl);
+    titresAffiches.push(tl);
+    html += potinHtml(p, 'Potin', nouveau);
   });
   const baseU = POTINS_BASE.filter(unique);
   if(baseU.length){
-    html += `<div class="jour">Avant le tournoi</div>`;
-    baseU.forEach(p=>{ html += potinHtml(p, p.tag); });
+    html += `<div class="jour">📅 Avant le tournoi</div>`;
+    baseU.forEach(p=>{ html += potinHtml(p, p.tag, false); });
   }
   $('liste-potins').innerHTML = html;
+  /* badge sur l'onglet Potins */
+  const onglet = document.querySelector('nav button[data-sec=potins]');
+  if(onglet){
+    const n = nbPotinsNouveaux();
+    let b = onglet.querySelector('.nav-badge');
+    if(n>0){ if(!b){ b=document.createElement('span'); b.className='nav-badge'; onglet.appendChild(b);} b.textContent=n; }
+    else if(b){ b.remove(); }
+  }
+  /* si on est sur l'onglet potins, on marque comme lus après affichage */
+  if(document.querySelector('#sec-potins.actif')) setTimeout(()=>{ marquerPotinsVus(titresAffiches); const b=document.querySelector('nav button[data-sec=potins] .nav-badge'); if(b)b.remove(); }, 1500);
 }
 async function ajouterPotin(){
   const titre = $('potin-titre').value.trim(), contenu = $('potin-contenu').value.trim();
@@ -1420,6 +1462,68 @@ async function jugerDuel(id, verdict){
     toast('Verdict rendu — points transférés ⚔️');
     toutAfficher();
   }catch(e){ toast('Échec du verdict'); }
+}
+
+/* ============ RÉCAP DE JOURNÉE 🎬📅 ============ */
+function joursAvecResultats(){
+  const jours = {};
+  M.forEach(m=>{ if(resultats[m.id]){ const j = jourCle(m); (jours[j]=jours[j]||[]).push(m); } });
+  return jours;
+}
+function boutonRecapJour(){
+  const z = $('bouton-recap-jour');
+  if(!z) return;
+  const jours = joursAvecResultats();
+  const clefs = Object.keys(jours);
+  if(!clefs.length){ z.innerHTML=''; return; }
+  /* dernier jour = celui du match le plus récent joué */
+  let dernierJour = null, dernierTs = 0;
+  Object.entries(jours).forEach(([j,ms])=>{ ms.forEach(m=>{ if(m.dt.getTime()>dernierTs){ dernierTs=m.dt.getTime(); dernierJour=j; } }); });
+  const lbl = jours[dernierJour][0].dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
+  z.innerHTML = `<button class="btn" style="width:100%;margin:10px 0;background:transparent;border:1px solid var(--or);color:var(--or);font-weight:700" onclick="lancerRecapJour('${dernierJour}')">🎬 Revoir la journée de ${lbl} — pari par pari</button>`;
+}
+function lancerRecapJour(jourClef){
+  const jours = joursAvecResultats();
+  const matchs = (jours[jourClef]||[]).slice().sort((a,b)=>a.dt-b.dt);
+  if(!matchs.length) return;
+  const lbl = matchs[0].dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
+  const etapes = [];
+  etapes.push(`<div class="etape"><div class="eti-r">🎬 Le récap de la journée</div><h3>${lbl}</h3><div class="ligne-r" style="color:var(--gris)">${matchs.length} match${matchs.length>1?'s':''} · l'évolution pari par pari</div><div class="punch">Préparez le pop-corn. Et les mouchoirs, pour certains.</div></div>`);
+  matchs.forEach((m,idx)=>{
+    const re = resultats[m.id];
+    const cl = calculTotaux(x => x.dt.getTime() <= m.dt.getTime());
+    const lignesPts = PARTICIPANTS.map(p=>{
+      const pr = pronos[p] && pronos[p][m.id];
+      if(!pr) return `<div class="ligne-r"><span style="color:var(--gris)">${p} : absent</span></div>`;
+      const t = ptsTotal(pr, re);
+      const emo = t>=4?'🔥':t===3?'🎯':t>0?'👍':t===0?'😬':'💀';
+      return `<div class="ligne-r">${p} : <b>${pr.score_a}-${pr.score_b}</b> → <b class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t}</b> ${emo}</div>`;
+    }).join('');
+    const lignesCl = cl.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
+    etapes.push(`<div class="etape"><div class="eti-r">Match ${idx+1}/${matchs.length}</div><h3 style="font-size:20px">${m.a} ${re.score_a}-${re.score_b} ${m.b}</h3>${lignesPts}<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><div class="eti-r">classement après ce match</div>${lignesCl}</div></div>`);
+  });
+  const clJour = calculTotaux(x => x.dt.getTime() <= matchs[matchs.length-1].dt.getTime());
+  const lignesFinal = clJour.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
+  const leader = clJour[0], dernier = clJour[clJour.length-1];
+  let punchFinale = 'Une journée de plus dans les livres. Demain, tout peut basculer.';
+  if(leader && dernier && leader.p!==dernier.p && leader.total>dernier.total){
+    const pf = [
+      `${leader.p} dort en tête ce soir. ${dernier.p} dort. C'est déjà ça.`,
+      `Au sommet : ${leader.p}. Tout en bas, fidèle au poste : ${dernier.p}.`,
+      `${leader.p} mène la danse, ${dernier.p} cherche encore la piste.`,
+      `Journée pliée : ${leader.p} devant, ${dernier.p} qui jure qu'il « se rattrapera demain ».`
+    ];
+    punchFinale = pf[(matchs.length + clJour.length) % pf.length];
+  }
+  etapes.push(`<div class="etape"><div class="eti-r">🏆 Le classement du soir</div>${lignesFinal}<div class="punch">🎙️ ${punchFinale}</div></div>`);
+
+  let etape = 0;
+  let div = document.getElementById('reveal-overlay');
+  if(!div){ div = document.createElement('div'); div.id='reveal-overlay'; div.className='reveal'; document.body.appendChild(div); }
+  div.style.display='flex';
+  const rendre = () => { div.innerHTML = etapes[etape] + `<div class="suite">${etape<etapes.length-1?'Touche pour la suite ('+(etape+1)+'/'+etapes.length+')':'Touche pour fermer'}</div>`; };
+  div.onclick = () => { etape++; if(etape>=etapes.length){ div.style.display='none'; } else rendre(); };
+  rendre();
 }
 
 /* ============ RÉCAP CINÉMATIQUE 🎬 ============ */
