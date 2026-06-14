@@ -57,6 +57,7 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .fam-l .pts{margin-left:auto;font-weight:800;font-family:'Space Grotesk',monospace}
 .fam-ch-l{font-size:11.5px;color:var(--gris);font-style:italic;margin:0 0 5px 62px}
 .fam-spacer{flex:1}
+.fam-attente{font-size:12px;color:var(--gris);font-style:italic}
 .fam-tags{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px 62px}
 .ptag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;white-space:nowrap}
 .tag-win{background:rgba(46,196,169,.18);color:#5fe0c4;border:1px solid rgba(46,196,169,.4)}
@@ -328,7 +329,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.18';
+const APP_VERSION = '9.19';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -865,6 +866,15 @@ function carteMatch(m, modePronos){
     }
     if(!pr) return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-no">n'a pas parié 🙈</span></div>`;
     const t = ptsTotal(pr, re);
+    /* match commencé mais pas encore validé : on montre les pronos de chacun (score + bonus), sans points ni verdict */
+    if(t===null){
+      const tags = [];
+      tags.push(`<span class="ptag tag-neutre">Score ${pr.score_a}-${pr.score_b}</span>`);
+      if(pr.buteur) tags.push(`<span class="ptag tag-neutre">⚽ ${pr.buteur}</span>`);
+      if(pr.btts===true||pr.btts===false) tags.push(`<span class="ptag tag-neutre">${pr.btts?'Les 2 marquent':'Aucun des 2'}</span>`);
+      if(pr.en_or) tags.push(`<span class="ptag tag-or">🌟 Match en Or</span>`);
+      return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-spacer"></span><span class="fam-attente">en attente</span></div><div class="fam-tags">${tags.join('')}</div>`;
+    }
     let pts = '', chambre = '', etiquettes = '';
     if(t!==null){
       pts = `<span class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t}</span>`;
