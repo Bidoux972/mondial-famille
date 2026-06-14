@@ -162,6 +162,12 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .potin{background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--corail);border-radius:12px;padding:14px;margin-bottom:10px}
 .potin-neuf{border-left-color:var(--or);box-shadow:0 0 0 1px var(--or)}
 .pastille-neuf{background:var(--or);color:#0E1B2C;font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 6px;border-radius:6px;vertical-align:middle}
+.pastille-hier{background:var(--lagon);color:#0E1B2C}
+.bonus-zone{margin-top:10px;padding:11px 12px;background:var(--panneau2);border:1px dashed var(--or);border-radius:10px}
+.bonus-titre{font-size:12px;font-weight:800;color:var(--or);margin-bottom:8px}
+.bonus-l{display:block;font-size:12.5px;color:var(--creme);font-weight:600;margin:8px 0 3px}
+.bonus-l .bonus-pts{font-weight:400;color:var(--gris);font-size:11.5px}
+.bonus-zone select,.bonus-zone input{width:100%;margin:0}
 .nav-badge{position:absolute;top:2px;right:50%;transform:translateX(14px);background:var(--corail);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
 .potin .titre{font-weight:700;margin-bottom:4px}
 .potin .texte{font-size:14px;color:#cfd9e4;line-height:1.45}
@@ -313,7 +319,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.13';
+const APP_VERSION = '9.14';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -834,22 +840,28 @@ function carteMatch(m, modePronos){
       <button class="btn" onclick="sauverProno(${m.id})">${monPr ? 'Modifier' : 'Valider'}</button>
       ${monPr ? '<span class="ok">✓</span>' : ''}
     </div>
-    <select id="bu-${m.id}" onchange="document.getElementById('but-${m.id}').style.display=this.value==='__autre__'?'':'none'">
-      <option value="">⚽ Buteur : +2 s'il marque / −1 sinon — facultatif</option>
-      ${optsA?`<optgroup label="${F[m.a]} ${m.a}">${optsA}</optgroup>`:''}
-      ${optsB?`<optgroup label="${F[m.b]} ${m.b}">${optsB}</optgroup>`:''}
-      <option value="__autre__" ${buteurActuel&&!connu?'selected':''}>Autre joueur…</option>
-    </select>
-    <input type="text" id="but-${m.id}" placeholder="Nom du buteur" value="${buteurActuel&&!connu?buteurActuel.replace(/"/g,'&quot;'):''}" style="display:${buteurActuel&&!connu?'':'none'}">
-    <select id="bt-${m.id}">
-      <option value="">🥅 « Les 2 équipes marquent » : +1 juste / −1 faux — facultatif</option>
-      <option value="oui" ${bttsVal==='oui'?'selected':''}>Oui, les deux marquent</option>
-      <option value="non" ${bttsVal==='non'?'selected':''}>Non</option>
-    </select>
-    <select id="or-${m.id}">
-      <option value="">Match normal</option>
-      <option value="or" ${monPr&&monPr.en_or?'selected':''}>🌟 MATCH EN OR — tout est doublé, gains ET pertes (1 par jour)</option>
-    </select>`;
+    <div class="bonus-zone">
+      <div class="bonus-titre">🎁 Paris bonus (facultatifs — à toi de voir si tu oses)</div>
+      <label class="bonus-l">⚽ Un buteur ? <span class="bonus-pts">+2 s'il marque / −1 sinon</span></label>
+      <select id="bu-${m.id}" onchange="document.getElementById('but-${m.id}').style.display=this.value==='__autre__'?'':'none'">
+        <option value="">— Je ne parie pas de buteur —</option>
+        ${optsA?`<optgroup label="${F[m.a]} ${m.a}">${optsA}</optgroup>`:''}
+        ${optsB?`<optgroup label="${F[m.b]} ${m.b}">${optsB}</optgroup>`:''}
+        <option value="__autre__" ${buteurActuel&&!connu?'selected':''}>Autre joueur…</option>
+      </select>
+      <input type="text" id="but-${m.id}" placeholder="Nom du buteur" value="${buteurActuel&&!connu?buteurActuel.replace(/"/g,'&quot;'):''}" style="display:${buteurActuel&&!connu?'':'none'}">
+      <label class="bonus-l">🥅 Les 2 équipes vont marquer ? <span class="bonus-pts">+1 juste / −1 faux</span></label>
+      <select id="bt-${m.id}">
+        <option value="">— Je ne parie pas là-dessus —</option>
+        <option value="oui" ${bttsVal==='oui'?'selected':''}>Oui, les deux marquent</option>
+        <option value="non" ${bttsVal==='non'?'selected':''}>Non, au moins une équipe reste à 0</option>
+      </select>
+      <label class="bonus-l">🌟 Match en Or ? <span class="bonus-pts">tout ×2 — 1 seul par jour</span></label>
+      <select id="or-${m.id}">
+        <option value="">— Match normal —</option>
+        <option value="or" ${monPr&&monPr.en_or?'selected':''}>🌟 OUI, je double tout sur ce match (gains ET pertes)</option>
+      </select>
+    </div>`;
   } else if(monPr){
     const base = points(monPr, re), bo = bonus(monPr, re), tot = ptsTotal(monPr, re);
     let detail = '';
@@ -1245,34 +1257,42 @@ async function sauverEcurie(eq){
 }
 
 /* ============ POTINS ============ */
-function potinsVus(){ try{ return JSON.parse(localStorage.getItem('mf_potins_vus')||'[]'); }catch(e){ return []; } }
-function marquerPotinsVus(titres){ try{ const v = new Set(potinsVus()); titres.forEach(t=>v.add(t)); localStorage.setItem('mf_potins_vus', JSON.stringify([...v])); }catch(e){} }
+function freshLabel(created_at){
+  if(!created_at) return null;
+  const d = new Date(created_at);
+  const auj = new Date().toLocaleDateString('fr-CA',{timeZone:'America/Martinique'});
+  const jourP = d.toLocaleDateString('fr-CA',{timeZone:'America/Martinique'});
+  const hier = new Date(Date.now()-864e5).toLocaleDateString('fr-CA',{timeZone:'America/Martinique'});
+  if(jourP===auj) return 'AUJOURD\'HUI';
+  if(jourP===hier) return 'HIER';
+  return null;
+}
 function nbPotinsNouveaux(){
-  const vus = new Set(potinsVus());
   const titresUniques = new Set();
-  return potinsCloud.filter(p=>{ const t=String(p.titre||'').trim().toLowerCase(); if(titresUniques.has(t))return false; titresUniques.add(t); return !vus.has(t); }).length;
+  return potinsCloud.filter(p=>{
+    const t=String(p.titre||'').trim().toLowerCase();
+    if(titresUniques.has(t))return false; titresUniques.add(t);
+    return freshLabel(p.created_at)==='AUJOURD\'HUI';
+  }).length;
 }
 function potins(){
   const vus = new Set();
-  const dejaLus = new Set(potinsVus());
   const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
-  const potinHtml = (p, tag, nouveau) => `<div class="potin${nouveau?' potin-neuf':''}"><div class="titre">${nouveau?'<span class="pastille-neuf">NOUVEAU</span> ':''}${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
+  const potinHtml = (p, tag, fresh) => `<div class="potin${fresh==='AUJOURD\'HUI'?' potin-neuf':''}"><div class="titre">${fresh?`<span class="pastille-neuf${fresh==='HIER'?' pastille-hier':''}">${fresh}</span> `:''}${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
   let html = '', jourCourant = '';
   potinsCloud.filter(unique).forEach(p=>{
     const d = p.created_at ? new Date(p.created_at) : null;
     const j = d ? d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'}) : 'Récents';
     if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">📅 ${j}</div>`; }
-    const tl = String(p.titre||'').trim().toLowerCase();
-    const nouveau = !dejaLus.has(tl);
-    html += potinHtml(p, 'Potin', nouveau);
+    html += potinHtml(p, 'Potin', freshLabel(p.created_at));
   });
   const baseU = POTINS_BASE.filter(unique);
   if(baseU.length){
     html += `<div class="jour">📅 Avant le tournoi</div>`;
-    baseU.forEach(p=>{ html += potinHtml(p, p.tag, false); });
+    baseU.forEach(p=>{ html += potinHtml(p, p.tag, null); });
   }
   $('liste-potins').innerHTML = html;
-  /* badge sur l'onglet Potins */
+  /* badge sur l'onglet Potins = nombre de potins du jour */
   const onglet = document.querySelector('nav button[data-sec=potins]');
   if(onglet){
     const n = nbPotinsNouveaux();
@@ -1280,17 +1300,6 @@ function potins(){
     if(n>0){ if(!b){ b=document.createElement('span'); b.className='nav-badge'; onglet.appendChild(b);} b.textContent=n; }
     else if(b){ b.remove(); }
   }
-}
-/* marque tous les potins actuels comme lus (appelé à l'ouverture de l'onglet Potins) */
-function marquerTousPotinsLus(){
-  const titres = [];
-  const vus = new Set();
-  potinsCloud.forEach(p=>{ const t=String(p.titre||'').trim().toLowerCase(); if(!vus.has(t)){ vus.add(t); titres.push(t); } });
-  marquerPotinsVus(titres);
-  const b = document.querySelector('nav button[data-sec=potins] .nav-badge');
-  if(b) b.remove();
-  document.querySelectorAll('.potin-neuf').forEach(el=>el.classList.remove('potin-neuf'));
-  document.querySelectorAll('.pastille-neuf').forEach(el=>el.remove());
 }
 async function ajouterPotin(){
   const titre = $('potin-titre').value.trim(), contenu = $('potin-contenu').value.trim();
@@ -1872,11 +1881,7 @@ async function appliquerMajJour(){
   }catch(e){ toast('Échec de la mise à jour'); }
 }
 
-let _etaitSurPotins = false;
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
-  /* si on QUITTE l'onglet potins, on marque les potins comme lus (ils restaient visibles pendant la lecture) */
-  if(_etaitSurPotins && b.dataset.sec!=='potins') marquerTousPotinsLus();
-  _etaitSurPotins = (b.dataset.sec==='potins');
   document.querySelectorAll('nav button').forEach(x=>x.classList.remove('actif'));
   document.querySelectorAll('section').forEach(x=>x.classList.remove('actif'));
   b.classList.add('actif'); $('sec-'+b.dataset.sec).classList.add('actif');
