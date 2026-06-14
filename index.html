@@ -313,11 +313,15 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.8';
+const APP_VERSION = '9.9';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
 const PARTICIPANTS = ['Bidou','Ginou','Véro','Alex'];
+const GENRE = {Bidou:'h', Ginou:'f', Véro:'f', Alex:'h'};
+const ilElle = p => GENRE[p]==='f' ? 'elle' : 'il';
+const leLa = p => GENRE[p]==='f' ? 'la' : 'le';
+const accord = (p, masc, fem) => GENRE[p]==='f' ? fem : masc;
 const ADMIN_PSEUDO = 'Bidou';
 
 /* ============ DRAPEAUX ============ */
@@ -1497,36 +1501,95 @@ function lancerRecapJour(jourClef){
   const matchs = (jours[jourClef]||[]).slice().sort((a,b)=>a.dt-b.dt);
   if(!matchs.length) return;
   const lbl = matchs[0].dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
+
+  /* on récolte tous les "scores du jour" pour repérer les moments forts */
+  const perfs = []; /* {p, m, pr, t, detail} */
+  matchs.forEach(m=>{
+    const re = resultats[m.id];
+    PARTICIPANTS.forEach(p=>{
+      const pr = pronos[p] && pronos[p][m.id];
+      if(pr){ perfs.push({p, m, pr, re, t: ptsTotal(pr, re)}); }
+    });
+  });
+  const detailLigne = (pr, re) => {
+    const base = points(pr, re), bo = bonus(pr, re), parts = [];
+    parts.push(base===3?'score exact +3':base===1?'tendance +1':'score 0');
+    if(pr.buteur) parts.push(bo.but===2?'buteur ✓ +2':'buteur ✗ −1');
+    if(pr.btts===true||pr.btts===false) parts.push(bo.btts===1?'2 marquent ✓ +1':'2 marquent ✗ −1');
+    let txt = parts.join(' · ');
+    if(pr.en_or){ txt = `(${txt}) ×2 🌟`; }
+    return txt;
+  };
+
   const etapes = [];
-  etapes.push(`<div class="etape"><div class="eti-r">🎬 Le récap de la journée</div><h3>${lbl}</h3><div class="ligne-r" style="color:var(--gris)">${matchs.length} match${matchs.length>1?'s':''} · l'évolution pari par pari</div><div class="punch">Préparez le pop-corn. Et les mouchoirs, pour certains.</div></div>`);
+
+  /* ACTE 1 — intro */
+  etapes.push(`<div class="etape"><div class="eti-r">🎬 Le grand récap</div><h3>${lbl}</h3>
+    <div class="ligne-r" style="color:var(--gris)">${matchs.length} match${matchs.length>1?'s':''} · ${perfs.length} paris en jeu</div>
+    <div class="punch">Lumières, ralentis, et règlements de comptes. C'est parti.</div></div>`);
+
+  /* UN ACTE PAR MATCH — dévoilement avec détail + une phrase qui raconte */
   matchs.forEach((m,idx)=>{
     const re = resultats[m.id];
-    const cl = calculTotaux(x => x.dt.getTime() <= m.dt.getTime());
-    const lignesPts = PARTICIPANTS.map(p=>{
-      const pr = pronos[p] && pronos[p][m.id];
-      if(!pr) return `<div class="ligne-r"><span style="color:var(--gris)">${p} : absent</span></div>`;
-      const t = ptsTotal(pr, re);
-      const emo = t>=4?'🔥':t===3?'🎯':t>0?'👍':t===0?'😬':'💀';
-      return `<div class="ligne-r">${p} : <b>${pr.score_a}-${pr.score_b}</b> → <b class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t}</b> ${emo}</div>`;
+    const joueurs = perfs.filter(x=>x.m.id===m.id);
+    const lignes = PARTICIPANTS.map(p=>{
+      const j = joueurs.find(x=>x.p===p);
+      if(!j) return `<div class="ligne-r"><span style="color:var(--gris)">${p} : ${accord(p,'absent','absente')} ce coup-ci 🙈</span></div>`;
+      const emo = j.t>=4?'🔥':j.t===3?'🎯':j.t>0?'👍':j.t===0?'😬':'💀';
+      return `<div class="ligne-r">${p} : <b>${j.pr.score_a}-${j.pr.score_b}</b> · <span style="color:var(--gris);font-size:13px">${detailLigne(j.pr, re)}</span> → <b class="pts p${j.t>=3?3:j.t>=1?1:0}">${j.t>0?'+':''}${j.t}</b> ${emo}</div>`;
     }).join('');
-    const lignesCl = cl.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
-    etapes.push(`<div class="etape"><div class="eti-r">Match ${idx+1}/${matchs.length}</div><h3 style="font-size:20px">${m.a} ${re.score_a}-${re.score_b} ${m.b}</h3>${lignesPts}<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><div class="eti-r">classement après ce match</div>${lignesCl}</div></div>`);
+    /* la phrase qui raconte ce match */
+    const best = joueurs.length ? joueurs.reduce((a,b)=>b.t>a.t?b:a) : null;
+    const worst = joueurs.length ? joueurs.reduce((a,b)=>b.t<a.t?b:a) : null;
+    let raconte = '';
+    if(best && worst && best.t>worst.t){
+      if(best.t>=4) raconte = `${best.p} a flairé ${leLa(m.a)===''?'':''}le coup et rafle gros. ${worst.p}, de ${accord(worst.p,'son','sa')} côté, ${accord(worst.p,'repartira bredouille','repartira bredouille')}.`;
+      else if(best.t===3) raconte = `Score exact pour ${best.p} ! Pendant ce temps, ${worst.p} ${accord(worst.p,'révisait','révisait')} visiblement un autre match.`;
+      else raconte = `Petit avantage à ${best.p} sur ce match. ${worst.p} ${accord(worst.p,'s\'en mord les doigts','s\'en mord les doigts')}.`;
+    } else if(best && worst && best.t===worst.t){
+      raconte = `Tout le monde logé à la même enseigne sur ce match. Pas de vainqueur, pas de chambrage. Frustrant.`;
+    }
+    etapes.push(`<div class="etape"><div class="eti-r">Match ${idx+1}/${matchs.length}</div>
+      <h3 style="font-size:21px">${m.a} ${re.score_a}-${re.score_b} ${m.b}</h3>
+      ${re.buteurs?`<div class="ligne-r" style="color:var(--gris);font-size:12px">⚽ ${re.buteurs}</div>`:''}
+      <div style="margin-top:8px">${lignes}</div>
+      ${raconte?`<div class="punch">🎙️ ${raconte}</div>`:''}</div>`);
   });
+
+  /* ACTE — les moments forts du jour */
+  if(perfs.length){
+    const top = perfs.reduce((a,b)=>b.t>a.t?b:a);
+    const flop = perfs.reduce((a,b)=>b.t<a.t?b:a);
+    let momentsHtml = '';
+    if(top.t>0) momentsHtml += `<div class="ligne-r">🏅 <b>Le coup du jour</b> : ${top.p}, ${top.t>0?'+':''}${top.t} pts sur ${top.m.a}-${top.m.b}. ${accord(top.p,'Chapeau l\'artiste','Chapeau l\'artiste')}.</div>`;
+    if(flop.t<0) momentsHtml += `<div class="ligne-r">🤡 <b>Le plongeon du jour</b> : ${flop.p}, ${flop.t} pts sur ${flop.m.a}-${flop.m.b}. ${accord(flop.p,'On a tous nos mauvais jours','On a toutes nos mauvaises journées')}.</div>`;
+    const enOrs = perfs.filter(x=>x.pr.en_or);
+    if(enOrs.length){
+      const orWin = enOrs.filter(x=>x.t>0), orLose = enOrs.filter(x=>x.t<0);
+      if(orWin.length) momentsHtml += `<div class="ligne-r">🌟 <b>Match en Or gagnant</b> : ${orWin.map(x=>x.p).join(', ')}. Le poker a payé.</div>`;
+      if(orLose.length) momentsHtml += `<div class="ligne-r">💀 <b>Match en Or qui explose</b> : ${orLose.map(x=>x.p).join(', ')}. ×2 sur les pertes aussi, aïe.</div>`;
+    }
+    if(momentsHtml) etapes.push(`<div class="etape"><div class="eti-r">⭐ Les moments forts</div>${momentsHtml}</div>`);
+  }
+
+  /* ACTE FINAL — le classement du soir + grande punchline genrée */
   const clJour = calculTotaux(x => x.dt.getTime() <= matchs[matchs.length-1].dt.getTime());
   const lignesFinal = clJour.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
-  const leader = clJour[0], dernier = clJour[clJour.length-1];
+  const leader = clJour[0], lanterne = clJour[clJour.length-1];
   let punchFinale = 'Une journée de plus dans les livres. Demain, tout peut basculer.';
-  if(leader && dernier && leader.p!==dernier.p && leader.total>dernier.total){
+  if(leader && lanterne && leader.p!==lanterne.p && leader.total>lanterne.total){
     const pf = [
-      `${leader.p} dort en tête ce soir. ${dernier.p} dort. C'est déjà ça.`,
-      `Au sommet : ${leader.p}. Tout en bas, fidèle au poste : ${dernier.p}.`,
-      `${leader.p} mène la danse, ${dernier.p} cherche encore la piste.`,
-      `Journée pliée : ${leader.p} devant, ${dernier.p} qui jure qu'il « se rattrapera demain ».`
+      `${leader.p} dort en tête ce soir, ${accord(leader.p,'tranquille','tranquille')}. ${lanterne.p} dort aussi. C'est déjà ça.`,
+      `Au sommet : ${leader.p}. Tout en bas, ${accord(lanterne.p,'fidèle au poste','fidèle au poste')} : ${lanterne.p}.`,
+      `${leader.p} mène la danse. ${lanterne.p} cherche encore la piste — et les pas.`,
+      `Journée pliée : ${leader.p} devant, ${lanterne.p} qui jure déjà que demain, ${ilElle(lanterne.p)} ${accord(lanterne.p,'se rattrapera','se rattrapera')}. On note.`,
+      `${leader.p} prend le pouvoir. ${lanterne.p}… prend des notes.`
     ];
-    punchFinale = pf[(matchs.length + clJour.length) % pf.length];
+    punchFinale = pf[(matchs.length + clJour.length + new Date().getDate()) % pf.length];
   }
   etapes.push(`<div class="etape"><div class="eti-r">🏆 Le classement du soir</div>${lignesFinal}<div class="punch">🎙️ ${punchFinale}</div></div>`);
 
+  /* affichage overlay */
   let etape = 0;
   let div = document.getElementById('reveal-overlay');
   if(!div){ div = document.createElement('div'); div.id='reveal-overlay'; div.className='reveal'; document.body.appendChild(div); }
