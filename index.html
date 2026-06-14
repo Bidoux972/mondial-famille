@@ -320,7 +320,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.15';
+const APP_VERSION = '9.16';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -765,18 +765,61 @@ async function sauverAvm(id){
 }
 
 /* ============ MATCHS ============ */
+let _chambreVues = new Set();
 function chambrage(p, pr, re, t){
+  if(t===null) return '';
   const base = points(pr, re);
   const bo = bonus(pr, re);
-  if(t>=6) return `🔥 ${p} a TOUT explosé sur ce match. Incliné.`;
-  if(base===3 && t>=4) return `🎯 Score pile poil ET le bonus. ${p} sentait le coup.`;
-  if(base===3) return `🎯 Score exact ! ${p} avait vu juste.`;
-  if(bo.but===2) return `⚽ Le buteur trouvé, joli flair de ${p}.`;
-  if(t<0 && pr.en_or) return `💀 Match en Or qui se retourne… aïe pour ${p}.`;
-  if(t<0) return `❌ Pari raté, ${p} lâche des points. Ça pique.`;
-  if(base===1) return `👍 Bonne tendance, ${p} sauve les meubles.`;
-  if(base===0) return `😬 À côté de la plaque, ${p}.`;
-  return '';
+  const pick = arr => {
+    const dispo = arr.filter(x => !_chambreVues.has(x));
+    const pool = dispo.length ? dispo : arr;
+    if(!dispo.length) arr.forEach(x => _chambreVues.delete(x));
+    const c = pool[Math.floor(Math.random()*pool.length)];
+    _chambreVues.add(c); return c;
+  };
+  /* on juge sur le TOTAL réel, pas sur le seul score principal */
+  if(t>=6) return pick([
+    `🔥 ${p} a TOUT explosé. ${accord(p,'Incliné','Inclinée')}.`,
+    `🔥 Carton plein pour ${p}. On range les autres au vestiaire.`,
+    `🔥 ${p} en mode devin absolu. Personne ne suit.`
+  ]);
+  if(t>=4) return pick([
+    `🎯 Score ET bonus pour ${p}. ${accord(p,'Bien vu','Bien vue')}, l'artiste.`,
+    `🎯 ${p} rafle le paquet. Le flair à l'état pur.`,
+    `🎯 Gros coup de ${p}. ${accord(p,'Calculé','Calculée') ? '' : ''}Du grand art.`,
+    `🎯 ${p} empoche tout. Les autres regardent.`
+  ]);
+  if(base===3) return pick([
+    `🎯 Score exact ! ${p} avait vu juste.`,
+    `🎯 Pile-poil pour ${p}. Dans le mille.`,
+    `🎯 ${p} a deviné au millimètre. Chapeau.`
+  ]);
+  if(t>=1) return pick([
+    `👍 ${p} grappille des points malins, bonus compris.`,
+    `👍 Pas le score, mais ${p} sauve les meubles avec le bonus.`,
+    `👍 ${p} s'en sort bien, le pari bonus paie.`,
+    `👍 Petit profit pour ${p}. ${accord(p,'Malin','Maligne')}.`,
+    `👍 ${p} repart avec du positif. Bien joué.`
+  ]);
+  if(t===0) return pick([
+    `😬 ${p} repart bredouille, ni gain ni perte.`,
+    `😬 Zéro pointé pour ${p}. On efface, on recommence.`,
+    `😬 ${p} passe à côté. Ça arrive.`,
+    `😬 Rien pour ${p} ce coup-ci. La prochaine sera la bonne.`
+  ]);
+  /* t < 0 */
+  if(pr.en_or) return pick([
+    `💀 Match en Or qui explose pour ${p}. Le poker ×2 fait mal.`,
+    `💀 Aïe, le 🌟 se retourne contre ${p}. Double peine.`,
+    `💀 ${p} avait misé gros avec le Match en Or. Mauvais pari.`
+  ]);
+  return pick([
+    `❌ Pari raté, ${p} lâche des points. Ça pique.`,
+    `❌ ${p} dans le rouge. Le bonus s'est retourné.`,
+    `❌ Mauvaise pioche pour ${p}. ${accord(p,'Refroidi','Refroidie')}.`,
+    `❌ ${p} perd des plumes sur ce match. Aïe.`,
+    `❌ Le pari de trop pour ${p}. ${accord(p,'Puni','Punie')}.`
+  ]);
 }
 function detailCalcul(pr, re){
   const base = points(pr, re);
@@ -804,6 +847,7 @@ function carteMatch(m, modePronos){
   if(re && re.cartons) infosResultat += `<div class="monprono">🟥 ${re.cartons}</div>`;
 
   /* statut famille : avant le coup d'envoi on voit qui a parié (pas quoi) ; après, tout est révélé avec chambrage */
+  _chambreVues = new Set();
   const lignesFamille = PARTICIPANTS.map(p => {
     const pr = pronos[p] && pronos[p][m.id];
     if(!verrou){
