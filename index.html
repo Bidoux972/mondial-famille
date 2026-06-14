@@ -47,11 +47,21 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 @keyframes pulse-direct{0%,100%{opacity:1}50%{opacity:.55}}
 @media (prefers-reduced-motion: reduce){.badge-direct{animation:none}}
 /* encadré paris famille */
-.bloc-famille{margin-top:10px;padding:9px 11px;background:var(--panneau2);border:1px solid var(--ligne);border-radius:10px;font-size:12.5px;line-height:1.8;color:var(--creme)}
+.bloc-famille{margin-top:10px;padding:11px 13px;background:var(--panneau2);border:1px solid var(--ligne);border-radius:10px}
+.bloc-famille .fam-titre{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:8px}
+.fam-l{display:flex;align-items:center;gap:8px;padding:3px 0}
+.fam-l .fam-n{font-weight:700;font-size:13px;min-width:54px}
+.fam-l .fam-d{font-size:13px;color:var(--creme)}
+.fam-l .fam-ok{font-size:12px;color:var(--lagon);font-weight:600}
+.fam-l .fam-no{font-size:12px;color:var(--corail);font-weight:600}
+.fam-l .pts{margin-left:auto;font-weight:800;font-family:'Space Grotesk',monospace}
+.fam-ch-l{font-size:11.5px;color:var(--gris);font-style:italic;margin:0 0 5px 62px}
 /* barre live au-dessus du hero */
-.live-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,107,94,.12);border:1px solid var(--corail);border-radius:12px;padding:11px 14px;margin-bottom:10px;cursor:pointer}
+.live-bar{background:rgba(255,107,94,.12);border:1px solid var(--corail);border-radius:12px;padding:11px 14px;margin-bottom:10px}
+.live-bar .live-haut{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer}
 .live-bar .live-match{font-weight:800;font-size:14px;color:var(--creme)}
 .live-bar .live-prono{margin-left:auto;font-size:12px;color:var(--gris)}
+.live-bar .live-actions{display:flex;gap:8px;margin-top:10px}
 /* écran identité */
 .identite{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin:14px 0}
 .identite label{display:block;font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
@@ -298,7 +308,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.5';
+const APP_VERSION = '9.6';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -651,10 +661,16 @@ function hero(){
     hd.style.display='';
     hd.innerHTML = lives.map(m=>{
       const monPr = pseudo && pronos[pseudo] ? pronos[pseudo][m.id] : null;
-      return `<div class="live-bar" onclick="goTab('matchs')">
-        <span class="badge-direct">● EN DIRECT</span>
-        <span class="live-match">${F[m.a]} ${m.a} – ${m.b} ${F[m.b]}</span>
-        <span class="live-prono">${monPr?`ton prono : ${monPr.score_a}-${monPr.score_b}`:'tu n\'as pas parié'}</span>
+      return `<div class="live-bar">
+        <div class="live-haut" onclick="goTab('matchs')">
+          <span class="badge-direct">● EN DIRECT</span>
+          <span class="live-match">${F[m.a]} ${m.a} – ${m.b} ${F[m.b]}</span>
+          <span class="live-prono">${monPr?`ton prono : ${monPr.score_a}-${monPr.score_b}`:'⚠️ tu n\'as pas parié'}</span>
+        </div>
+        <div class="live-actions">
+          <button class="btn" style="flex:1;font-size:12px;padding:8px" onclick="goTab('matchs')">👀 Voir les paris de tous</button>
+          <button class="btn corail" style="flex:1;font-size:12px;padding:8px" onclick="goTab('classement');setTimeout(()=>document.getElementById('zone-duels').scrollIntoView({behavior:'smooth'}),100)">⚔️ Lancer un duel</button>
+        </div>
       </div>`;
     }).join('');
   } else hd.style.display='none';
@@ -685,7 +701,7 @@ function hero(){
     </div>
     <div class="quand">${fmtJour(prochain.dt)} · ${fmtHeure(prochain.dt)} ${compte?`<span class="compte">(${compte})</span>`:''}</div>
     ${rappel}
-    ${avmDispo(prochain.id) ? `<div class="rappel-prono" style="color:var(--or);font-weight:700">Touche ici pour lire l'avant-match</div>` : ''}
+    ${avmDispo(prochain.id) ? `<button class="btn" style="display:block;width:100%;margin-top:12px;background:transparent;border:1px solid var(--or);color:var(--or);font-weight:700" onclick="event.stopPropagation();ouvrirAvm(${prochain.id})">📋 Lire l'avant-match · forces, faiblesses, compos</button>` : ''}
     ${puces}`;
   h.style.cursor = avmDispo(prochain.id)||admin ? 'pointer' : 'default';
   h.onclick = () => { if(avmDispo(prochain.id)||admin) ouvrirAvm(prochain.id); };
@@ -733,6 +749,19 @@ async function sauverAvm(id){
 }
 
 /* ============ MATCHS ============ */
+function chambrage(p, pr, re, t){
+  const base = points(pr, re);
+  const bo = bonus(pr, re);
+  if(t>=6) return `🔥 ${p} a TOUT explosé sur ce match. Incliné.`;
+  if(base===3 && t>=4) return `🎯 Score pile poil ET le bonus. ${p} sentait le coup.`;
+  if(base===3) return `🎯 Score exact ! ${p} avait vu juste.`;
+  if(bo.but===2) return `⚽ Le buteur trouvé, joli flair de ${p}.`;
+  if(t<0 && pr.en_or) return `💀 Match en Or qui se retourne… aïe pour ${p}.`;
+  if(t<0) return `❌ Pari raté, ${p} lâche des points. Ça pique.`;
+  if(base===1) return `👍 Bonne tendance, ${p} sauve les meubles.`;
+  if(base===0) return `😬 À côté de la plaque, ${p}.`;
+  return '';
+}
 function carteMatch(m, modePronos){
   const re = resultats[m.id];
   const monPr = pseudo && pronos[pseudo] ? pronos[pseudo][m.id] : null;
@@ -746,16 +775,26 @@ function carteMatch(m, modePronos){
   if(re && re.buteurs) infosResultat += `<div class="monprono">⚽ <b>${re.buteurs}</b></div>`;
   if(re && re.cartons) infosResultat += `<div class="monprono">🟥 ${re.cartons}</div>`;
 
-  /* statut famille : avant le coup d'envoi on voit qui a parié (pas quoi) ; après, tout est révélé */
-  const famille = PARTICIPANTS.map(p => {
+  /* statut famille : avant le coup d'envoi on voit qui a parié (pas quoi) ; après, tout est révélé avec chambrage */
+  const lignesFamille = PARTICIPANTS.map(p => {
     const pr = pronos[p] && pronos[p][m.id];
-    if(!verrou) return pr ? `${p} ✓` : `<span style="color:var(--corail)">${p} —</span>`;
-    if(!pr) return `<span style="color:var(--gris)">${p} —</span>`;
+    if(!verrou){
+      return pr
+        ? `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-ok">✓ a parié</span></div>`
+        : `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-no">— pas encore !</span></div>`;
+    }
+    if(!pr) return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-no">n'a pas parié 🙈</span></div>`;
     const t = ptsTotal(pr, re);
-    return `${p} <b>${pr.score_a}-${pr.score_b}</b>${pr.buteur?' ⚽'+pr.buteur:''}${pr.en_or?' 🌟':''}${t!==null?` <span class="pts p${t>=3?3:t>=1?1:0}">(${t>0?'+':''}${t})</span>`:''}`;
-  }).join(' · ');
+    const detail = `${pr.score_a}-${pr.score_b}${pr.buteur?' · ⚽'+pr.buteur:''}${pr.btts===true?' · 🥅oui':pr.btts===false?' · 🥅non':''}${pr.en_or?' · 🌟':''}`;
+    let pts = '', chambre = '';
+    if(t!==null){
+      pts = `<span class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t}</span>`;
+      chambre = `<span class="fam-ch">${chambrage(p, pr, re, t)}</span>`;
+    }
+    return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-d">${detail}</span>${pts}</div>${chambre?`<div class="fam-ch-l">${chambre}</div>`:''}`;
+  }).join('');
   const titreFamille = re ? '🏁 Les paris de la famille' : (verrou ? '🔒 Les paris (match en cours)' : '✏️ Qui a déjà parié ?');
-  const ligneFamille = `<div class="bloc-famille">${titreFamille}<br>${famille}</div>`;
+  const ligneFamille = `<div class="bloc-famille"><div class="fam-titre">${titreFamille}</div>${lignesFamille}</div>`;
 
   let bas = '';
   if(modePronos && pseudo && !verrou){
