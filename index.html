@@ -313,7 +313,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.7';
+const APP_VERSION = '9.8';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -901,7 +901,7 @@ function carteMatch(m, modePronos){
 function listeMatchs(){
   let liste = M;
   if(filtreMatchs==='venir') liste = M.filter(m=>!joue(m));
-  if(filtreMatchs==='joues') liste = M.filter(m=>joue(m));
+  if(filtreMatchs==='joues') liste = M.filter(m=>joue(m)).slice().sort((a,b)=>b.dt-a.dt);
   let html = '', jourCourant = '';
   liste.forEach(m=>{
     const j = fmtJour(m.dt);
@@ -1254,14 +1254,12 @@ function potins(){
   const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
   const potinHtml = (p, tag, nouveau) => `<div class="potin${nouveau?' potin-neuf':''}"><div class="titre">${nouveau?'<span class="pastille-neuf">NOUVEAU</span> ':''}${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
   let html = '', jourCourant = '';
-  const titresAffiches = [];
   potinsCloud.filter(unique).forEach(p=>{
     const d = p.created_at ? new Date(p.created_at) : null;
     const j = d ? d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'}) : 'Récents';
     if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">📅 ${j}</div>`; }
     const tl = String(p.titre||'').trim().toLowerCase();
     const nouveau = !dejaLus.has(tl);
-    titresAffiches.push(tl);
     html += potinHtml(p, 'Potin', nouveau);
   });
   const baseU = POTINS_BASE.filter(unique);
@@ -1278,8 +1276,17 @@ function potins(){
     if(n>0){ if(!b){ b=document.createElement('span'); b.className='nav-badge'; onglet.appendChild(b);} b.textContent=n; }
     else if(b){ b.remove(); }
   }
-  /* si on est sur l'onglet potins, on marque comme lus après affichage */
-  if(document.querySelector('#sec-potins.actif')) setTimeout(()=>{ marquerPotinsVus(titresAffiches); const b=document.querySelector('nav button[data-sec=potins] .nav-badge'); if(b)b.remove(); }, 1500);
+}
+/* marque tous les potins actuels comme lus (appelé à l'ouverture de l'onglet Potins) */
+function marquerTousPotinsLus(){
+  const titres = [];
+  const vus = new Set();
+  potinsCloud.forEach(p=>{ const t=String(p.titre||'').trim().toLowerCase(); if(!vus.has(t)){ vus.add(t); titres.push(t); } });
+  marquerPotinsVus(titres);
+  const b = document.querySelector('nav button[data-sec=potins] .nav-badge');
+  if(b) b.remove();
+  document.querySelectorAll('.potin-neuf').forEach(el=>el.classList.remove('potin-neuf'));
+  document.querySelectorAll('.pastille-neuf').forEach(el=>el.remove());
 }
 async function ajouterPotin(){
   const titre = $('potin-titre').value.trim(), contenu = $('potin-contenu').value.trim();
@@ -1473,14 +1480,17 @@ function joursAvecResultats(){
 function boutonRecapJour(){
   const z = $('bouton-recap-jour');
   if(!z) return;
-  const jours = joursAvecResultats();
-  const clefs = Object.keys(jours);
-  if(!clefs.length){ z.innerHTML=''; return; }
-  /* dernier jour = celui du match le plus récent joué */
-  let dernierJour = null, dernierTs = 0;
-  Object.entries(jours).forEach(([j,ms])=>{ ms.forEach(m=>{ if(m.dt.getTime()>dernierTs){ dernierTs=m.dt.getTime(); dernierJour=j; } }); });
-  const lbl = jours[dernierJour][0].dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
-  z.innerHTML = `<button class="btn" style="width:100%;margin:10px 0;background:transparent;border:1px solid var(--or);color:var(--or);font-weight:700" onclick="lancerRecapJour('${dernierJour}')">🎬 Revoir la journée de ${lbl} — pari par pari</button>`;
+  /* on ne propose que les journées ENTIÈREMENT terminées (tous les matchs du jour joués) */
+  const parJour = {};
+  M.forEach(m=>{ const j = jourCle(m); (parJour[j]=parJour[j]||[]).push(m); });
+  const joursComplets = Object.entries(parJour)
+    .filter(([j,ms]) => ms.every(m=>resultats[m.id]))
+    .map(([j,ms]) => ({j, ts: Math.max(...ms.map(m=>m.dt.getTime()))}))
+    .sort((a,b)=>b.ts-a.ts);
+  if(!joursComplets.length){ z.innerHTML=''; return; }
+  const dernier = joursComplets[0];
+  const lbl = parJour[dernier.j][0].dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
+  z.innerHTML = `<button class="btn" style="width:100%;margin:10px 0;background:transparent;border:1px solid var(--or);color:var(--or);font-weight:700" onclick="lancerRecapJour('${dernier.j}')">🎬 Revoir la journée de ${lbl} — pari par pari</button>`;
 }
 function lancerRecapJour(jourClef){
   const jours = joursAvecResultats();
@@ -1709,6 +1719,7 @@ document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()
   document.querySelectorAll('section').forEach(x=>x.classList.remove('actif'));
   b.classList.add('actif'); $('sec-'+b.dataset.sec).classList.add('actif');
   ficheOuverte = null; avmOuvert = null; renduAvm(); zoneEquipes();
+  if(b.dataset.sec==='potins') setTimeout(marquerTousPotinsLus, 800);
   window.scrollTo({top:0});
 }));
 document.querySelectorAll('#sec-matchs .filtres button').forEach(b=>b.addEventListener('click',()=>{
