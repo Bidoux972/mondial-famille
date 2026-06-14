@@ -56,6 +56,13 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .fam-l .fam-no{font-size:12px;color:var(--corail);font-weight:600}
 .fam-l .pts{margin-left:auto;font-weight:800;font-family:'Space Grotesk',monospace}
 .fam-ch-l{font-size:11.5px;color:var(--gris);font-style:italic;margin:0 0 5px 62px}
+.fam-spacer{flex:1}
+.fam-tags{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px 62px}
+.ptag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;white-space:nowrap}
+.tag-win{background:rgba(46,196,169,.18);color:#5fe0c4;border:1px solid rgba(46,196,169,.4)}
+.tag-lose{background:rgba(255,107,94,.15);color:#ff9b8f;border:1px solid rgba(255,107,94,.35)}
+.tag-neutre{background:var(--panneau2);color:var(--gris);border:1px solid var(--ligne)}
+.tag-or{background:rgba(245,180,60,.18);color:var(--or);border:1px solid rgba(245,180,60,.45)}
 .fam-calc{font-size:11px;color:var(--gris);margin:1px 0 0 62px;font-family:'Space Grotesk',monospace}
 /* barre live au-dessus du hero */
 .live-bar{background:rgba(255,107,94,.12);border:1px solid var(--corail);border-radius:12px;padding:11px 14px;margin-bottom:10px}
@@ -320,7 +327,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.16';
+const APP_VERSION = '9.17';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -857,14 +864,31 @@ function carteMatch(m, modePronos){
     }
     if(!pr) return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-no">n'a pas parié 🙈</span></div>`;
     const t = ptsTotal(pr, re);
-    const detail = `${pr.score_a}-${pr.score_b}${pr.buteur?' · ⚽'+pr.buteur:''}${pr.btts===true?' · 🥅oui':pr.btts===false?' · 🥅non':''}${pr.en_or?' · 🌟':''}`;
-    let pts = '', chambre = '', calcul = '';
+    let pts = '', chambre = '', etiquettes = '';
     if(t!==null){
       pts = `<span class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t}</span>`;
       chambre = chambrage(p, pr, re, t);
-      calcul = detailCalcul(pr, re);
+      const base = points(pr, re), bo = bonus(pr, re);
+      const tags = [];
+      /* étiquette score : verte si exact, neutre si tendance/raté */
+      const scoreClasse = base===3 ? 'tag-win' : 'tag-neutre';
+      const scoreVerdict = base===3 ? '<i class="ico-ok">✓</i>' : base===1 ? '+1' : '';
+      tags.push(`<span class="ptag ${scoreClasse}">Score ${pr.score_a}-${pr.score_b} ${base===3?'✓':base===1?'· tendance':'✗'}</span>`);
+      /* étiquette buteur */
+      if(pr.buteur){
+        tags.push(`<span class="ptag ${bo.but===2?'tag-win':'tag-lose'}">⚽ ${pr.buteur} ${bo.but===2?'✓':'✗'}</span>`);
+      }
+      /* étiquette les 2 marquent */
+      if(pr.btts===true||pr.btts===false){
+        tags.push(`<span class="ptag ${bo.btts===1?'tag-win':'tag-lose'}">${pr.btts?'Les 2 marquent':'Aucun des 2'} ${bo.btts===1?'✓':'✗'}</span>`);
+      }
+      /* étiquette match en or */
+      if(pr.en_or){
+        tags.push(`<span class="ptag ${t>=0?'tag-or':'tag-lose'}">🌟 Match en Or ×2</span>`);
+      }
+      etiquettes = `<div class="fam-tags">${tags.join('')}</div>`;
     }
-    return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-d">${detail}</span>${pts}</div>${calcul?`<div class="fam-calc">${calcul}</div>`:''}${chambre?`<div class="fam-ch-l">${chambre}</div>`:''}`;
+    return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-spacer"></span>${pts}</div>${etiquettes}${chambre?`<div class="fam-ch-l">${chambre}</div>`:''}`;
   }).join('');
   const titreFamille = re ? '🏁 Les paris de la famille' : (verrou ? '🔒 Les paris (match en cours)' : '✏️ Qui a déjà parié ?');
   const ligneFamille = `<div class="bloc-famille"><div class="fam-titre">${titreFamille}</div>${lignesFamille}</div>`;
