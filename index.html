@@ -313,7 +313,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.12';
+const APP_VERSION = '9.13';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1872,12 +1872,15 @@ async function appliquerMajJour(){
   }catch(e){ toast('Échec de la mise à jour'); }
 }
 
+let _etaitSurPotins = false;
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
+  /* si on QUITTE l'onglet potins, on marque les potins comme lus (ils restaient visibles pendant la lecture) */
+  if(_etaitSurPotins && b.dataset.sec!=='potins') marquerTousPotinsLus();
+  _etaitSurPotins = (b.dataset.sec==='potins');
   document.querySelectorAll('nav button').forEach(x=>x.classList.remove('actif'));
   document.querySelectorAll('section').forEach(x=>x.classList.remove('actif'));
   b.classList.add('actif'); $('sec-'+b.dataset.sec).classList.add('actif');
   ficheOuverte = null; avmOuvert = null; renduAvm(); zoneEquipes();
-  if(b.dataset.sec==='potins') setTimeout(marquerTousPotinsLus, 800);
   window.scrollTo({top:0});
 }));
 document.querySelectorAll('#sec-matchs .filtres button').forEach(b=>b.addEventListener('click',()=>{
