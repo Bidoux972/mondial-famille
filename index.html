@@ -313,7 +313,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.9';
+const APP_VERSION = '9.10';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1496,6 +1496,7 @@ function boutonRecapJour(){
   const lbl = parJour[dernier.j][0].dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
   z.innerHTML = `<button class="btn" style="width:100%;margin:10px 0;background:transparent;border:1px solid var(--or);color:var(--or);font-weight:700" onclick="lancerRecapJour('${dernier.j}')">🎬 Revoir la journée de ${lbl} — pari par pari</button>`;
 }
+const pioche = arr => arr[Math.floor(Math.random()*arr.length)];
 function lancerRecapJour(jourClef){
   const jours = joursAvecResultats();
   const matchs = (jours[jourClef]||[]).slice().sort((a,b)=>a.dt-b.dt);
@@ -1523,10 +1524,19 @@ function lancerRecapJour(jourClef){
 
   const etapes = [];
 
-  /* ACTE 1 — intro */
+  /* ACTE 1 — intro variée */
+  const intros = [
+    "Lumières, ralentis, et règlements de comptes. C'est parti.",
+    "Asseyez-vous, ça va piquer pour certaines et certains.",
+    "Le jury est réuni, les pronos sont tombés. Place au verdict.",
+    "Une journée de foot, quatre ego, et beaucoup de mauvaise foi à venir.",
+    "On rembobine la journée — et on n'épargne personne.",
+    "Préparez les excuses : le débrief commence.",
+    "Ce soir, on distribue les médailles… et les bonnets d'âne."
+  ];
   etapes.push(`<div class="etape"><div class="eti-r">🎬 Le grand récap</div><h3>${lbl}</h3>
     <div class="ligne-r" style="color:var(--gris)">${matchs.length} match${matchs.length>1?'s':''} · ${perfs.length} paris en jeu</div>
-    <div class="punch">Lumières, ralentis, et règlements de comptes. C'est parti.</div></div>`);
+    <div class="punch">${pioche(intros)}</div></div>`);
 
   /* UN ACTE PAR MATCH — dévoilement avec détail + une phrase qui raconte */
   matchs.forEach((m,idx)=>{
@@ -1543,11 +1553,37 @@ function lancerRecapJour(jourClef){
     const worst = joueurs.length ? joueurs.reduce((a,b)=>b.t<a.t?b:a) : null;
     let raconte = '';
     if(best && worst && best.t>worst.t){
-      if(best.t>=4) raconte = `${best.p} a flairé ${leLa(m.a)===''?'':''}le coup et rafle gros. ${worst.p}, de ${accord(worst.p,'son','sa')} côté, ${accord(worst.p,'repartira bredouille','repartira bredouille')}.`;
-      else if(best.t===3) raconte = `Score exact pour ${best.p} ! Pendant ce temps, ${worst.p} ${accord(worst.p,'révisait','révisait')} visiblement un autre match.`;
-      else raconte = `Petit avantage à ${best.p} sur ce match. ${worst.p} ${accord(worst.p,'s\'en mord les doigts','s\'en mord les doigts')}.`;
+      if(best.t>=4){
+        raconte = pioche([
+          `${best.p} a flairé le coup et rafle gros. ${worst.p}, ${accord(worst.p,'reparti','repartie')} les mains vides.`,
+          `Carton plein pour ${best.p} ! ${worst.p} ${accord(worst.p,'peut aller se rhabiller','peut aller se rhabiller')}.`,
+          `${best.p} encaisse le jackpot. ${worst.p} encaisse… surtout les moqueries.`,
+          `Masterclass de ${best.p}. ${worst.p}, ${ilElle(worst.p)} ${accord(worst.p,'était au stade ? Pas sûr','était au stade ? Pas sûr')}.`,
+          `${best.p} marche sur l'eau sur ce match. ${worst.p} cherche encore la piscine.`
+        ]);
+      } else if(best.t===3){
+        raconte = pioche([
+          `Score exact pour ${best.p} ! ${worst.p} ${accord(worst.p,'révisait','révisait')} visiblement un autre match.`,
+          `Dans le mille, ${best.p}. ${worst.p} a tiré… à côté de la cible et du stade.`,
+          `${best.p} avait la boule de cristal. ${worst.p} avait surtout de l'imagination.`,
+          `Pile-poil pour ${best.p}. ${worst.p} repassera — avec des lunettes.`
+        ]);
+      } else {
+        raconte = pioche([
+          `Petit avantage à ${best.p} sur ce match. ${worst.p} grince des dents.`,
+          `${best.p} grappille, ${worst.p} ${accord(worst.p,'rumine','rumine')}.`,
+          `Léger mais réel : ${best.p} prend le dessus. ${worst.p} ${accord(worst.p,'boude','boude')} dans son coin.`,
+          `${best.p} sauve les meubles, ${worst.p} les casse.`,
+          `Avantage ${best.p}. ${worst.p}, on t'a connu plus ${accord(worst.p,'inspiré','inspirée')}.`
+        ]);
+      }
     } else if(best && worst && best.t===worst.t){
-      raconte = `Tout le monde logé à la même enseigne sur ce match. Pas de vainqueur, pas de chambrage. Frustrant.`;
+      raconte = pioche([
+        `Tout le monde logé à la même enseigne. Pas de vainqueur, pas de chambrage. Frustrant.`,
+        `Égalité sur ce match — la famille soudée dans la médiocrité, c'est touchant.`,
+        `Personne ne se détache. On remet ça au prochain match.`,
+        `Match nul aussi côté pronos. L'ennui à l'état pur.`
+      ]);
     }
     etapes.push(`<div class="etape"><div class="eti-r">Match ${idx+1}/${matchs.length}</div>
       <h3 style="font-size:21px">${m.a} ${re.score_a}-${re.score_b} ${m.b}</h3>
@@ -1561,8 +1597,8 @@ function lancerRecapJour(jourClef){
     const top = perfs.reduce((a,b)=>b.t>a.t?b:a);
     const flop = perfs.reduce((a,b)=>b.t<a.t?b:a);
     let momentsHtml = '';
-    if(top.t>0) momentsHtml += `<div class="ligne-r">🏅 <b>Le coup du jour</b> : ${top.p}, ${top.t>0?'+':''}${top.t} pts sur ${top.m.a}-${top.m.b}. ${accord(top.p,'Chapeau l\'artiste','Chapeau l\'artiste')}.</div>`;
-    if(flop.t<0) momentsHtml += `<div class="ligne-r">🤡 <b>Le plongeon du jour</b> : ${flop.p}, ${flop.t} pts sur ${flop.m.a}-${flop.m.b}. ${accord(flop.p,'On a tous nos mauvais jours','On a toutes nos mauvaises journées')}.</div>`;
+    if(top.t>0) momentsHtml += `<div class="ligne-r">🏅 <b>Le coup du jour</b> : ${top.p}, +${top.t} pts sur ${top.m.a}-${top.m.b}. ${pioche(['Chapeau l\'artiste.','Du grand art.','On s\'incline.','Respect.','La classe à l\'état pur.'])}</div>`;
+    if(flop.t<0) momentsHtml += `<div class="ligne-r">🤡 <b>Le plongeon du jour</b> : ${flop.p}, ${flop.t} pts sur ${flop.m.a}-${flop.m.b}. ${pioche([accord(flop.p,'On a tous nos mauvais jours.','On a toutes nos mauvaises journées.'),'Aïe aïe aïe.','Ça arrive aux meilleurs. Enfin, presque.','Le foot est cruel.','On efface et on recommence demain.'])}</div>`;
     const enOrs = perfs.filter(x=>x.pr.en_or);
     if(enOrs.length){
       const orWin = enOrs.filter(x=>x.t>0), orLose = enOrs.filter(x=>x.t<0);
@@ -1578,14 +1614,16 @@ function lancerRecapJour(jourClef){
   const leader = clJour[0], lanterne = clJour[clJour.length-1];
   let punchFinale = 'Une journée de plus dans les livres. Demain, tout peut basculer.';
   if(leader && lanterne && leader.p!==lanterne.p && leader.total>lanterne.total){
-    const pf = [
+    punchFinale = pioche([
       `${leader.p} dort en tête ce soir, ${accord(leader.p,'tranquille','tranquille')}. ${lanterne.p} dort aussi. C'est déjà ça.`,
       `Au sommet : ${leader.p}. Tout en bas, ${accord(lanterne.p,'fidèle au poste','fidèle au poste')} : ${lanterne.p}.`,
       `${leader.p} mène la danse. ${lanterne.p} cherche encore la piste — et les pas.`,
       `Journée pliée : ${leader.p} devant, ${lanterne.p} qui jure déjà que demain, ${ilElle(lanterne.p)} ${accord(lanterne.p,'se rattrapera','se rattrapera')}. On note.`,
-      `${leader.p} prend le pouvoir. ${lanterne.p}… prend des notes.`
-    ];
-    punchFinale = pf[(matchs.length + clJour.length + new Date().getDate()) % pf.length];
+      `${leader.p} prend le pouvoir. ${lanterne.p}… prend des notes.`,
+      `${leader.p} savoure. ${lanterne.p} digère. Chacun son menu.`,
+      `Trône pour ${leader.p}, strapontin pour ${lanterne.p}. Demain est un autre jour.`,
+      `${leader.p} en haut de l'affiche, ${lanterne.p} en bas du générique.`
+    ]);
   }
   etapes.push(`<div class="etape"><div class="eti-r">🏆 Le classement du soir</div>${lignesFinal}<div class="punch">🎙️ ${punchFinale}</div></div>`);
 
