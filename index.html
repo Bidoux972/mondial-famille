@@ -60,6 +60,7 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .fam-tags{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px 62px}
 .ptag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;white-space:nowrap}
 .tag-win{background:rgba(46,196,169,.18);color:#5fe0c4;border:1px solid rgba(46,196,169,.4)}
+.tag-tendance{background:rgba(46,196,169,.10);color:#7fd8c6;border:1px solid rgba(46,196,169,.28)}
 .tag-lose{background:rgba(255,107,94,.15);color:#ff9b8f;border:1px solid rgba(255,107,94,.35)}
 .tag-neutre{background:var(--panneau2);color:var(--gris);border:1px solid var(--ligne)}
 .tag-or{background:rgba(245,180,60,.18);color:var(--or);border:1px solid rgba(245,180,60,.45)}
@@ -327,7 +328,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.17';
+const APP_VERSION = '9.18';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -870,10 +871,16 @@ function carteMatch(m, modePronos){
       chambre = chambrage(p, pr, re, t);
       const base = points(pr, re), bo = bonus(pr, re);
       const tags = [];
-      /* étiquette score : verte si exact, neutre si tendance/raté */
-      const scoreClasse = base===3 ? 'tag-win' : 'tag-neutre';
-      const scoreVerdict = base===3 ? '<i class="ico-ok">✓</i>' : base===1 ? '+1' : '';
-      tags.push(`<span class="ptag ${scoreClasse}">Score ${pr.score_a}-${pr.score_b} ${base===3?'✓':base===1?'· tendance':'✗'}</span>`);
+      /* étiquette score : vert si exact (+3), vert nuancé si bonne tendance (+1), rouge si raté */
+      if(base===3){
+        tags.push(`<span class="ptag tag-win">Score ${pr.score_a}-${pr.score_b} exact ✓</span>`);
+      } else if(base===1){
+        const estNul = re.score_a===re.score_b;
+        const lib = estNul ? 'Match nul prévu' : 'Bon vainqueur';
+        tags.push(`<span class="ptag tag-tendance">${lib} ${pr.score_a}-${pr.score_b} ✓ +1</span>`);
+      } else {
+        tags.push(`<span class="ptag tag-lose">Score ${pr.score_a}-${pr.score_b} ✗</span>`);
+      }
       /* étiquette buteur */
       if(pr.buteur){
         tags.push(`<span class="ptag ${bo.but===2?'tag-win':'tag-lose'}">⚽ ${pr.buteur} ${bo.but===2?'✓':'✗'}</span>`);
