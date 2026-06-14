@@ -329,7 +329,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.19';
+const APP_VERSION = '9.20';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -871,7 +871,7 @@ function carteMatch(m, modePronos){
       const tags = [];
       tags.push(`<span class="ptag tag-neutre">Score ${pr.score_a}-${pr.score_b}</span>`);
       if(pr.buteur) tags.push(`<span class="ptag tag-neutre">⚽ ${pr.buteur}</span>`);
-      if(pr.btts===true||pr.btts===false) tags.push(`<span class="ptag tag-neutre">${pr.btts?'Les 2 marquent':'Aucun des 2'}</span>`);
+      if(pr.btts===true||pr.btts===false) tags.push(`<span class="ptag tag-neutre">${pr.btts?'Les 2 marquent':'Pas les 2 (une à 0)'}</span>`);
       if(pr.en_or) tags.push(`<span class="ptag tag-or">🌟 Match en Or</span>`);
       return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-spacer"></span><span class="fam-attente">en attente</span></div><div class="fam-tags">${tags.join('')}</div>`;
     }
@@ -897,7 +897,7 @@ function carteMatch(m, modePronos){
       }
       /* étiquette les 2 marquent */
       if(pr.btts===true||pr.btts===false){
-        tags.push(`<span class="ptag ${bo.btts===1?'tag-win':'tag-lose'}">${pr.btts?'Les 2 marquent':'Aucun des 2'} ${bo.btts===1?'✓':'✗'}</span>`);
+        tags.push(`<span class="ptag ${bo.btts===1?'tag-win':'tag-lose'}">${pr.btts?'Les 2 marquent':'Pas les 2 (une à 0)'} ${bo.btts===1?'✓':'✗'}</span>`);
       }
       /* étiquette match en or */
       if(pr.en_or){
