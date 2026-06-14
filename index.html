@@ -313,7 +313,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.10';
+const APP_VERSION = '9.12';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1496,8 +1496,17 @@ function boutonRecapJour(){
   const lbl = parJour[dernier.j][0].dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'});
   z.innerHTML = `<button class="btn" style="width:100%;margin:10px 0;background:transparent;border:1px solid var(--or);color:var(--or);font-weight:700" onclick="lancerRecapJour('${dernier.j}')">🎬 Revoir la journée de ${lbl} — pari par pari</button>`;
 }
-const pioche = arr => arr[Math.floor(Math.random()*arr.length)];
+let _piocheVues = new Set();
+function pioche(arr){
+  const dispo = arr.filter(x => !_piocheVues.has(x));
+  const pool = dispo.length ? dispo : arr;
+  if(!dispo.length) arr.forEach(x => _piocheVues.delete(x));
+  const choix = pool[Math.floor(Math.random()*pool.length)];
+  _piocheVues.add(choix);
+  return choix;
+}
 function lancerRecapJour(jourClef){
+  _piocheVues = new Set();
   const jours = joursAvecResultats();
   const matchs = (jours[jourClef]||[]).slice().sort((a,b)=>a.dt-b.dt);
   if(!matchs.length) return;
@@ -1524,7 +1533,7 @@ function lancerRecapJour(jourClef){
 
   const etapes = [];
 
-  /* ACTE 1 — intro variée */
+  /* ACTE 1 — intro variée (grand réservoir) */
   const intros = [
     "Lumières, ralentis, et règlements de comptes. C'est parti.",
     "Asseyez-vous, ça va piquer pour certaines et certains.",
@@ -1532,7 +1541,19 @@ function lancerRecapJour(jourClef){
     "Une journée de foot, quatre ego, et beaucoup de mauvaise foi à venir.",
     "On rembobine la journée — et on n'épargne personne.",
     "Préparez les excuses : le débrief commence.",
-    "Ce soir, on distribue les médailles… et les bonnets d'âne."
+    "Ce soir, on distribue les médailles… et les bonnets d'âne.",
+    "Mesdames et messieurs, le tribunal des pronostics est en séance.",
+    "Attention, certaines images du jour peuvent heurter la fierté des plus sensibles.",
+    "Le moment de vérité. Celui où on découvre qui a parié avec son cœur… et qui avec ses pieds.",
+    "Roulement de tambour. Suspense insoutenable. Et déjà quelqu'un qui transpire.",
+    "Bienvenue dans le récap, là où les certitudes du matin viennent mourir.",
+    "Quatre pronostiqueurs sont entrés. Combien en ressortiront la tête haute ?",
+    "Popcorn servi, mouchoirs distribués. Que le spectacle commence.",
+    "Aujourd'hui encore, le foot a écrit un scénario que personne n'avait coché.",
+    "On a analysé, décortiqué, et surtout bien rigolé. Voici votre journée.",
+    "Hitchcock aurait adoré : du suspense, des rebondissements, et une victime.",
+    "Le débrief du soir, sans filtre et sans pitié. Accrochez-vous.",
+    "Spoiler : il y a un héros, un maladroit, et beaucoup de mauvaise foi."
   ];
   etapes.push(`<div class="etape"><div class="eti-r">🎬 Le grand récap</div><h3>${lbl}</h3>
     <div class="ligne-r" style="color:var(--gris)">${matchs.length} match${matchs.length>1?'s':''} · ${perfs.length} paris en jeu</div>
@@ -1558,15 +1579,26 @@ function lancerRecapJour(jourClef){
           `${best.p} a flairé le coup et rafle gros. ${worst.p}, ${accord(worst.p,'reparti','repartie')} les mains vides.`,
           `Carton plein pour ${best.p} ! ${worst.p} ${accord(worst.p,'peut aller se rhabiller','peut aller se rhabiller')}.`,
           `${best.p} encaisse le jackpot. ${worst.p} encaisse… surtout les moqueries.`,
-          `Masterclass de ${best.p}. ${worst.p}, ${ilElle(worst.p)} ${accord(worst.p,'était au stade ? Pas sûr','était au stade ? Pas sûr')}.`,
-          `${best.p} marche sur l'eau sur ce match. ${worst.p} cherche encore la piscine.`
+          `Masterclass de ${best.p}. ${worst.p} ${accord(worst.p,'était au stade ? Pas sûr','était au stade ? Pas sûre')}.`,
+          `${best.p} marche sur l'eau sur ce match. ${worst.p} cherche encore la piscine.`,
+          `Braquage en règle de ${best.p}. ${worst.p} appelle la police des pronos.`,
+          `${best.p} a sorti la boule de cristal, le détecteur de mensonge et la bénédiction du pape. Imparable. ${worst.p}, beaucoup moins.`,
+          `On range ${best.p} au panthéon du jour. On range ${worst.p}… au placard.`,
+          `${best.p} a mis tout le monde d'accord. Surtout ${worst.p}, qui n'avait rien vu venir.`,
+          `Pluie de points sur ${best.p}. Sécheresse totale chez ${worst.p}.`,
+          `${best.p} signe le hold-up du jour. ${worst.p} signe le procès-verbal.`,
+          `Standing ovation pour ${best.p}. ${worst.p} quitte la salle discrètement.`
         ]);
       } else if(best.t===3){
         raconte = pioche([
           `Score exact pour ${best.p} ! ${worst.p} ${accord(worst.p,'révisait','révisait')} visiblement un autre match.`,
           `Dans le mille, ${best.p}. ${worst.p} a tiré… à côté de la cible et du stade.`,
           `${best.p} avait la boule de cristal. ${worst.p} avait surtout de l'imagination.`,
-          `Pile-poil pour ${best.p}. ${worst.p} repassera — avec des lunettes.`
+          `Pile-poil pour ${best.p}. ${worst.p} repassera — avec des lunettes.`,
+          `${best.p} a deviné au millimètre. ${worst.p} a deviné… le mauvais sport, on dirait.`,
+          `Chirurgie de précision signée ${best.p}. ${worst.p}, c'était plutôt à la tronçonneuse.`,
+          `${best.p} dans le mille, ${worst.p} dans le mur.`,
+          `Le score exact, rien que ça, pour ${best.p}. ${worst.p} applaudit en serrant les dents.`
         ]);
       } else {
         raconte = pioche([
@@ -1574,7 +1606,12 @@ function lancerRecapJour(jourClef){
           `${best.p} grappille, ${worst.p} ${accord(worst.p,'rumine','rumine')}.`,
           `Léger mais réel : ${best.p} prend le dessus. ${worst.p} ${accord(worst.p,'boude','boude')} dans son coin.`,
           `${best.p} sauve les meubles, ${worst.p} les casse.`,
-          `Avantage ${best.p}. ${worst.p}, on t'a connu plus ${accord(worst.p,'inspiré','inspirée')}.`
+          `Avantage ${best.p}. ${worst.p}, on t'a ${accord(worst.p,'connu plus inspiré','connue plus inspirée')}.`,
+          `${best.p} prend les miettes mais les prend quand même. ${worst.p} ramasse les siennes par terre.`,
+          `Une longueur d'avance pour ${best.p}. ${worst.p} regarde passer le train.`,
+          `${best.p} gratte un point précieux. ${worst.p} se gratte la tête.`,
+          `Rien de spectaculaire, mais ${best.p} fait le métier. ${worst.p} fait la moue.`,
+          `${best.p} marque des points, ${worst.p} marque le coup.`
         ]);
       }
     } else if(best && worst && best.t===worst.t){
@@ -1582,7 +1619,10 @@ function lancerRecapJour(jourClef){
         `Tout le monde logé à la même enseigne. Pas de vainqueur, pas de chambrage. Frustrant.`,
         `Égalité sur ce match — la famille soudée dans la médiocrité, c'est touchant.`,
         `Personne ne se détache. On remet ça au prochain match.`,
-        `Match nul aussi côté pronos. L'ennui à l'état pur.`
+        `Match nul aussi côté pronos. L'ennui à l'état pur.`,
+        `Ex æquo. Même les statistiques baillent.`,
+        `Tout le monde pareil. Le match en or, c'était hier, visiblement.`,
+        `Parfaite égalité. Un consensus rare et profondément inintéressant.`
       ]);
     }
     etapes.push(`<div class="etape"><div class="eti-r">Match ${idx+1}/${matchs.length}</div>
@@ -1597,8 +1637,8 @@ function lancerRecapJour(jourClef){
     const top = perfs.reduce((a,b)=>b.t>a.t?b:a);
     const flop = perfs.reduce((a,b)=>b.t<a.t?b:a);
     let momentsHtml = '';
-    if(top.t>0) momentsHtml += `<div class="ligne-r">🏅 <b>Le coup du jour</b> : ${top.p}, +${top.t} pts sur ${top.m.a}-${top.m.b}. ${pioche(['Chapeau l\'artiste.','Du grand art.','On s\'incline.','Respect.','La classe à l\'état pur.'])}</div>`;
-    if(flop.t<0) momentsHtml += `<div class="ligne-r">🤡 <b>Le plongeon du jour</b> : ${flop.p}, ${flop.t} pts sur ${flop.m.a}-${flop.m.b}. ${pioche([accord(flop.p,'On a tous nos mauvais jours.','On a toutes nos mauvaises journées.'),'Aïe aïe aïe.','Ça arrive aux meilleurs. Enfin, presque.','Le foot est cruel.','On efface et on recommence demain.'])}</div>`;
+    if(top.t>0) momentsHtml += `<div class="ligne-r">🏅 <b>Le coup du jour</b> : ${top.p}, +${top.t} pts sur ${top.m.a}-${top.m.b}. ${pioche(['Chapeau l\'artiste.','Du grand art.','On s\'incline.','Respect.','La classe à l\'état pur.','À encadrer.','Génie ou chance ? On ne saura jamais.','Le Mozart du pronostic.','Rideau, personne ne fera mieux.','On prend des notes.'])}</div>`;
+    if(flop.t<0) momentsHtml += `<div class="ligne-r">🤡 <b>Le plongeon du jour</b> : ${flop.p}, ${flop.t} pts sur ${flop.m.a}-${flop.m.b}. ${pioche([accord(flop.p,'On a tous nos mauvais jours.','On a toutes nos mauvaises journées.'),'Aïe aïe aïe.','Ça arrive aux meilleurs. Enfin, presque.','Le foot est cruel.','On efface et on recommence demain.','La cata du jour, sans conteste.','Un naufrage en direct.','Même un poulpe aurait mieux deviné.','Il fallait oser. Il a osé. Ça n\'a pas marché.','Le genre de pari qu\'on ne raconte pas aux petits-enfants.'])}</div>`;
     const enOrs = perfs.filter(x=>x.pr.en_or);
     if(enOrs.length){
       const orWin = enOrs.filter(x=>x.t>0), orLose = enOrs.filter(x=>x.t<0);
@@ -1622,7 +1662,15 @@ function lancerRecapJour(jourClef){
       `${leader.p} prend le pouvoir. ${lanterne.p}… prend des notes.`,
       `${leader.p} savoure. ${lanterne.p} digère. Chacun son menu.`,
       `Trône pour ${leader.p}, strapontin pour ${lanterne.p}. Demain est un autre jour.`,
-      `${leader.p} en haut de l'affiche, ${lanterne.p} en bas du générique.`
+      `${leader.p} en haut de l'affiche, ${lanterne.p} en bas du générique.`,
+      `${leader.p} caracole, ${lanterne.p} cale. La rime était trop facile, désolé.`,
+      `Pendant que ${leader.p} commande le champagne, ${lanterne.p} commande des excuses.`,
+      `${leader.p} domine, ${lanterne.p} rumine, et nous on se régale.`,
+      `Ce soir, ${leader.p} est ${accord(leader.p,'roi','reine')}. ${lanterne.p} est… ${accord(lanterne.p,'le bouffon','la bouffonne')} du royaume. Pour l'instant.`,
+      `${leader.p} a la couronne, ${lanterne.p} a la cuillère de bois. Le tournoi est long, cela dit.`,
+      `${leader.p} plane, ${lanterne.p} rame. Rendez-vous demain pour la suite du feuilleton.`,
+      `Le classement a parlé : ${leader.p} en haut, ${lanterne.p} qui consulte déjà son avocat.`,
+      `${leader.p} sourit, ${lanterne.p} soupire. Le foot donne, le foot reprend.`
     ]);
   }
   etapes.push(`<div class="etape"><div class="eti-r">🏆 Le classement du soir</div>${lignesFinal}<div class="punch">🎙️ ${punchFinale}</div></div>`);
@@ -1653,6 +1701,7 @@ function detecterReveals(){
   ouvrirReveal(revealQueue.shift());
 }
 function etapesReveal(id){
+  _piocheVues = new Set();
   const m = M.find(x=>x.id===id), re = resultats[id];
   const lignesParis = PARTICIPANTS.map(p=>{
     const pr = pronos[p] && pronos[p][id];
@@ -1676,23 +1725,27 @@ function etapesReveal(id){
     const tousNuls = scores.every(s=>s.t<=0);
     const exAequo = scores.length>1 && scores.every(s=>s.t===scores[0].t);
     if(tousNuls){
-      const ratés = [
+      punch = pioche([
         "Personne n'a vu venir ce match. Le football 1 — la famille 0.",
         "Un sans-faute… dans la médiocrité. Bravo à tous, vraiment.",
         "Ce match restera dans les annales : la famille au grand complet à côté de la plaque.",
         "Aucun point distribué. Les bookmakers de la famille peuvent fermer boutique.",
-        "Collectivement, vous avez prouvé une chose : vous ne connaissez rien au foot. Et c'est beau."
-      ];
-      punch = ratés[(id*7 + scores.length) % ratés.length];
+        "Collectivement, vous avez prouvé une chose : vous ne connaissez rien au foot. Et c'est beau.",
+        "Naufrage général. Même le poteau a mieux joué que vos pronos.",
+        "Zéro pointé pour tout le monde. Un moment de communion dans la défaite.",
+        "Le foot a gagné, la famille a perdu. Comme souvent.",
+        "Quatre pronos, quatre échecs. L'unité dans l'adversité, c'est ça aussi."
+      ]);
     } else if(exAequo){
-      const egal = [
+      punch = pioche([
         "Égalité parfaite. Quelle famille soudée. Quel ennui, aussi.",
         "Tout le monde à égalité — la diplomatie suisse vous fait de l'œil.",
-        "Match nul au classement aussi. Personne ne se chambre ce soir, dommage."
-      ];
-      punch = egal[(id*3) % egal.length];
+        "Match nul au classement aussi. Personne ne se chambre ce soir, dommage.",
+        "Parfaite égalité. Les statisticiens pleurent d'ennui.",
+        "Pas un cheveu d'écart. On se croirait à un repas de famille trop poli."
+      ]);
     } else if(max.t>min.t){
-      const punchs = [
+      punch = pioche([
         `${max.p} encaisse, ${min.p} encaisse… le coup. C'est le jeu, ma pauvre Lucette.`,
         `Belle opération pour ${max.p}. Pour ${min.p}, on parlera plutôt d'expérience formatrice.`,
         `${max.p} avait vu juste. ${min.p} avait vu… quelque chose, en tout cas.`,
@@ -1700,16 +1753,20 @@ function etapesReveal(id){
         `${max.p} encadre ce résultat dans le salon. ${min.p} le passe au broyeur.`,
         `On notera la masterclass de ${max.p}. On oubliera vite la tentative de ${min.p}.`,
         `${max.p} marche sur l'eau. ${min.p} cherche encore la piscine.`,
-        `Statistiquement, ${max.p} a été brillant. Statistiquement, ${min.p}, on n'en parle pas.`,
+        `Statistiquement, ${max.p} a été ${accord(max.p,'brillant','brillante')}. Statistiquement, ${min.p}, on n'en parle pas.`,
         `${max.p} peut sourire. ${min.p} peut retourner réviser les règles du hors-jeu.`,
         `Pendant que ${max.p} fête ça, ${min.p} explique déjà que « c'était imprévisible ».`,
-        `${max.p} : chirurgien. ${min.p} : témoin de la scène.`,
+        `${max.p} : ${accord(max.p,'chirurgien','chirurgienne')}. ${min.p} : témoin de la scène.`,
         `Le talent de ${max.p}, la malchance de ${min.p}, et nous au milieu qui rigolons.`,
         `${max.p} prend les points et la lumière. ${min.p} prend note.`,
         `Respect à ${max.p}. Condoléances à ${min.p}.`,
-        `${max.p} avait le nez creux. ${min.p} avait surtout de l'imagination.`
-      ];
-      punch = punchs[(id*13 + scores.length*5) % punchs.length];
+        `${max.p} avait le nez creux. ${min.p} avait surtout de l'imagination.`,
+        `${max.p} en mode devin. ${min.p} en mode… on ne sait pas trop, en fait.`,
+        `Hold-up parfait de ${max.p}. ${min.p} portera plainte demain matin.`,
+        `${max.p} a lu le match comme un livre. ${min.p} a lu la quatrième de couverture, au mieux.`,
+        `Ce soir, ${max.p} dîne aux chandelles. ${min.p} dîne de ses regrets.`,
+        `${max.p} vise, touche, marque. ${min.p} vise… ailleurs.`
+      ]);
     }
   }
   return [
