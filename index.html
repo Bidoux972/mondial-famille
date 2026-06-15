@@ -334,7 +334,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.24';
+const APP_VERSION = '9.25';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1820,11 +1820,23 @@ function lancerRecapJour(jourClef){
         const ecurieGagne = butEq>butAdv;
         const aParieGagnant = prMon>prAdv;
         if(ecurieGagne && !aParieGagnant){
-          contextLignes.push(`🏳️ ${p} a vu son écurie ${eq} gagner… après avoir parié contre. La loyauté a un prix, et ${ilElle(p)} vient de le payer.`);
+          contextLignes.push(`🏳️ ` + pioche([
+            `${p} a parié CONTRE sa propre écurie ${eq}… qui a gagné. Trahir les siens et y perdre des points : le double échec, moral et comptable.`,
+            `Son écurie ${eq} l'emporte, et ${p} avait misé contre. ${ilElle(p)} fête la victoire d'une main et compte ses pertes de l'autre. Schizophrène.`,
+            `${p} et son écurie ${eq}, c'est compliqué : ${ilElle(p)} a parié sa défaite, ${eq} a gagné. La loyauté, ça se travaille.`
+          ]));
         } else if(!ecurieGagne && aParieGagnant && butEq<butAdv){
-          contextLignes.push(`🏳️ ${p} a cru en son écurie ${eq}… qui a sombré. Le cœur a parlé plus fort que la raison.`);
+          contextLignes.push(`🏳️ ` + pioche([
+            `${p} a cru en son écurie ${eq} jusqu'au bout… qui a coulé. Le cœur a parlé, le tableau d'affichage a répondu. Sèchement.`,
+            `Fidèle à ${eq} jusque dans la défaite : ${p} y a laissé des points. Noble, romantique, et totalement ${accord(p,'perdant','perdante')}.`,
+            `${p} a soutenu son écurie ${eq}, ${eq} l'a remercié${GENRE[p]==='f'?'e':''} par une déroute. L'amour rend aveugle, surtout aux pronos.`
+          ]));
         } else if(ecurieGagne && aParieGagnant){
-          contextLignes.push(`🏳️ ${p} a soutenu son écurie ${eq} ET empoché les points. Le combo parfait du supporter malin.`);
+          contextLignes.push(`🏳️ ` + pioche([
+            `${p} a soutenu son écurie ${eq} ET raflé les points. Le supporter parfait : fidèle ET ${accord(p,'gagnant','gagnante')}. Insupportable de justesse.`,
+            `Écurie ${eq} victorieuse, pari gagné : ${p} signe le combo idéal et ne va pas se priver de le rappeler à tout le monde.`,
+            `${p} a tout bon avec son écurie ${eq} : le cœur et les points. La soirée parfaite du ${accord(p,'partisan','partisane')} ${accord(p,'malin','maligne')}.`
+          ]));
         }
       });
     });
@@ -1832,8 +1844,18 @@ function lancerRecapJour(jourClef){
     PARTICIPANTS.forEach(p=>{
       const siens = perfs.filter(x=>x.p===p);
       if(siens.length<2) return;
-      if(siens.every(x=>x.t>0)) contextLignes.push(`📈 ${p} n'a rien lâché aujourd'hui : QUE des paris positifs. ${accord(p,'Chaud','Chaude') } bouillant${GENRE[p]==='f'?'e':''}.`);
-      else if(siens.every(x=>x.t<=0)) contextLignes.push(`📉 ${p} a tout raté sur la journée. Un zéro pointé intégral. ${ilElle(p)} ${accord(p,'rentrera à pied','rentrera à pied')}.`);
+      if(siens.every(x=>x.t>0)) contextLignes.push(`📈 ` + pioche([
+        `${p} a tout réussi aujourd'hui. QUE du positif. Le genre de soirée où ${ilElle(p)} se croit ${accord(p,'devin','devineresse')} — laissons-${leLa(p)} rêver, ça ne durera pas.`,
+        `Sans-faute intégral pour ${p} sur la journée. Insupportable de réussite. On ${accord(p,'le','la')} déteste un peu, là, tout de suite.`,
+        `${p} a aligné les bons paris comme des perles. ${accord(p,'Chaud','Chaude')} bouillant${GENRE[p]==='f'?'e':''}, et pas peu ${accord(p,'fier','fière')} de ${ilElle(p)}-même.`,
+        `Carton sur toute la ligne pour ${p}. Profite bien : les statistiques détestent les séries, et la tienne a une date de péremption.`
+      ]));
+      else if(siens.every(x=>x.t<=0)) contextLignes.push(`📉 ` + pioche([
+        `${p} a TOUT raté sur la journée. Pas un point. Un naufrage si parfait qu'il en devient presque une œuvre d'art.`,
+        `Zéro pointé intégral pour ${p}. ${ilElle(p)} ${accord(p,'rentrera','rentrera')} à pied, sous la pluie, en méditant sur ses choix de vie.`,
+        `${p} n'a rien sauvé du tout aujourd'hui. Une journée à oublier — sauf qu'on est là pour la lui rappeler longtemps.`,
+        `Grand chelem dans le mauvais sens pour ${p}. Même en pariant au hasard, ${ilElle(p)} aurait fait mieux. C'est mathématique, et c'est gênant.`
+      ]));
     });
     /* 3) Le sort du leader provisoire : on aime taper sur celui d'en haut */
     const clAvant = calculTotaux(x => x.dt.getTime() < matchs[0].dt.getTime());
@@ -1841,7 +1863,18 @@ function lancerRecapJour(jourClef){
     if(clAvant.length && clApres.length && clAvant[0].total>0){
       const ancienLeader = clAvant[0].p, nouveauLeader = clApres[0].p;
       if(ancienLeader!==nouveauLeader && clApres[0].total>0){
-        contextLignes.push(`👑 Coup de théâtre : ${nouveauLeader} détrône ${ancienLeader} et s'empare de la tête ! Le roi est mort, vive ${accord(nouveauLeader,'le roi','la reine')}.`);
+        contextLignes.push(`👑 ` + pioche([
+          `${nouveauLeader} balance ${ancienLeader} de son trône sans même dire pardon. La régence est terminée, et personne ne pleure.`,
+          `Pendant des jours ${ancienLeader} a paradé en tête. Il aura suffi d'une soirée à ${nouveauLeader} pour transformer ce règne en simple parenthèse.`,
+          `${ancienLeader} était premier ce matin. ${ancienLeader} est ${accord(ancienLeader,'redevenu','redevenue')} ${accord(ancienLeader,'mortel','mortelle')} ce soir. ${nouveauLeader} remercie pour le siège, encore chaud.`,
+          `Hold-up au sommet : ${nouveauLeader} double ${ancienLeader} sur la ligne. ${ancienLeader} regarde la couronne s'éloigner, bouche bée.`,
+          `${ancienLeader} a gardé la tête juste assez longtemps pour s'y habituer. ${nouveauLeader} vient de la lui arracher des mains. Cruel et délicieux.`,
+          `Nouveau patron : ${nouveauLeader}. Ancien patron : ${ancienLeader}, prié de rendre les clés du bureau et le badge.`,
+          `${nouveauLeader} grimpe sur le toit et y plante son drapeau. ${ancienLeader}, lui, redescend par l'escalier de service.`,
+          `Le trône de ${ancienLeader} était en carton. ${nouveauLeader} a juste eu à souffler dessus. Premier ce soir, et ça se fête.`,
+          `Coup d'État réussi pour ${nouveauLeader}. ${ancienLeader} prépare déjà son discours de victime — "on m'a volé", la suite au prochain épisode.`,
+          `${ancienLeader} dégringole, ${nouveauLeader} s'installe. Le sommet a un nouveau locataire, et l'ancien n'a même pas eu le temps de faire ses cartons.`
+        ]));
       }
     }
     if(contextLignes.length){
