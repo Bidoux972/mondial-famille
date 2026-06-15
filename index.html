@@ -200,6 +200,10 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .reveal .eti-r{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:18px}
 .reveal h3{font-family:'Archivo Black';font-size:clamp(22px,7vw,40px);text-transform:uppercase;line-height:1.1;margin-bottom:10px}
 .reveal .grand-score{font-family:'Archivo Black';font-size:clamp(48px,18vw,96px);color:var(--or);line-height:1}
+.reveal .grand-score span{display:inline-block}
+.reveal .verdict-box{margin-top:18px;background:var(--or);color:#0E1B2C;border-radius:12px;padding:14px 18px;max-width:340px;margin-left:auto;margin-right:auto}
+.reveal .verdict-titre{font-family:'Archivo Black';font-size:19px;text-transform:uppercase;line-height:1.1;letter-spacing:.5px}
+.reveal .verdict-sous{font-size:13px;font-weight:600;margin-top:5px;line-height:1.35}
 .reveal .drapeaux{font-size:44px;margin:10px 0}
 .reveal .ligne-r{font-size:15px;margin:7px 0;line-height:1.5}
 .reveal .ligne-r b{color:var(--or)}
@@ -330,7 +334,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.21';
+const APP_VERSION = '9.23';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -424,7 +428,7 @@ M.sort((x,y)=>x.dt-y.dt);
 /* ============ FICHES DES 48 ÉQUIPES ============ */
 /* niveau : 1 à 5 étoiles · leaders / surveiller / histoire */
 const EQUIPES = {
-"France":{g:"I",niv:5,surnom:"Les Bleus",leaders:"Kylian Mbappé, capitaine, joueur le plus capé (96 sél.) et meilleur buteur de la liste, avec Ousmane Dembélé, le Ballon d'Or en titre. Didier Deschamps dirige sa 4e et DERNIÈRE Coupe du monde après 14 ans de règne. Et le retour surprise : N'Golo Kanté, 35 ans, rappelé pour l'expérience.",surveiller:"La nouvelle vague offensive : Doué, Cherki, Olise, Barcola, Akliouche — Deschamps a un embarras de richesse devant. Et la charnière de Premier League : Saliba, Konaté, Upamecano.",histoire:"Champions 2018, finalistes maudits 2022 (cette séance de tirs au but contre l'Argentine...). C'est LA quête de revanche, et la tournée d'adieu de Deschamps. Onze rescapés de 2022 seulement : ni Griezmann (retraité international), ni Lloris, ni Varane — une page se tourne. Et la France a perdu sa place de n°1 FIFA juste avant le tournoi. Premier test immédiat : le Sénégal."},
+"France":{g:"I",niv:5,surnom:"Les Bleus",leaders:"Kylian Mbappé, capitaine, qui pourrait fêter sa 100e sélection pendant le tournoi et chasse le record de buts de Giroud (57). À ses côtés, Ousmane Dembélé, Ballon d'Or en titre. Au milieu, le trio Tchouaméni–Rabiot–Koné épaulé par le retour surprise de N'Golo Kanté (35 ans). Mike Maignan dans les buts. Didier Deschamps dirige sa 4e et DERNIÈRE Coupe du monde après 14 ans de règne.",surveiller:"La nouvelle vague offensive : Doué, Cherki, Olise, Barcola, Akliouche — Deschamps a un embarras de richesse devant. La charnière de Premier League : Saliba, Konaté, Upamecano. Et les frères Hernández (Lucas et Theo), à leur 3e Mondial ensemble.",histoire:"17e participation, double championne du monde (1998, 2018), finaliste maudite 2022 (cette séance de tirs au but contre l'Argentine...). C'est LA quête de revanche, et la tournée d'adieu de Deschamps, sacré joueur en 98 et coach en 2018. Onze rescapés de 2022 seulement : ni Griezmann (retraité international), ni Lloris, ni Varane — une page se tourne. Et la France a perdu sa place de n°1 FIFA juste avant le tournoi, reculant à la 3e place derrière l'Argentine (qui a repris la tête) et l'Espagne, après une défaite en préparation contre la Côte d'Ivoire (1-2), la première jamais concédée par Deschamps avant une grande compétition. Premier test immédiat : le Sénégal, comme un écho à 2002."},
 "Brésil":{g:"C",niv:5,surnom:"La Seleção",leaders:"Neymar, de retour de l'enfer des blessures à 34 ans, et Vinicius Jr, la flèche du Real Madrid. Carlo Ancelotti, premier sélectionneur étranger du Brésil de l'histoire moderne.",surveiller:"Endrick, le gamin prodige, et Raphinha à qui Neymar a fait « une grande promesse » selon la presse brésilienne.",histoire:"Le Brésil n'a plus gagné depuis 2002 — une éternité pour le pays du foot. Quand Neymar a découvert sa convocation, il a fondu en larmes devant les caméras. Tout un pays retient son souffle pour la dernière chance de son enfant prodige. Et en face dans le groupe : Haïti, le petit poucet caribéen. Match à regarder en famille obligatoire."},
 "Argentine":{g:"J",niv:5,surnom:"L'Albiceleste",leaders:"Lionel Messi, 39 ans, champion du monde en titre, pour sa toute dernière Coupe du monde. Autour de lui, la bande de 2022 : Julián Álvarez, De Paul, le gardien-provocateur Emiliano Martínez.",surveiller:"Les jeunes qui se battent pour accompagner Messi dans sa dernière danse — chaque place dans cette équipe vaut de l'or.",histoire:"Champions en titre. Chaque match peut être le DERNIER match en Coupe du monde du plus grand joueur de l'histoire. Rien que pour ça, on ne rate aucun match de l'Argentine. L'émotion garantie du tournoi."},
 "Espagne":{g:"H",niv:5,surnom:"La Roja",leaders:"Lamine Yamal, 18 ans, le petit génie du Barça qui régale la planète, et Pedri, le métronome. Champions d'Europe 2024.",surveiller:"Yamal, encore et toujours : à 18 ans, il peut devenir la star absolue de ce Mondial, comme Pelé en 1958.",histoire:"L'Espagne est co-favorite avec la France et joue le plus beau football d'Europe. Si Ginou veut miser malin, c'est un cheval sérieux. Un éventuel France-Espagne en phase finale serait LA finale avant la lettre."},
@@ -464,7 +468,7 @@ const EQUIPES = {
 "Égypte":{g:"G",niv:3,surnom:"Les Pharaons",leaders:"Mohamed Salah, la superstar de Liverpool, ENFIN dans une Coupe du monde à son sommet.",surveiller:"Salah : il a porté l'Égypte toute sa carrière, c'est son moment.",histoire:"L'Égypte de Salah contre la Belgique de De Bruyne le 15 juin : duel de légendes de Liverpool... pardon, de Premier League. Salah mérite SON Mondial."},
 "Iran":{g:"G",niv:2,surnom:"Team Melli",leaders:"Mehdi Taremi, le renard des surfaces.",surveiller:"Une équipe soudée qui joue toujours mieux que prévu.",histoire:"Sixième Mondial d'affilée pour l'Iran, dont la participation a fait des vagues diplomatiques jusqu'au bout (visas, conditions posées à la FIFA...). Sur le terrain : accrocheurs, jamais ridicules."},
 "Nouvelle-Zélande":{g:"G",niv:1,surnom:"Les All Whites",leaders:"Chris Wood, le buteur de Premier League, et même un joueur de Saint-Étienne dans la liste.",surveiller:"Leur invincibilité statistique : en 2010, la NZ est restée INVAINCUE (3 nuls)... et éliminée quand même.",histoire:"Le pays du rugby vient jouer au foot. Personne ne les attend, c'est exactement comme ça qu'ils aiment."},
-"Cap-Vert":{g:"H",niv:1,surnom:"Les Requins Bleus",leaders:"Une sélection de la diaspora, pleine de joueurs nés au Portugal et en France.",surveiller:"L'exploit possible contre l'Arabie Saoudite : leur vrai match pour l'histoire.",histoire:"PREMIÈRE participation : 500 000 habitants, des îles, comme nous ! Et ils tombent... contre l'Espagne d'entrée. Les archipels au Mondial : Cap-Vert, Curaçao — l'année des îles."},
+"Cap-Vert":{g:"H",niv:1,surnom:"Les Requins Bleus",leaders:"Le capitaine Ryan Mendes (36 ans), passé par Lille et Le Havre, meilleur buteur et joueur le plus capé de l'histoire du pays — l'âme de la sélection. Logan Costa (Villarreal), le patron de la défense de retour de blessure. Et Vozinha, gardien historique de 40 ans qui vit le sommet de sa carrière.",surveiller:"L'effet diaspora : un effectif éparpillé dans 20 pays, formé surtout au Portugal. L'exploit possible contre l'Arabie Saoudite le 26 juin : leur vrai match pour l'histoire. Et un 0-0 accroché à l'Espagne en mars 2026 — ils savent embêter les gros.",histoire:"PREMIÈRE participation de l'histoire : un archipel de 500 000 habitants, des îles, comme nous ! Pour se qualifier, ces Requins Bleus ont éliminé le CAMEROUN et ses 8 Coupes du monde — un séisme. Le pays de Cesária Évora s'offre la lumière. Et ils tombent... contre l'Espagne d'entrée. Les archipels au Mondial : Cap-Vert, Curaçao — l'année des îles."},
 "Arabie Saoudite":{g:"H",niv:2,surnom:"Les Faucons Verts",leaders:"L'équipe qui a battu l'Argentine de Messi en ouverture 2022 — personne n'a oublié.",surveiller:"Leur match de préparation a été arrêté 2h pour des orages — ils sont prêts à tout.",histoire:"Auteurs du plus grand exploit de 2022 (victoire sur l'Argentine future championne). Capables du pire comme du miracle."},
 "Irak":{g:"I",niv:1,surnom:"Les Lions de Mésopotamie",leaders:"Une équipe de combattants, champions d'Asie 2007 — la plus belle histoire du foot asiatique.",surveiller:"Leur match contre la France le 22 juin : à 17h heure Martinique.",histoire:"Premier Mondial depuis 1986. Le foot irakien a survécu à tout — cette qualification est déjà une victoire immense. Adversaire « facile » des Bleus sur le papier, mais l'histoire est belle."},
 "Algérie":{g:"J",niv:3,surnom:"Les Fennecs",leaders:"Riyad Mahrez et une génération qui a faim, avec des renforts de la diaspora française.",surveiller:"« Si le Maroc a pu le faire... » : les Fennecs visent ouvertement l'exploit à la marocaine de 2022.",histoire:"Premier Mondial depuis 2014, et un tirage de feu : l'ARGENTINE DE MESSI d'entrée, le 16 juin à 21h heure Martinique. Toute la diaspora algérienne de France sera en fusion. Match événement."},
@@ -1822,6 +1826,29 @@ function detecterReveals(){
   revealQueue = aJouer.map(m => m.id);
   ouvrirReveal(revealQueue.shift());
 }
+function verdictMatch(m, re){
+  const a = re.score_a, b = re.score_b, tot = a+b, ecart = Math.abs(a-b);
+  const niveauA = (EQUIPES[m.a]||{}).niv || 3, niveauB = (EQUIPES[m.b]||{}).niv || 3;
+  const favori = niveauA > niveauB ? m.a : (niveauB > niveauA ? m.b : null);
+  const ecartNiv = Math.abs(niveauA - niveauB);
+  const vainqueur = a>b ? m.a : (b>a ? m.b : null);
+  const perdant = a>b ? m.b : (b>a ? m.a : null);
+  // Exploit : un petit bat ou tient un gros
+  if(ecartNiv >= 2){
+    if(vainqueur && vainqueur !== favori) return {titre:'EXPLOIT HISTORIQUE', sous:`${vainqueur} renverse la hiérarchie !`, fete:true};
+    if(!vainqueur && favori) return {titre:'EXPLOIT', sous:`${a===b?(perdant||m.a):''} ${favori===m.a?m.b:m.a} tient tête au favori !`.trim(), fete:true};
+  }
+  // Festival de buts
+  if(tot >= 6) return {titre:'FESTIVAL DE BUTS', sous:`${tot} buts dans ce match de folie !`, fete:true};
+  if(tot >= 4 && ecart >= 3) return {titre:'DÉMONSTRATION', sous:`${vainqueur} déroule sans pitié`, fete:true};
+  if(ecart >= 4) return {titre:'SANS PITIÉ', sous:`${vainqueur} humilie ${perdant}`, fete:true};
+  // Nuls
+  if(a===b && tot===0) return {titre:'MATCH FERMÉ', sous:'0-0, les défenses ont tout verrouillé', fete:false};
+  if(a===b) return {titre:'ILS SE QUITTENT DOS À DOS', sous:`Partage des points (${a}-${b})`, fete:false};
+  // Victoire serrée
+  if(ecart === 1) return {titre:'À UN SOUFFLE', sous:`${vainqueur} l'emporte d'un rien`, fete:false};
+  return {titre:'VERDICT DU TERRAIN', sous:`${vainqueur} s'impose`, fete:false};
+}
 function etapesReveal(id){
   _piocheVues = new Set();
   const m = M.find(x=>x.id===id), re = resultats[id];
@@ -1891,10 +1918,11 @@ function etapesReveal(id){
       ]);
     }
   }
+  const vd = verdictMatch(m, re);
   return [
     `<div class="etape"><div class="eti-r">🎬 Le récap du match</div><div class="drapeaux">${F[m.a]} ${F[m.b]}</div><h3>${m.a}<br>${m.b}</h3><div class="ligne-r" style="color:var(--gris)">Groupe ${m.g} · terminé</div></div>`,
     `<div class="etape"><div class="eti-r">Les paris étaient posés…</div>${lignesParis}</div>`,
-    `<div class="etape"><div class="eti-r">Le verdict du terrain</div><div class="grand-score">${re.score_a} – ${re.score_b}</div>${re.buteurs?`<div class="ligne-r">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`,
+    `<div class="etape" data-reveal-score data-a="${re.score_a}" data-b="${re.score_b}" data-fete="${vd.fete?1:0}"><div class="eti-r">Le verdict du terrain</div><div class="grand-score"><span class="sc-a">0</span> – <span class="sc-b">0</span></div><div class="verdict-box"><div class="verdict-titre">${vd.titre}</div><div class="verdict-sous">${vd.sous}</div></div>${re.buteurs?`<div class="ligne-r" style="margin-top:14px">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`,
     `<div class="etape"><div class="eti-r">Les comptes sont bons</div>${lignesComptes}</div>`,
     `<div class="etape"><div class="eti-r">Le classement après ce match</div>${lignesClassement}<div class="punch">🎙️ ${punch}</div></div>`
   ];
@@ -1912,6 +1940,8 @@ function ouvrirReveal(id){
   div.style.display = 'flex';
   const rendre = () => {
     div.innerHTML = etapes[revealEtape] + `<div class="suite">${revealEtape < etapes.length-1 ? 'Touche pour la suite ('+(revealEtape+1)+'/'+etapes.length+')' : 'Touche pour fermer'}</div>`;
+    const sc = div.querySelector('[data-reveal-score]');
+    if(sc) animerScore(sc, div);
   };
   div.onclick = () => {
     revealEtape++;
@@ -1924,6 +1954,38 @@ function ouvrirReveal(id){
   rendre();
 }
 
+function animerScore(etape, overlay){
+  const a = parseInt(etape.getAttribute('data-a'),10), b = parseInt(etape.getAttribute('data-b'),10);
+  const fete = etape.getAttribute('data-fete')==='1';
+  const elA = etape.querySelector('.sc-a'), elB = etape.querySelector('.sc-b');
+  const box = etape.querySelector('.verdict-box');
+  if(box){ box.style.opacity='0'; box.style.transform='translateY(14px)'; }
+  const monte = (el, to, done) => {
+    if(to===0){ el.textContent='0'; el.animate([{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:450}); if(done)done(); return; }
+    let n=0; el.textContent='0';
+    const iv = setInterval(()=>{ n++; el.textContent=n; el.animate([{transform:'scale(1.4)'},{transform:'scale(1)'}],{duration:160}); if(n>=to){ clearInterval(iv); if(done)done(); } }, 200);
+  };
+  setTimeout(()=>monte(elA, a, ()=>{
+    setTimeout(()=>monte(elB, b, ()=>{
+      if(box){ box.style.transition='opacity .5s, transform .5s'; box.style.opacity='1'; box.style.transform='translateY(0)'; }
+      if(fete){ if(navigator.vibrate) navigator.vibrate([40,30,60]); confettiReveal(overlay); }
+    }), 350);
+  }), 300);
+}
+function confettiReveal(overlay){
+  let c = overlay.querySelector('.confetti-layer');
+  if(!c){ c=document.createElement('div'); c.className='confetti-layer'; c.style.cssText='position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5'; overlay.appendChild(c); }
+  c.innerHTML='';
+  const cols=['#F5B43C','#FF6B5E','#2EC4A9','#fff','#3b82f6'];
+  for(let i=0;i<70;i++){
+    const p=document.createElement('div'); const sz=6+Math.random()*7;
+    p.style.cssText='position:absolute;width:'+sz+'px;height:'+sz+'px;background:'+cols[i%5]+';left:'+(Math.random()*100)+'%;top:-12px;border-radius:2px';
+    c.appendChild(p);
+    const dur=1900+Math.random()*1500, delay=Math.random()*500, rot=Math.random()*720-360;
+    p.animate([{transform:'translateY(0) rotate(0deg)',opacity:1},{transform:'translateY('+(window.innerHeight||700)+'px) rotate('+rot+'deg)',opacity:.85}],{duration:dur,delay:delay,easing:'cubic-bezier(.3,.6,.5,1)',fill:'forwards'});
+  }
+  setTimeout(()=>{ if(c) c.innerHTML=''; }, 4200);
+}
 function toutAfficher(){ lisereEcurie(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none';
   if(admin && palmares){ const pf=$('pal-finaliste'), pv=$('pal-vainqueur'); if(pf&&!pf.value)pf.value=palmares.finaliste||''; if(pv&&!pv.value)pv.value=palmares.vainqueur||''; } }
 
@@ -1966,8 +2028,16 @@ async function appliquerMajJour(){
     }
     for(const a of (data.avantmatchs||[])){
       try{
+        let mid = a.match_id;
+        /* si pas de match_id, on le retrouve via les noms d'équipes (insensible casse/accents) */
+        if(mid==null && (a.equipe_a||a.equipe_b||a.a||a.b)){
+          const na = normNom(a.equipe_a||a.a||''), nb = normNom(a.equipe_b||a.b||'');
+          const trouve = M.find(m => (normNom(m.a)===na && normNom(m.b)===nb) || (normNom(m.a)===nb && normNom(m.b)===na));
+          if(trouve) mid = trouve.id;
+        }
+        if(mid==null){ ko++; continue; }
         await sb('mondial_avantmatch?on_conflict=match_id', {method:'POST', prefer:'resolution=merge-duplicates',
-          body: JSON.stringify({match_id:a.match_id, titre:a.titre||'', contenu:a.contenu||''})});
+          body: JSON.stringify({match_id:mid, titre:a.titre||'', contenu:a.contenu||''})});
         ok++;
       }catch(e){ ko++; }
     }
