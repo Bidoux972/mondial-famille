@@ -173,6 +173,7 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .pastille-neuf{background:var(--or);color:#0E1B2C;font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 7px;border-radius:6px;vertical-align:middle}
 .potin-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .potin-date{font-size:11px;color:var(--gris);font-family:'Space Grotesk',monospace}
+.potin-suppr{margin-left:auto;background:rgba(255,107,94,.15);border:1px solid rgba(255,107,94,.35);color:#ff9b8f;border-radius:7px;padding:2px 8px;font-size:13px;cursor:pointer}
 .bonus-zone{margin-top:10px;padding:11px 12px;background:var(--panneau2);border:1px dashed var(--or);border-radius:10px}
 .bonus-titre{font-size:12px;font-weight:800;color:var(--or);margin-bottom:8px}
 .bonus-l{display:block;font-size:12.5px;color:var(--creme);font-weight:600;margin:8px 0 3px}
@@ -329,7 +330,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.20';
+const APP_VERSION = '9.21';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1375,20 +1376,20 @@ function nbPotinsNouveaux(){
 function potins(){
   const vus = new Set();
   const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
-  const potinHtml = (p, tag, nouveau, dateLabel) => `<div class="potin${nouveau?' potin-neuf':''}">
-    <div class="potin-meta">${nouveau?'<span class="pastille-neuf">● NOUVEAU</span>':''}${dateLabel?`<span class="potin-date">${dateLabel}</span>`:''}</div>
+  const potinHtml = (p, tag, nouveau, dateLabel, supprimable) => `<div class="potin${nouveau?' potin-neuf':''}">
+    <div class="potin-meta">${nouveau?'<span class="pastille-neuf">● NOUVEAU</span>':''}${dateLabel?`<span class="potin-date">${dateLabel}</span>`:''}${supprimable&&admin?`<button class="potin-suppr" onclick="supprimerPotin(${p.id})" title="Supprimer ce potin">🗑</button>`:''}</div>
     <div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
   let html = '', jourCourant = '';
   potinsCloud.filter(unique).forEach(p=>{
     const d = p.created_at ? new Date(p.created_at) : null;
     const j = d ? d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'}) : 'Récents';
     if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">📅 ${j}</div>`; }
-    html += potinHtml(p, 'Potin', estNouveauPotin(p), freshLabel(p.created_at));
+    html += potinHtml(p, 'Potin', estNouveauPotin(p), freshLabel(p.created_at), true);
   });
   const baseU = POTINS_BASE.filter(unique);
   if(baseU.length){
     html += `<div class="jour">📅 Avant le tournoi</div>`;
-    baseU.forEach(p=>{ html += potinHtml(p, p.tag, false, null); });
+    baseU.forEach(p=>{ html += potinHtml(p, p.tag, false, null, false); });
   }
   $('liste-potins').innerHTML = html;
   const onglet = document.querySelector('nav button[data-sec=potins]');
@@ -1404,6 +1405,14 @@ function ouvrirOngletPotins(){
   marquerVisitePotins();
   /* on ne met PAS à jour _refVisitePotins tout de suite : les NOUVEAU restent affichés pendant la lecture.
      À la prochaine ouverture de la page (ou prochain passage après rechargement), ils ne seront plus nouveaux. */
+}
+async function supprimerPotin(id){
+  if(!admin){ toast('Réservé au commissaire'); return; }
+  if(!confirm('Supprimer définitivement ce potin ?')) return;
+  try{
+    await sb(`mondial_potins?id=eq.${id}`, {method:'DELETE'});
+    toast('Potin supprimé 🗑'); await chargerTout();
+  }catch(e){ toast('Échec de la suppression'); }
 }
 async function ajouterPotin(){
   const titre = $('potin-titre').value.trim(), contenu = $('potin-contenu').value.trim();
