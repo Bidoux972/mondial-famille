@@ -334,7 +334,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.25';
+const APP_VERSION = '9.26';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -527,6 +527,47 @@ function joueursPoste(equipe){
 }
 const labelJoueur = j => j.pos ? `${j.nom}\u2002·\u2002${POSTES[j.pos]}` : j.nom;
 
+/* Stats dérivées AUTOMATIQUEMENT des résultats : on compte combien de fois
+   chaque joueur apparaît dans les champs "buteurs" de tous les matchs joués.
+   Aucune saisie supplémentaire : l'info est déjà dans la base. */
+let _statsButeurs = null;
+function statsButeurs(){
+  if(_statsButeurs) return _statsButeurs;
+  const map = {};
+  Object.values(resultats||{}).forEach(re=>{
+    if(!re || !re.buteurs) return;
+    /* on découpe la liste des buteurs ; un même nom peut revenir (doublé) */
+    String(re.buteurs).split(/[,;\n\/]/).map(s=>s.trim()).filter(Boolean).forEach(seg=>{
+      /* doublé/triplé détecté par les séparateurs explicites "&" ou "et" entre minutes,
+         ex "Havertz (45e+5sp & 88e)" = 2 buts. On NE compte PAS les nombres (45e+5 = 1 but). */
+      let nbButs = 1;
+      const paren = seg.match(/\(([^)]*)\)/);
+      if(paren){
+        const sep = paren[1].match(/&|\bet\b|\+(?=\s*\d+e)/g);
+        /* on compte les "&"/"et" séparant deux minutes distinctes ; +5sp n'en est pas un */
+        const amp = (paren[1].match(/&|\bet\b/g)||[]).length;
+        if(amp>0) nbButs = amp + 1;
+      }
+      const nom = seg.replace(/\([^)]*\)/g,'').replace(/\d+e?\+?\d*/g,'').replace(/\bsp\b|\bcsc\b|·/gi,'').replace(/\b[A-ZÉÈ]{3,}\b/g,'').trim();
+      if(!nom) return;
+      const cle = normNom(nom);
+      if(!cle) return;
+      map[cle] = (map[cle]||0) + nbButs;
+    });
+  });
+  _statsButeurs = map;
+  return map;
+}
+function butsDe(nom){
+  const map = statsButeurs(), cible = normNom(nom);
+  if(!cible) return 0;
+  /* correspondance souple : "Havertz" matche "Kai Havertz" */
+  let total = 0, exact = map[cible];
+  if(exact) return exact;
+  for(const cle in map){ if(cle.includes(cible) || cible.includes(cle)){ total = Math.max(total, map[cle]); } }
+  return total;
+}
+
 /* ============ ÉTAT ============ */
 let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null, ficheOuverte = null, avmOuvert = null;
 let avmCloud = {};
@@ -562,7 +603,7 @@ async function chargerTout() {
       sb('mondial_duels?select=*&order=created_at.desc').catch(()=>[])
     ]);
     pronos = {}; (p||[]).forEach(x => { (pronos[x.pseudo] = pronos[x.pseudo] || {})[x.match_id] = x; });
-    resultats = {}; (r||[]).forEach(x => resultats[x.match_id] = x);
+    resultats = {}; (r||[]).forEach(x => resultats[x.match_id] = x); _statsButeurs = null;
     participants = {}; (pa||[]).forEach(x => participants[x.pseudo] = x);
     potinsCloud = po || [];
     avmCloud = {}; (av||[]).forEach(x => avmCloud[x.match_id] = x);
@@ -954,8 +995,9 @@ function carteMatch(m, modePronos){
     const jA = joueursPoste(m.a), jB = joueursPoste(m.b);
     const buteurActuel = monPr && monPr.buteur ? monPr.buteur : '';
     const connu = [...jA, ...jB].some(x=>x.nom===buteurActuel);
-    const optsA = jA.map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===buteurActuel?'selected':''}>${labelJoueur(j)}</option>`).join('');
-    const optsB = jB.map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===buteurActuel?'selected':''}>${labelJoueur(j)}</option>`).join('');
+    const labelAvecStats = j => { const b = butsDe(j.nom); return labelJoueur(j) + (b>0 ? `\u2002·\u2002${b}\u26bd` : ''); };
+    const optsA = jA.map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===buteurActuel?'selected':''}>${labelAvecStats(j)}</option>`).join('');
+    const optsB = jB.map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===buteurActuel?'selected':''}>${labelAvecStats(j)}</option>`).join('');
     const bttsVal = monPr ? (monPr.btts===true?'oui':monPr.btts===false?'non':'') : '';
     bas = `<div class="prono-saisie">
       <input type="number" min="0" max="20" id="pa-${m.id}" value="${va}" inputmode="numeric">
@@ -1104,7 +1146,7 @@ async function validerScore(id){
     await sb('mondial_resultats?on_conflict=match_id', {method:'POST',
       prefer:'resolution=merge-duplicates',
       body: JSON.stringify({match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null})});
-    resultats[id] = {match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null};
+    resultats[id] = {match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null}; _statsButeurs = null;
     toast('Score validé — classement mis à jour 🏆'); toutAfficher();
   }catch(e){ toast('Échec de la validation'); }
 }
