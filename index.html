@@ -137,6 +137,12 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .classement .rang:first-child .pos{color:var(--or)}
 .classement .qui{font-weight:700;font-size:16px;flex:1}
 .classement .detail{font-size:11px;color:var(--gris)}
+.badges-rang{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.badge-j{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;line-height:1.5}
+.badge-feu{background:rgba(255,107,94,.16);color:#FF6B5E}
+.badge-froid{background:rgba(120,150,180,.16);color:#9fb2c8}
+.badge-or{background:rgba(245,180,60,.16);color:var(--or)}
+.badge-ok{background:rgba(46,196,169,.14);color:var(--lagon)}
 .classement .total{font-family:'Space Grotesk',monospace;font-size:22px;font-weight:700;color:var(--or)}
 /* écuries */
 .ecurie{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:14px;margin-bottom:10px}
@@ -338,7 +344,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.27';
+const APP_VERSION = '9.28';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1156,6 +1162,34 @@ async function validerScore(id){
 }
 
 /* ============ CLASSEMENT ============ */
+/* Badges / séries : on analyse les pronos JUGÉS d'un joueur, dans l'ordre chronologique
+   des matchs, pour repérer séries en cours, coups d'éclat et passes à vide. Sans emoji cliché. */
+function badgesDe(p){
+  const juges = Object.values(pronos[p]||{})
+    .map(pr=>({pr, m:M.find(x=>x.id===pr.match_id), re:resultats[pr.match_id]}))
+    .filter(o=>o.m && o.re && points(o.pr,o.re)!==null)
+    .sort((a,b)=>a.m.dt-b.m.dt);
+  if(!juges.length) return [];
+  const badges = [];
+  /* série EN COURS de bons paris (total>0) en partant de la fin */
+  let streakBon=0, streakMauvais=0;
+  for(let i=juges.length-1;i>=0;i--){ if(ptsTotal(juges[i].pr,juges[i].re)>0) streakBon++; else break; }
+  for(let i=juges.length-1;i>=0;i--){ if(ptsTotal(juges[i].pr,juges[i].re)<0) streakMauvais++; else break; }
+  if(streakBon>=3) badges.push({txt:`🔥 En feu · ${streakBon} paris gagnants d'affilée`, cls:'badge-feu'});
+  else if(streakBon===2) badges.push({txt:`Sur sa lancée · 2 bons paris de suite`, cls:'badge-ok'});
+  if(streakMauvais>=3) badges.push({txt:`🧊 Passe à vide · ${streakMauvais} ratés d'affilée`, cls:'badge-froid'});
+  /* coups d'éclat cumulés */
+  const nbExacts = juges.filter(o=>points(o.pr,o.re)===3).length;
+  if(nbExacts>=3) badges.push({txt:`🎯 Sniper · ${nbExacts} scores exacts`, cls:'badge-or'});
+  /* série de scores exacts consécutifs */
+  let exactStreak=0; for(let i=juges.length-1;i>=0;i--){ if(points(juges[i].pr,juges[i].re)===3) exactStreak++; else break; }
+  if(exactStreak>=2) badges.push({txt:`💎 ${exactStreak} scores exacts de suite — irréel`, cls:'badge-or'});
+  /* flair du buteur */
+  const nbButs = juges.filter(o=>bonus(o.pr,o.re).but===2).length;
+  if(nbButs>=3) badges.push({txt:`⚽ Flair du buteur · ${nbButs} buteurs trouvés`, cls:'badge-ok'});
+  /* on limite à 2 badges pour ne pas charger */
+  return badges.slice(0,2);
+}
 function calculTotaux(filtreMatch){
   const deltaDuels = p => duelsCloud.reduce((s,d)=>{
     if(d.statut!=='juge' || !d.verdict) return s;
@@ -1216,7 +1250,7 @@ function classement(){
     <div class="rang">
       <div class="pos">${i===0&&l.total>0?'👑':i+1}</div>
       <div><div class="qui">${l.p}${participants[l.p]&&participants[l.p].equipe_ecurie?' · '+(F[participants[l.p].equipe_ecurie]||''):''}${fleche}</div>
-      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances · buteurs ${l.buts}⚽/${l.butsKo}❌ · ${l.ors} 🌟${l.duels!==0?` · duels ${l.duels>0?'+':''}${l.duels}⚔️`:''}${l.bonusEc?` · écurie +${l.bonusEc}🏆`:''}</div></div>
+      <div class="detail">${l.n} pronos jugés · ${l.exacts} exacts · ${l.bons} tendances · buteurs ${l.buts}⚽/${l.butsKo}❌ · ${l.ors} 🌟${l.duels!==0?` · duels ${l.duels>0?'+':''}${l.duels}⚔️`:''}${l.bonusEc?` · écurie +${l.bonusEc}🏆`:''}</div>${(()=>{const bs=badgesDe(l.p);return bs.length?`<div class="badges-rang">${bs.map(b=>`<span class="badge-j ${b.cls}">${b.txt}</span>`).join('')}</div>`:'';})()}</div>
       <div class="total">${l.total}</div>
     </div>`;
   }).join('');
