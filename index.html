@@ -334,7 +334,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.23';
+const APP_VERSION = '9.24';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -795,44 +795,77 @@ function chambrage(p, pr, re, t){
   if(t>=6) return pick([
     `🔥 ${p} a TOUT explosé. ${accord(p,'Incliné','Inclinée')}.`,
     `🔥 Carton plein pour ${p}. On range les autres au vestiaire.`,
-    `🔥 ${p} en mode devin absolu. Personne ne suit.`
+    `🔥 ${p} en mode devin absolu. Personne ne suit.`,
+    `🔥 ${p} a vu le match avant qu'il soit joué. Sorcellerie.`,
+    `🔥 Récital de ${p}. Les autres prennent des notes (ou devraient).`,
+    `🔥 ${p} encaisse le jackpot. La banque a sauté.`,
+    `🔥 Score, bonus, tout y passe : ${p} fait un carton plein historique.`,
+    `🔥 On arrête le concours, ${p} a gagné le match à ${accord(p,'lui seul','elle seule')}.`,
+    `🔥 ${p} déroule un sans-faute. Madame Irma peut ranger sa boule.`,
+    `🔥 Soirée parfaite pour ${p}. Indécent, presque.`
   ]);
   if(t>=4) return pick([
     `🎯 Score ET bonus pour ${p}. ${accord(p,'Bien vu','Bien vue')}, l'artiste.`,
     `🎯 ${p} rafle le paquet. Le flair à l'état pur.`,
-    `🎯 Gros coup de ${p}. ${accord(p,'Calculé','Calculée') ? '' : ''}Du grand art.`,
-    `🎯 ${p} empoche tout. Les autres regardent.`
+    `🎯 Gros coup de ${p}. Du grand art.`,
+    `🎯 ${p} empoche tout. Les autres regardent.`,
+    `🎯 ${p} a coché les bonnes cases. Méthodique et cruel.`,
+    `🎯 Belle prise pour ${p}. Le filet est plein.`,
+    `🎯 ${p} additionne score et bonus comme on additionne les zéros sur un chèque.`,
+    `🎯 ${p} repart les poches pleines. Discrètement génial.`,
+    `🎯 Coup de maître de ${p}. On applaudit, un peu jaloux.`
   ]);
   if(base===3) return pick([
     `🎯 Score exact ! ${p} avait vu juste.`,
     `🎯 Pile-poil pour ${p}. Dans le mille.`,
-    `🎯 ${p} a deviné au millimètre. Chapeau.`
+    `🎯 ${p} a deviné au millimètre. Chapeau.`,
+    `🎯 Le score exact de ${p}. Coup de chance ? On ne dira rien.`,
+    `🎯 ${p} pose le bon score sans trembler. Respect.`,
+    `🎯 Pronostic chirurgical de ${p}. Net et précis.`,
+    `🎯 ${p} tape exactement juste. Le genre de truc qui agace les autres.`
   ]);
   if(t>=1) return pick([
     `👍 ${p} grappille des points malins, bonus compris.`,
     `👍 Pas le score, mais ${p} sauve les meubles avec le bonus.`,
     `👍 ${p} s'en sort bien, le pari bonus paie.`,
     `👍 Petit profit pour ${p}. ${accord(p,'Malin','Maligne')}.`,
-    `👍 ${p} repart avec du positif. Bien joué.`
+    `👍 ${p} repart avec du positif. Bien joué.`,
+    `👍 Récolte modeste mais réelle pour ${p}. Ça compte.`,
+    `👍 ${p} ne rentre pas bredouille. Le minimum syndical, version maline.`,
+    `👍 Quelques points pour ${p}. Pas le gros lot, mais pas rien.`,
+    `👍 ${p} gratte ce qu'il y a à gratter. Opportuniste.`
   ]);
   if(t===0) return pick([
     `😬 ${p} repart bredouille, ni gain ni perte.`,
     `😬 Zéro pointé pour ${p}. On efface, on recommence.`,
     `😬 ${p} passe à côté. Ça arrive.`,
-    `😬 Rien pour ${p} ce coup-ci. La prochaine sera la bonne.`
+    `😬 Rien pour ${p} ce coup-ci. La prochaine sera la bonne.`,
+    `😬 ${p} fait du surplace. Le foot est cruel avec les indécis.`,
+    `😬 Blanche, la copie de ${p}. Pas faux, pas juste.`,
+    `😬 ${p} regarde le train passer. Zéro au compteur.`,
+    `😬 Match neutre pour ${p}. On ne gagne rien à être tiède.`
   ]);
   /* t < 0 */
   if(pr.en_or) return pick([
     `💀 Match en Or qui explose pour ${p}. Le poker ×2 fait mal.`,
     `💀 Aïe, le 🌟 se retourne contre ${p}. Double peine.`,
-    `💀 ${p} avait misé gros avec le Match en Or. Mauvais pari.`
+    `💀 ${p} avait misé gros avec le Match en Or. Mauvais pari.`,
+    `💀 Le Match en Or de ${p} vire au plomb. ×2 dans le mauvais sens.`,
+    `💀 ${p} a doublé la mise… et doublé la chute. Brutal.`,
+    `💀 Quand on joue le 🌟 et qu'on se loupe : voilà ${p}, deux fois puni.`,
+    `💀 Le pari en Or de ${p} part en fumée. Avec les intérêts.`
   ]);
   return pick([
     `❌ Pari raté, ${p} lâche des points. Ça pique.`,
     `❌ ${p} dans le rouge. Le bonus s'est retourné.`,
     `❌ Mauvaise pioche pour ${p}. ${accord(p,'Refroidi','Refroidie')}.`,
     `❌ ${p} perd des plumes sur ce match. Aïe.`,
-    `❌ Le pari de trop pour ${p}. ${accord(p,'Puni','Punie')}.`
+    `❌ Le pari de trop pour ${p}. ${accord(p,'Puni','Punie')}.`,
+    `❌ ${p} a tenté, ${p} a sombré. Le bonus était un piège.`,
+    `❌ Dans le dur pour ${p}. Le pari bonus pique les fesses.`,
+    `❌ ${p} mise, ${p} se rate, ${p} paie. Triple peine.`,
+    `❌ Le foot a puni l'audace de ${p}. Sans pitié.`,
+    `❌ ${p} repart avec moins que rien. Le bonus, ce faux ami.`
   ]);
 }
 function detailCalcul(pr, re){
@@ -1772,6 +1805,52 @@ function lancerRecapJour(jourClef){
       if(orLose.length) momentsHtml += `<div class="ligne-r">💀 <b>Match en Or qui explose</b> : ${orLose.map(x=>x.p).join(', ')}. ×2 sur les pertes aussi, aïe.</div>`;
     }
     if(momentsHtml) etapes.push(`<div class="etape"><div class="eti-r">⭐ Les moments forts</div>${momentsHtml}</div>`);
+  }
+
+  /* ACTE — chambrage CONTEXTUEL : on pioche dans le réel (écuries, séries, sort du leader) */
+  if(perfs.length){
+    const contextLignes = [];
+    /* 1) Qui a parié sur/contre un match impliquant son écurie ? */
+    PARTICIPANTS.forEach(p=>{
+      const eq = ecurieDe(p);
+      if(!eq) return;
+      perfs.filter(x=>x.p===p && (x.m.a===eq||x.m.b===eq)).forEach(x=>{
+        const re2 = x.re, monEq = x.m.a===eq, butEq = monEq?re2.score_a:re2.score_b, butAdv = monEq?re2.score_b:re2.score_a;
+        const prMon = monEq?x.pr.score_a:x.pr.score_b, prAdv = monEq?x.pr.score_b:x.pr.score_a;
+        const ecurieGagne = butEq>butAdv;
+        const aParieGagnant = prMon>prAdv;
+        if(ecurieGagne && !aParieGagnant){
+          contextLignes.push(`🏳️ ${p} a vu son écurie ${eq} gagner… après avoir parié contre. La loyauté a un prix, et ${ilElle(p)} vient de le payer.`);
+        } else if(!ecurieGagne && aParieGagnant && butEq<butAdv){
+          contextLignes.push(`🏳️ ${p} a cru en son écurie ${eq}… qui a sombré. Le cœur a parlé plus fort que la raison.`);
+        } else if(ecurieGagne && aParieGagnant){
+          contextLignes.push(`🏳️ ${p} a soutenu son écurie ${eq} ET empoché les points. Le combo parfait du supporter malin.`);
+        }
+      });
+    });
+    /* 2) Séries du jour : qui a tout réussi / tout raté sur la journée */
+    PARTICIPANTS.forEach(p=>{
+      const siens = perfs.filter(x=>x.p===p);
+      if(siens.length<2) return;
+      if(siens.every(x=>x.t>0)) contextLignes.push(`📈 ${p} n'a rien lâché aujourd'hui : QUE des paris positifs. ${accord(p,'Chaud','Chaude') } bouillant${GENRE[p]==='f'?'e':''}.`);
+      else if(siens.every(x=>x.t<=0)) contextLignes.push(`📉 ${p} a tout raté sur la journée. Un zéro pointé intégral. ${ilElle(p)} ${accord(p,'rentrera à pied','rentrera à pied')}.`);
+    });
+    /* 3) Le sort du leader provisoire : on aime taper sur celui d'en haut */
+    const clAvant = calculTotaux(x => x.dt.getTime() < matchs[0].dt.getTime());
+    const clApres = calculTotaux(x => x.dt.getTime() <= matchs[matchs.length-1].dt.getTime());
+    if(clAvant.length && clApres.length && clAvant[0].total>0){
+      const ancienLeader = clAvant[0].p, nouveauLeader = clApres[0].p;
+      if(ancienLeader!==nouveauLeader && clApres[0].total>0){
+        contextLignes.push(`👑 Coup de théâtre : ${nouveauLeader} détrône ${ancienLeader} et s'empare de la tête ! Le roi est mort, vive ${accord(nouveauLeader,'le roi','la reine')}.`);
+      }
+    }
+    if(contextLignes.length){
+      /* on pioche au max 3 piques contextuelles pour ne pas noyer */
+      const choisies = [];
+      const pool = contextLignes.slice();
+      while(choisies.length<3 && pool.length){ choisies.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
+      etapes.push(`<div class="etape"><div class="eti-r">🎙️ Le coin des règlements de comptes</div>${choisies.map(c=>`<div class="ligne-r" style="margin:10px 0;line-height:1.5">${c}</div>`).join('')}</div>`);
+    }
   }
 
   /* ACTE FINAL — le classement du soir + grande punchline genrée */
