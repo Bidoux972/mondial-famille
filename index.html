@@ -183,6 +183,10 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .potin .titre{font-weight:700;margin-bottom:4px}
 .potin .texte{font-size:14px;color:#cfd9e4;line-height:1.45}
 .potin .tag{display:inline-block;margin-top:8px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--or);font-weight:700}
+.potin .tag-news{color:var(--lagon)}
+.potin .tag-potin{color:var(--or)}
+.potin-news{border-left-color:var(--lagon)}
+.potin-potin{border-left-color:var(--corail)}
 textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Public Sans';font-size:14px;min-height:70px;margin-top:8px}
 input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Public Sans';font-size:14px;margin-top:8px}
 .admin-bloc{border:1px dashed var(--or);border-radius:12px;padding:12px;margin:12px 0;background:rgba(245,180,60,.05)}
@@ -334,7 +338,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.26';
+const APP_VERSION = '9.27';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1452,23 +1456,40 @@ function nbPotinsNouveaux(){
     return estNouveauPotin(p);
   }).length;
 }
+function typePotin(p){
+  /* priorité au champ type explicite, sinon on détecte via un préfixe [NEWS]/[POTIN] dans le titre */
+  if(p.type==='news'||p.type==='potin') return p.type;
+  const t = String(p.titre||'').toLowerCase();
+  if(/\[\s*news\s*\]|\[\s*info\s*\]/.test(t)) return 'news';
+  if(/\[\s*potin\s*\]/.test(t)) return 'potin';
+  return 'potin';
+}
+function titrePropre(titre){
+  /* on retire le préfixe [NEWS]/[POTIN]/[INFO] du titre affiché, le badge en bas suffit */
+  return String(titre||'').replace(/^\s*\[\s*(news|info|potin)\s*\]\s*/i,'').trim();
+}
+function badgePotin(type){
+  return type==='news'
+    ? '<span class="tag tag-news">📰 INFO UTILE</span>'
+    : '<span class="tag tag-potin">🍿 POTIN</span>';
+}
 function potins(){
   const vus = new Set();
   const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
-  const potinHtml = (p, tag, nouveau, dateLabel, supprimable) => `<div class="potin${nouveau?' potin-neuf':''}">
+  const potinHtml = (p, nouveau, dateLabel, supprimable) => { const ty = typePotin(p); return `<div class="potin${nouveau?' potin-neuf':''} potin-${ty}">
     <div class="potin-meta">${nouveau?'<span class="pastille-neuf">● NOUVEAU</span>':''}${dateLabel?`<span class="potin-date">${dateLabel}</span>`:''}${supprimable&&admin?`<button class="potin-suppr" onclick="supprimerPotin(${p.id})" title="Supprimer ce potin">🗑</button>`:''}</div>
-    <div class="titre">${p.titre}</div><div class="texte">${p.contenu}</div><span class="tag">${tag}</span></div>`;
+    <div class="titre">${titrePropre(p.titre)}</div><div class="texte">${p.contenu}</div>${badgePotin(ty)}</div>`; };
   let html = '', jourCourant = '';
   potinsCloud.filter(unique).forEach(p=>{
     const d = p.created_at ? new Date(p.created_at) : null;
     const j = d ? d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Martinique'}) : 'Récents';
     if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">📅 ${j}</div>`; }
-    html += potinHtml(p, 'Potin', estNouveauPotin(p), freshLabel(p.created_at), true);
+    html += potinHtml(p, estNouveauPotin(p), freshLabel(p.created_at), true);
   });
   const baseU = POTINS_BASE.filter(unique);
   if(baseU.length){
     html += `<div class="jour">📅 Avant le tournoi</div>`;
-    baseU.forEach(p=>{ html += potinHtml(p, p.tag, false, null, false); });
+    baseU.forEach(p=>{ html += potinHtml(p, false, null, false); });
   }
   $('liste-potins').innerHTML = html;
   const onglet = document.querySelector('nav button[data-sec=potins]');
@@ -2199,8 +2220,10 @@ async function appliquerMajJour(){
     for(const po of (data.potins||[])){
       try{
         if(titresExistants.has(String(po.titre||'').trim().toLowerCase())) continue;
-        await sb('mondial_potins', {method:'POST',
-          body: JSON.stringify({titre:po.titre, contenu:po.contenu})});
+        /* type: 'news' (info utile au pari) ou 'potin' (anecdote). Défaut : potin. */
+        const ty = (po.type==='news'||po.type==='potin') ? po.type : null;
+        const corps = ty ? {titre:po.titre, contenu:po.contenu, type:ty} : {titre:po.titre, contenu:po.contenu};
+        await sb('mondial_potins', {method:'POST', body: JSON.stringify(corps)});
         titresExistants.add(String(po.titre||'').trim().toLowerCase());
         ok++;
       }catch(e){ ko++; }
