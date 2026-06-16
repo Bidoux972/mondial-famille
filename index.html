@@ -169,6 +169,9 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .fiche .tete .etoiles{color:var(--or);letter-spacing:3px;font-size:13px;margin-top:2px}
 .fiche .bloc{margin-top:14px}
 .fiche .bloc .eti{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);font-weight:700;margin-bottom:4px}
+.fiche .bloc-actus{margin-top:14px;background:rgba(255,107,94,.1);border:1px solid rgba(255,107,94,.35);border-left:4px solid var(--corail);border-radius:10px;padding:12px 14px}
+.fiche .bloc-actus .eti-actus{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--corail);font-weight:700;margin-bottom:5px}
+.fiche .bloc-actus p{margin:0;font-size:13.5px;line-height:1.5}
 .fiche .bloc p{font-size:14px;line-height:1.5;color:#cfd9e4}
 .fiche .bloc p b{color:var(--creme)}
 .fiche .ses-matchs{margin-top:14px}
@@ -344,7 +347,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.30';
+const APP_VERSION = '9.31';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -474,7 +477,7 @@ const EQUIPES = {
 "Côte d'Ivoire":{g:"E",niv:3,surnom:"Les Éléphants",leaders:"Sébastien Haller, héros de la CAN 2024 après avoir vaincu un cancer des testicules — buteur de la finale, une histoire bouleversante. Autour de lui, Franck Kessié au milieu, Amad Diallo (Manchester United) qui monte en puissance, et Ousmane Diomandé en défense.",surveiller:"L'effet champion d'Afrique : l'Allemagne a publiquement déclaré qu'elle « craint la Côte d'Ivoire ». Quand un quadruple champion du monde dit ça d'un adversaire, c'est du sérieux.",histoire:"Champions d'Afrique en titre (CAN 2024 remportée à domicile dans un scénario fou), les Éléphants débarquent dans le groupe E avec l'Allemagne, l'Équateur et Curaçao. Sortir l'Allemagne serait le séisme du tournoi — et au vu de leur niveau actuel, ce n'est pas de la science-fiction."},
 "Équateur":{g:"E",niv:3,surnom:"La Tri",leaders:"Moisés Caicedo (Chelsea), le milieu le plus cher de l'histoire de la Premier League, véritable patron au cœur du jeu. Piero Hincapié (Leverkusen) en défense, et le jeune buteur Kendry Páez, pépite annoncée comme la future star sud-américaine.",surveiller:"La solidité défensive et la puissance physique : l'Équateur a terminé l'une des meilleures défenses des qualifications sud-américaines. Personne ne veut les affronter, pas même l'Allemagne.",histoire:"L'Équateur monte en puissance depuis des années. Présent au Qatar en 2022, qualifié à nouveau (deuxième fois consécutive de son histoire), il fait peur à tout le monde. Dans le groupe E avec l'Allemagne et la Côte d'Ivoire, la Tri vise clairement les 16es, voire mieux."},
 "Suède":{g:"F",niv:2,surnom:"Blågult",leaders:"Alexander Isak et Viktor Gyökeres : le duo d'attaquants le plus chaud d'Europe... sur le papier.",surveiller:"Gyökeres-Isak : si ça clique, ça peut marquer 3 buts par match.",histoire:"Retour au Mondial porté par deux buteurs de classe mondiale. Avec un mystère : la pépite Roony Bardghji absente pour des « raisons fracassantes » selon la presse. Drama suédois."},
-"Tunisie":{g:"F",niv:2,surnom:"Les Aigles de Carthage",leaders:"Une équipe collective et accrocheuse, fierté du Maghreb.",surveiller:"Leur capacité à faire tomber un gros : ils ont battu la France en 2022 (1-0, on s'en souvient).",histoire:"La Tunisie ne passe jamais les poules mais gâche toujours la fête de quelqu'un. Les Pays-Bas sont prévenus."},
+"Tunisie":{g:"F",niv:2,surnom:"Les Aigles de Carthage",leaders:"Une équipe collective et accrocheuse, fierté du Maghreb. Le capitaine Youssef Msakni, l'expérimenté Wahbi Khazri, le milieu Aïssa Laïdouni (combatif) et le gardien Aymen Dahmen forment l'ossature.",surveiller:"Leur capacité à faire tomber un gros : ils avaient battu la France championne du monde en titre en 2022 (1-0, on s'en souvient !). Une équipe qui n'a rien à perdre et peut gâcher la fête.",actus:"⚠️ SÉISME : Sabri Lamouchi a été LIMOGÉ dès le 1er match, après la déroute 5-1 contre la Suède — premier sélectionneur viré du tournoi ! Mondher Kebaier (déjà en poste de 2019 à 2022) assure l'intérim pour les matchs contre le Japon et les Pays-Bas. Ambiance électrique chez les Aigles.",histoire:"La Tunisie ne passe jamais les poules mais gâche toujours la fête de quelqu'un. Dans le groupe F avec les Pays-Bas et le Japon, après un départ catastrophique (1-5), il va falloir tout reconstruire en pleine compétition. Les Pays-Bas sont quand même prévenus."},
 "Égypte":{g:"G",niv:3,surnom:"Les Pharaons",leaders:"Mohamed Salah, la superstar de Liverpool, ENFIN dans une Coupe du monde à son sommet.",surveiller:"Salah : il a porté l'Égypte toute sa carrière, c'est son moment.",histoire:"L'Égypte de Salah contre la Belgique de De Bruyne le 15 juin : duel de légendes de Liverpool... pardon, de Premier League. Salah mérite SON Mondial."},
 "Iran":{g:"G",niv:2,surnom:"Team Melli",leaders:"Mehdi Taremi, le renard des surfaces.",surveiller:"Une équipe soudée qui joue toujours mieux que prévu.",histoire:"Sixième Mondial d'affilée pour l'Iran, dont la participation a fait des vagues diplomatiques jusqu'au bout (visas, conditions posées à la FIFA...). Sur le terrain : accrocheurs, jamais ridicules."},
 "Nouvelle-Zélande":{g:"G",niv:1,surnom:"Les All Whites",leaders:"Chris Wood, le buteur de Premier League, et même un joueur de Saint-Étienne dans la liste.",surveiller:"Leur invincibilité statistique : en 2010, la NZ est restée INVAINCUE (3 nuls)... et éliminée quand même.",histoire:"Le pays du rugby vient jouer au foot. Personne ne les attend, c'est exactement comme ça qu'ils aiment."},
@@ -1329,6 +1332,7 @@ function zoneEquipes(){
       <div class="tete"><span class="f">${F[ficheOuverte]}</span>
         <div><h3>${ficheOuverte}</h3><div class="surnom">${e.surnom} · Groupe ${e.g}</div>
         <div class="etoiles">${etoiles(e.niv)}</div></div></div>
+      ${e.actus?`<div class="bloc-actus"><div class="eti-actus">📡 Dernière info du Mondial</div><p>${e.actus}</p></div>`:''}
       <div class="bloc"><div class="eti">Les leaders</div><p>${e.leaders}</p></div>
       <div class="bloc"><div class="eti">À surveiller</div><p>${e.surveiller}</p></div>
       <div class="bloc"><div class="eti">La belle histoire</div><p>${e.histoire}</p></div>
