@@ -383,7 +383,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.40';
+const APP_VERSION = '9.42';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1567,14 +1567,68 @@ function banniereEcurie(){
     const r = resultats[matchDuJour.id];
     const enCours = joue(matchDuJour) && !r;
     const fini = !!r;
+    const niv = (eqData(eq).niv)||3; /* 5=ogre, 4=gros, 3=solide, 2=outsider, 1=petit poucet */
+    const gros = niv>=4, petit = niv<=2;
     let etat;
     if(fini){
       const moi=matchDuJour.a===eq?r.score_a:r.score_b, lui=matchDuJour.a===eq?r.score_b:r.score_a;
-      etat = moi>lui ? `VICTOIRE ${moi}-${lui} ! Ton écurie a assuré 🎉` : moi===lui ? `Match nul ${moi}-${lui}. Un point de pris.` : `Défaite ${moi}-${lui}. Dure soirée pour ton écurie...`;
+      if(moi>lui){
+        etat = pioche(gros ? [
+          `${moi}-${lui}. ${eq} a fait ce qu'on attend d'un grand : gagner sans trembler. Les autres écuries peuvent commencer à s'inquiéter.`,
+          `${moi}-${lui}, sans forcer. ${eq} envoie un message au reste du tableau — et tu en récoltes les fruits.`,
+          `${eq} déroule, ${moi}-${lui}. Pendant ce temps, les rivaux relisent leurs notes en transpirant.`
+        ] : [
+          `${moi}-${lui} ! Personne n'attendait ${eq}, et c'est toi qui ris le dernier. Savoure.`,
+          `${moi}-${lui}. Ton outsider a fait tomber un mur. Le genre de soir qui se raconte longtemps.`,
+          `${eq} crée la surprise, ${moi}-${lui}. Tu avais raison de croire à la belle histoire.`
+        ]);
+      } else if(moi===lui){
+        etat = pioche([
+          `${moi}-${lui}. ${eq} assure le minimum. On prend le point, on garde le sourire poli.`,
+          `Nul ${moi}-${lui}. Pas de quoi pavoiser, pas de quoi rougir. ${eq} avance masquée.`,
+          `${moi}-${lui}. Match sage de ${eq}. Le spectacle viendra plus tard, on veut y croire.`
+        ]);
+      } else {
+        etat = pioche(gros ? [
+          `${lui}-${moi}. L'ogre ${eq} a trébuché. Les autres écuries jubilent — toi, tu fais le dos rond.`,
+          `${moi}-${lui}. Un favori qui tombe, c'est tout le tournoi qui ricane. ${eq} doit relever la tête, vite.`,
+          `${lui}-${moi}. ${eq} a oublié de se présenter. La pression monte, et tu le sens passer.`
+        ] : [
+          `${lui}-${moi}. ${eq} s'est battue mais a cédé. L'honneur est sauf, les points non.`,
+          `${moi}-${lui}. Ton outsider a touché ses limites ce soir. La fierté reste, la revanche aussi.`
+        ]);
+      }
     } else if(enCours){
-      etat = `LE MATCH EST EN COURS ! Ton écurie est sur le terrain 🔥`;
+      etat = pioche([
+        `Ça se joue MAINTENANT. ${eq} contre ${adv}, et toute la famille regarde qui a misé juste.`,
+        `${eq} est sur la pelouse. L'heure des paroles est finie — place au terrain, et tu y es.`,
+        `${eq} - ${adv}, en direct, là, tout de suite. Respire. Ou pas.`
+      ]);
     } else {
-      etat = `Coup d'envoi à ${fmtHeure(matchDuJour.dt)} 🇲🇶 — prépare les snacks !`;
+      /* AVANT le match : ton selon le standing + le rang */
+      const enTete = rang===1, galere = rang>=3;
+      if(gros){
+        etat = pioche([
+          `Aujourd'hui, ${eq} entre dans l'arène face à ${adv}. On ne demande pas à un favori de gagner : on l'exige. ${fmtHeure(matchDuJour.dt)}.`,
+          `${eq} joue à ${fmtHeure(matchDuJour.dt)}. ${adv} a dû mal dormir cette nuit. Toi, tu sirotes tranquille.`,
+          `C'est l'heure, ${eq} défie ${adv}. Pendant que les autres prient, toi tu choisis déjà ta tenue de finale. ${fmtHeure(matchDuJour.dt)}.`,
+          `${eq} vs ${adv}, ${fmtHeure(matchDuJour.dt)}. Le favori descend de son trône le temps d'un match. Reste à le prouver.`
+        ]);
+      } else if(petit){
+        etat = pioche([
+          `${eq} affronte ${adv} à ${fmtHeure(matchDuJour.dt)}. Personne n'y croit, sauf toi. C'est exactement comme ça qu'on écrit les légendes.`,
+          `Jour de match pour ${eq} contre ${adv}. David a déjà battu Goliath une fois — pourquoi pas ce soir ? ${fmtHeure(matchDuJour.dt)}.`,
+          `${eq} entre en lice à ${fmtHeure(matchDuJour.dt)}. Rien à perdre, tout à prouver. Le cœur avant les pronostics.`
+        ]);
+      } else {
+        etat = pioche([
+          `${eq} défie ${adv} à ${fmtHeure(matchDuJour.dt)}. Ni favori, ni figurant : à ton écurie de faire pencher la balance.`,
+          `Jour de match : ${eq} contre ${adv}, ${fmtHeure(matchDuJour.dt)}. Le genre d'affiche où tout se joue dans les détails.`,
+          `${eq} entre en scène à ${fmtHeure(matchDuJour.dt)}. L'occasion de prouver qu'on t'a sous-estimé.`
+        ]);
+      }
+      if(enTete) etat += ` ${eq} caracole en tête du groupe ${eqData(eq).g} — défends ta couronne.`;
+      else if(galere) etat += ` ${eq} a du retard à rattraper dans le groupe ${eqData(eq).g}. Ce soir, pas le droit à l'erreur.`;
     }
     z.innerHTML = `<div class="ecurie-banniere dday" onclick="voirEquipe('${eq.replace(/'/g,"\\'")}')" style="border-color:${id?id.c:'var(--or)'}">
       <span class="f dday-pulse">${F[eq]||'🏳️'}</span>
