@@ -384,7 +384,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.49';
+const APP_VERSION = '9.51';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1372,19 +1372,36 @@ function classementButeurs(){
         nom = nom.replace(re2,'').trim();
       });
       if(!nom) return;
+      nom = nom.replace(/\s+/g,' ').trim();
       const cle = normNom(nom);
       if(!cle) return;
       if(nomsEquipes.has(cle)) return; /* c'est un nom d'équipe, pas un joueur */
       if(cle.length < 2) return;       /* résidu trop court */
-      /* deviner l'équipe : dans quelle équipe du match ce nom figure-t-il ? */
-      let equipe = '';
+      /* RÉSOLUTION DU JOUEUR PRÉCIS dans les deux équipes du match.
+         - on matche sur le nom de famille (dernier mot significatif)
+         - si une initiale de prénom est fournie ("T. Hernandez"), elle départage les homonymes
+         - l'identité retenue = nom complet du joueur trouvé (pour distinguer les frères/homonymes) */
+      const initiale = (nom.match(/^([A-Za-zÀ-ÿ])\.\s/) || [])[1]; /* "T." -> "T" */
+      const nomFamille = normNom(nom).split(' ').filter(w=>w.length>1).slice(-1)[0] || normNom(nom);
+      let equipe = '', joueurResolu = null;
       [m.a, m.b].forEach(eq=>{
-        const liste = joueursDe(eq).map(parseJoueur).map(j=>normNom(j.nom));
-        if(liste.some(jn=>jn && (jn===cle || jn.split(' ').includes(cle) || cle.split(' ').includes(jn)))) equipe = eq;
+        joueursDe(eq).map(parseJoueur).forEach(j=>{
+          const motsJ = normNom(j.nom).split(' ').filter(w=>w.length>1);
+          if(!motsJ.length) return;
+          const famJ = motsJ.slice(-1)[0];        /* nom de famille du joueur de la liste */
+          const prenomJ = motsJ.length>1 ? motsJ[0] : ''; /* prénom éventuel */
+          if(famJ !== nomFamille) return;          /* pas le même nom de famille */
+          /* nom de famille identique : si une initiale est donnée, elle doit correspondre au prénom */
+          if(initiale && prenomJ && prenomJ[0] !== normNom(initiale)) return;
+          equipe = eq; joueurResolu = j.nom;        /* on a notre joueur */
+        });
       });
-      if(!compteurs[cle]) compteurs[cle] = {nom, equipe, buts:0};
-      compteurs[cle].buts += nbButs;
-      if(equipe && !compteurs[cle].equipe) compteurs[cle].equipe = equipe;
+      /* identité : nom complet du joueur résolu, sinon le nom tel qu'écrit */
+      const nomAffiche = joueurResolu || nom;
+      const cleId = normNom(nomAffiche);
+      if(!compteurs[cleId]) compteurs[cleId] = {nom:nomAffiche, equipe, buts:0};
+      compteurs[cleId].buts += nbButs;
+      if(equipe && !compteurs[cleId].equipe) compteurs[cleId].equipe = equipe;
     });
   });
   return Object.values(compteurs).filter(x=>x.buts>0).sort((a,b)=> b.buts-a.buts || a.nom.localeCompare(b.nom,'fr'));
