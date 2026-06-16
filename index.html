@@ -143,6 +143,28 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .badge-froid{background:rgba(120,150,180,.16);color:#9fb2c8}
 .badge-or{background:rgba(245,180,60,.16);color:var(--or)}
 .badge-ok{background:rgba(46,196,169,.14);color:var(--lagon)}
+.grp-card{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.grp-titre{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--or);font-weight:800;margin-bottom:8px}
+.grp-head,.grp-ligne{display:grid;grid-template-columns:34px 1fr 26px 52px 38px 30px;align-items:center;column-gap:4px}
+.grp-head{font-size:10px;letter-spacing:.5px;color:var(--gris);text-transform:uppercase;padding-bottom:4px}
+.grp-head span{text-align:center}
+.grp-head .c-nom{text-align:left}
+.grp-ligne{padding:7px 0;border-top:1px solid var(--ligne)}
+.grp-ligne.qualif{background:linear-gradient(90deg,rgba(46,196,169,.07),transparent)}
+.grp-ligne .c-rang{display:flex;align-items:center;gap:3px;justify-content:flex-start}
+.grp-pos{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris)}
+.grp-ligne.qualif .grp-pos{color:var(--lagon);font-weight:700}
+.grp-fleche{font-size:9px;line-height:1;width:9px;display:inline-block;text-align:center}
+.grp-fleche.up{color:var(--lagon)}
+.grp-fleche.down{color:var(--corail)}
+.grp-fleche.eg{color:var(--gris)}
+.grp-fleche.vide{visibility:hidden}
+.grp-ligne .c-nom{text-align:left;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grp-ligne .c-j,.grp-ligne .c-vnd{text-align:center;font-size:12px;color:var(--gris)}
+.grp-ligne .c-diff{text-align:center;font-size:12px;font-family:'Space Grotesk',monospace;color:var(--gris)}
+.grp-ligne .c-diff.pos{color:var(--lagon)}
+.grp-ligne .c-diff.neg{color:var(--corail)}
+.grp-ligne .c-pts{text-align:center;font-weight:800;color:var(--or);font-family:'Space Grotesk',monospace;font-size:14px}
 .classement .total{font-family:'Space Grotesk',monospace;font-size:22px;font-weight:700;color:var(--or)}
 /* écuries */
 .ecurie{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:14px;margin-bottom:10px}
@@ -347,7 +369,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.35';
+const APP_VERSION = '9.36';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1269,10 +1291,11 @@ function classement(){
 }
 
 /* ============ FICHES ÉQUIPES ============ */
-function classementGroupe(g){
+function classementGroupe(g, filtreMatch){
   const equipes = [...new Set(M.filter(m=>m.g===g).flatMap(m=>[m.a,m.b]))];
   const t = {}; equipes.forEach(e=>t[e]={e,j:0,v:0,n:0,d:0,bp:0,bc:0,pts:0});
   M.filter(m=>m.g===g).forEach(m=>{
+    if(filtreMatch && !filtreMatch(m)) return;
     const r = resultats[m.id]; if(!r) return;
     const A=t[m.a], B=t[m.b];
     A.j++; B.j++; A.bp+=r.score_a; A.bc+=r.score_b; B.bp+=r.score_b; B.bc+=r.score_a;
@@ -1283,19 +1306,32 @@ function classementGroupe(g){
   return Object.values(t).sort((x,y)=> y.pts-x.pts || (y.bp-y.bc)-(x.bp-x.bc) || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
 }
 function vueGroupes(){
+  const aujourdhui = jourCle({dt: new Date()});
   return 'ABCDEFGHIJKL'.split('').map(g=>{
     const lignes = classementGroupe(g);
-    return `<div class="match" style="margin-bottom:12px">
-      <b style="font-size:13px;color:var(--or)">GROUPE ${g}</b>
-      <div class="monprono" style="display:flex;justify-content:flex-end;gap:14px;border:none;margin-top:6px;padding:0;color:var(--gris);font-size:10px"><span style="width:24px;text-align:center">J</span><span style="width:48px;text-align:center">V-N-D</span><span style="width:30px;text-align:center">Diff</span><span style="width:24px;text-align:center">Pts</span></div>
-      ${lignes.map((l,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--ligne)">
-        <span style="color:${i<2?'var(--lagon)':'var(--gris)'};font-family:'Space Grotesk',monospace;font-size:12px;width:14px">${i+1}</span>
-        <span style="cursor:pointer;flex:1;font-weight:600;font-size:13px" onclick="voirEquipe('${l.e.replace(/'/g,"\\'")}')">${F[l.e]} ${l.e}</span>
-        <span style="width:24px;text-align:center;font-size:12px;color:var(--gris)">${l.j}</span>
-        <span style="width:48px;text-align:center;font-size:12px;color:var(--gris)">${l.v}-${l.n}-${l.d}</span>
-        <span style="width:30px;text-align:center;font-size:12px;font-family:'Space Grotesk',monospace">${(l.bp-l.bc)>0?'+':''}${l.bp-l.bc}</span>
-        <span style="width:24px;text-align:center;font-weight:700;color:var(--or);font-family:'Space Grotesk',monospace">${l.pts}</span>
-      </div>`).join('')}
+    /* classement de la veille (matchs avant aujourd'hui) pour les flèches de mouvement */
+    const lignesHier = classementGroupe(g, m => jourCle(m) !== aujourdhui);
+    const aJoueHier = lignesHier.some(l=>l.j>0);
+    const posHier = {}; lignesHier.forEach((l,i)=>posHier[l.e]=i);
+    return `<div class="grp-card">
+      <div class="grp-titre">Groupe ${g}</div>
+      <div class="grp-head"><span class="c-rang"></span><span class="c-nom"></span><span class="c-j">J</span><span class="c-vnd">V-N-D</span><span class="c-diff">Diff</span><span class="c-pts">Pts</span></div>
+      ${lignes.map((l,i)=>{
+        let fleche = '<span class="grp-fleche vide"></span>';
+        if(aJoueHier && l.e in posHier){
+          const d = posHier[l.e]-i;
+          fleche = d>0 ? `<span class="grp-fleche up">▲</span>` : d<0 ? `<span class="grp-fleche down">▼</span>` : `<span class="grp-fleche eg">＝</span>`;
+        }
+        const diff = l.bp-l.bc;
+        return `<div class="grp-ligne${i<2?' qualif':''}">
+          <span class="c-rang">${fleche}<span class="grp-pos">${i+1}</span></span>
+          <span class="c-nom" onclick="voirEquipe('${l.e.replace(/'/g,"\\'")}')">${F[l.e]} ${l.e}</span>
+          <span class="c-j">${l.j}</span>
+          <span class="c-vnd">${l.v}-${l.n}-${l.d}</span>
+          <span class="c-diff ${diff>0?'pos':diff<0?'neg':''}">${diff>0?'+':''}${diff}</span>
+          <span class="c-pts">${l.pts}</span>
+        </div>`;
+      }).join('')}
     </div>`;
   }).join('');
 }
