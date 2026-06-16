@@ -383,7 +383,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.44';
+const APP_VERSION = '9.46';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1581,70 +1581,64 @@ function banniereEcurie(){
       const moi=matchDuJour.a===eq?r.score_a:r.score_b, lui=matchDuJour.a===eq?r.score_b:r.score_a;
       if(moi>lui){
         const opts = [
-          `${moi}-${lui}. ${eq} a fait le boulot, ${pseudo}. Tu as le droit d'être insupportable dans le groupe ce soir — modérément.`,
-          `${moi}-${lui} pour ${eq}. ${pseudo}, savoure : c'est le genre de soir où on relit la conversation de famille avec le sourire.`
+          `${moi}-${lui}. ${eq} a assuré, ${pseudo}. Tu peux ressortir le maillot et devenir insupportable dans le groupe — c'est ta soirée.`,
+          `${moi}-${lui} pour ${eq}. ${pseudo}, prépare tes plus beaux messages : ce soir c'est toi qui tiens le micro à la table familiale.`
         ];
-        if(rivaux.length) opts.push(`${moi}-${lui} ! ${pseudo}, pendant que ${nomsRivaux} compte${rivaux.length>1?'nt':''} les dégâts, ton écurie ${eq} parade. Profite.`);
-        if(allies.length) opts.push(`${moi}-${lui}. ${pseudo}, toi et ${nomsAllies} sur ${eq}, vous pouvez bomber le torse en chœur ce soir.`);
-        if(gros && rivaux.length) opts.push(`${moi}-${lui}, sans trembler. ${eq} envoie un message, et ${nomsRivaux} ferai${rivaux.length>1?'ent':'t'} bien de prendre des notes.`);
+        if(rivaux.length) opts.push(`${moi}-${lui} ! ${pseudo}, ${nomsRivaux} ${rivaux.length>1?'rongent':'ronge'} leur frein pendant que ton écurie parade. Envoie-leur un petit emoji bien placé.`);
+        if(allies.length) opts.push(`${moi}-${lui}. ${pseudo}, toi et ${nomsAllies} avez misé sur le bon cheval. Tournée de chambrage générale ce soir.`);
         etat = pioche(opts);
       } else if(moi===lui){
         const opts = [
-          `${moi}-${lui}. ${eq} assure le minimum syndical, ${pseudo}. On prend le point, on garde le sourire poli.`,
-          `Nul ${moi}-${lui}. Pas de quoi pavoiser ${pseudo}, mais pas de quoi rougir. ${eq} avance masquée.`
+          `${moi}-${lui}. Match nul pour ${eq}, ${pseudo}. Ni gloire ni honte : tu peux ranger les confettis ET les mouchoirs.`,
+          `Nul ${moi}-${lui}, ${pseudo}. Ton écurie t'évite l'humiliation sans te donner de quoi fanfaronner. Soirée en demi-teinte au canapé.`
         ];
-        if(rivaux.length) opts.push(`${moi}-${lui}. ${pseudo}, ${eq} n'a ni gagné ni perdu — assez pour empêcher ${nomsRivaux} de trop ricaner.`);
+        if(rivaux.length) opts.push(`${moi}-${lui}. ${pseudo}, au moins ${nomsRivaux} ne ${rivaux.length>1?'pourront':'pourra'} pas trop ricaner. Match blanc, vannes en sourdine.`);
         etat = pioche(opts);
       } else {
         const opts = gros ? [
-          `${lui}-${moi}. L'ogre ${eq} a trébuché, ${pseudo}. Prépare-toi : le chambrage va pleuvoir.`,
-          `${moi}-${lui}. Un favori qui tombe, ${pseudo}, c'est toute la famille qui jubile. Fais le dos rond.`
+          `${lui}-${moi}. Ton favori ${eq} s'est vautré, ${pseudo}. Coupe les notifications du groupe famille : ça va déménager.`,
+          `${moi}-${lui}. ${pseudo}, ton écurie t'a trahi en direct. Prépare une bonne excuse pour le prochain repas, tu vas en avoir besoin.`
         ] : [
-          `${lui}-${moi}. ${eq} s'est battue mais a cédé, ${pseudo}. L'honneur est sauf, les points non.`,
-          `${moi}-${lui}. Ton écurie a touché ses limites ce soir ${pseudo}. La fierté reste, la revanche aussi.`
+          `${lui}-${moi}. ${eq} a fait ce qu'elle a pu, ${pseudo}. Ton cœur de supporter saigne, et tes points aussi.`,
+          `${moi}-${lui}. Soirée amère au canapé, ${pseudo}. Ton écurie est tombée — la fierté repassera plus tard.`
         ];
-        if(rivaux.length) opts.push(`${lui}-${moi}. ${pseudo}, ${nomsRivaux} ${rivaux.length>1?'vont':'va'} t'attendre au tournant avec ${eq} qui chute. Courage.`);
-        if(allies.length) opts.push(`${moi}-${lui}. ${pseudo}, toi et ${nomsAllies} sur ${eq}, vous coulez ensemble ce soir. Au moins vous n'êtes pas seuls.`);
+        if(rivaux.length) opts.push(`${lui}-${moi}. ${pseudo}, ${nomsRivaux} ${rivaux.length>1?'ont':'a'} déjà la capture d'écran prête à ressortir jusqu'en finale. Bon courage.`);
+        if(allies.length) opts.push(`${moi}-${lui}. ${pseudo}, toi et ${nomsAllies} pleurez la même défaite. Au moins le canapé est plein ce soir.`);
         etat = pioche(opts);
       }
     } else if(enCours){
       const opts = [
-        `Ça se joue MAINTENANT, ${pseudo}. ${eq} contre ${adv}, et toute la famille regarde qui a misé juste.`,
-        `${eq} est sur la pelouse, ${pseudo}. L'heure des paroles est finie. Serre les dents.`
+        `Ça se joue MAINTENANT, ${pseudo}. ${eq} est sur la pelouse — toi, tu ronges tes ongles devant l'écran avec ton prono en jeu.`,
+        `${eq} - ${adv}, en direct, ${pseudo}. Plus rien à faire qu'à hurler devant la télé et croiser les doigts.`
       ];
-      if(rivaux.length) opts.push(`${eq} - ${adv}, en direct ${pseudo}. ${nomsRivaux} guette${rivaux.length>1?'nt':''} le moindre de tes faux pas. Tiens bon.`);
-      if(seul && rivaux.length) opts.push(`${pseudo}, ${eq} joue, et tu es seul·e à la défendre face à ${nomsRivaux}. Toute la pression sur tes épaules.`);
+      if(rivaux.length) opts.push(`${eq} joue, ${pseudo}, et ${nomsRivaux} ${rivaux.length>1?'guettent':'guette'} déjà le moment de te chambrer. Le canapé est un champ de bataille.`);
       etat = pioche(opts);
     } else {
-      /* AVANT : ton selon standing, nominatif et social */
+      /* AVANT : phrases ENTIÈRES, prisme SUPPORTER/PARIEUR (pas "joue") */
       const dejaJoue = mEq.some(mm=> mm.id!==matchDuJour.id && resultats[mm.id]);
+      const h = fmtHeure(matchDuJour.dt);
       const opts = [];
       if(gros){
-        opts.push(`${pseudo}, ${eq} entre dans l'arène face à ${adv} (${fmtHeure(matchDuJour.dt)}). D'un favori on n'attend pas une victoire : on l'exige.`);
-        opts.push(`${eq} joue à ${fmtHeure(matchDuJour.dt)}, ${pseudo}. ${adv} a dû mal dormir. Toi, tu sirotes tranquille.`);
-        if(rivaux.length) opts.push(`C'est l'heure, ${pseudo} : ${eq} défie ${adv}. Pendant que ${nomsRivaux} prie${rivaux.length>1?'nt':''} pour leur sort, toi tu choisis déjà ta tenue de finale. ${fmtHeure(matchDuJour.dt)}.`);
+        if(!dejaJoue){
+          opts.push(`${pseudo}, ton ${eq} entre en lice face à ${adv} (${h}). Si ton favori se loupe d'entrée, ${rivaux.length?nomsRivaux:'la famille'} te le ressortira jusqu'en finale.`);
+          opts.push(`${eq} part archi-favorite contre ${adv} (${h}), ${pseudo}. Tu as parié sur la valeur sûre — autant dire que tu n'as aucune excuse si ça capote.`);
+        } else {
+          opts.push(`${pseudo}, ${eq} affronte ${adv} (${h}). Avec un favori pareil, une contre-performance et c'est TOI qu'on accusera d'avoir porté la poisse.`);
+          opts.push(`${eq} contre ${adv} (${h}), ${pseudo}. Sur le papier ton écurie écrase tout — sauf que le papier ne remplit pas ta feuille de pari.`);
+        }
+        if(rivaux.length) opts.push(`${pseudo}, ${nomsRivaux} ${rivaux.length>1?'attendent':'attend'} qu'${eq} se prenne les pieds dans le tapis pour fêter ça. Croise les doigts très fort (${h}).`);
       } else if(petit){
-        opts.push(`${pseudo}, ${eq} affronte ${adv} à ${fmtHeure(matchDuJour.dt)}. Personne n'y croit, sauf toi. C'est comme ça qu'on écrit les légendes.`);
-        opts.push(`Jour de match pour ${eq} contre ${adv}, ${pseudo}. David a déjà battu Goliath — pourquoi pas ce soir ? ${fmtHeure(matchDuJour.dt)}.`);
+        if(!dejaJoue) opts.push(`${pseudo}, ${eq} entre en lice face à ${adv} (${h}). Personne n'a misé sur ton outsider — si ça passe, tu seras le génie incompris de la famille.`);
+        else opts.push(`${pseudo}, ${eq} défie ${adv} (${h}). Tu as parié avec le cœur, pas avec la raison. On admire le courage.`);
+        if(rivaux.length) opts.push(`${pseudo}, si ton petit ${eq} fait tomber ${adv} (${h}), ${nomsRivaux} en avalera${rivaux.length>1?'ont':''} son écharpe. Rêve un peu, ça fait du bien.`);
       } else {
-        opts.push(`${pseudo}, ${eq} défie ${adv} à ${fmtHeure(matchDuJour.dt)}. Ni favori ni figurant : à ton écurie de faire pencher la balance.`);
-        opts.push(`Jour de match ${pseudo} : ${eq} contre ${adv}, ${fmtHeure(matchDuJour.dt)}. Tout se joue dans les détails.`);
+        if(!dejaJoue) opts.push(`${pseudo}, ${eq} lance son tournoi contre ${adv} (${h}). Ton pari n'est ni fou ni gagné d'avance — exactement le genre qui rend la soirée intéressante.`);
+        else opts.push(`${pseudo}, ${eq} contre ${adv} (${h}). Tout peut basculer — et ta feuille de pari avec.`);
+        if(rivaux.length) opts.push(`${pseudo}, une victoire d'${eq} (${h}) et tu fais taire ${nomsRivaux} pour la soirée. La balle est dans le camp de ton écurie.`);
       }
-      /* pique sociale : seul vs entouré */
-      if(allies.length) opts.push(`${pseudo}, ${eq} entre en lice (${fmtHeure(matchDuJour.dt)}). Toi, ${nomsAllies}... vous avez mis tous vos œufs dans le même panier. Si elle tombe, le chambrage sera collectif.`);
-      else if(rivaux.length) opts.push(`${pseudo}, ${eq} joue à ${fmtHeure(matchDuJour.dt)} et tu es seul·e à porter ses couleurs face à ${nomsRivaux}. L'occasion de leur clouer le bec.`);
+      if(allies.length) opts.push(`${pseudo}, toi et ${nomsAllies} avez tous misé sur ${eq} (${h}). Si elle coule, vous coulez en groupe — et personne pour vous consoler.`);
+      else if(rivaux.length && !gros) opts.push(`${pseudo}, tu es le seul à croire en ${eq} face à ${nomsRivaux} (${h}). De quoi leur clouer le bec, ou te faire chambrer jusqu'à la fin du Mondial.`);
       etat = pioche(opts);
-      if(!dejaJoue){
-        etat += ' ' + pioche([
-          `Et c'est l'entrée en lice : une première impression ne se rattrape pas.`,
-          `Premier match du tournoi — attention au faux pas d'entrée, il en a coulé plus d'un.`,
-          `Pas le droit de se louper pour les débuts.`
-        ]);
-      } else {
-        const enTete = rang===1, galere = rang>=3;
-        if(enTete) etat += ` ${eq} caracole en tête du groupe ${eqData(eq).g} — défends ta couronne.`;
-        else if(galere) etat += ` ${eq} a du retard dans le groupe ${eqData(eq).g}. Ce soir, pas le droit à l'erreur.`;
-      }
     }
     z.innerHTML = `<div class="ecurie-banniere dday" onclick="voirEquipe('${eq.replace(/'/g,"\\'")}')" style="border-color:${id?id.c:'var(--or)'}">
       <span class="f dday-pulse">${F[eq]||'🏳️'}</span>
