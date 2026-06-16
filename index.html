@@ -379,7 +379,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.37';
+const APP_VERSION = '9.38';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1316,32 +1316,50 @@ function classementGroupe(g, filtreMatch){
   return Object.values(t).sort((x,y)=> y.pts-x.pts || (y.bp-y.bc)-(x.bp-x.bc) || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
 }
 function classementButeurs(){
-  /* on repart des résultats : pour chaque but, on retrouve le nom affichable + l'équipe.
-     L'équipe est devinée via le suffixe (ex "Just (7e & 54e) NZL") ou via les listes de joueurs. */
   const compteurs = {}; /* clé = nom normalisé -> {nom, equipe, buts} */
+  /* ensemble des noms d'équipes connus (pour ne JAMAIS les compter comme buteurs) */
+  const nomsEquipes = new Set(Object.keys(EQUIPES).map(normNom));
   M.forEach(m=>{
     const re = resultats[m.id]; if(!re || !re.buteurs) return;
-    /* on sépare par " · " ou "/" pour distinguer les deux équipes si présent */
-    String(re.buteurs).split(/[\/·]/).forEach(part=>{
-      /* deviner l'équipe : un code pays en fin de segment (NZL, IRN...) ou par défaut via les joueurs */
-      part.split(/[,;\n]/).map(s=>s.trim()).filter(Boolean).forEach(seg=>{
-        let nbButs = 1;
-        const paren = seg.match(/\(([^)]*)\)/);
-        if(paren){ const amp = (paren[1].match(/&|\bet\b/g)||[]).length; if(amp>0) nbButs = amp+1; }
-        const nom = seg.replace(/\([^)]*\)/g,'').replace(/\d+e?\+?\d*/g,'').replace(/\bsp\b|\bcsc\b|·/gi,'').replace(/\b[A-ZÉÈ]{3,}\b/g,'').trim();
-        if(!nom) return;
-        const cle = normNom(nom); if(!cle) return;
-        if(/csc/i.test(seg)) return; /* on ignore les buts contre son camp */
-        /* deviner l'équipe du buteur : on cherche dans quelle équipe du match ce joueur figure */
-        let equipe = '';
-        [m.a, m.b].forEach(eq=>{
-          const liste = joueursDe(eq).map(parseJoueur).map(j=>normNom(j.nom));
-          if(liste.some(jn=>jn===cle || jn.includes(cle) || cle.includes(jn))) equipe = eq;
-        });
-        if(!compteurs[cle]) compteurs[cle] = {nom, equipe, buts:0};
-        compteurs[cle].buts += nbButs;
-        if(equipe && !compteurs[cle].equipe) compteurs[cle].equipe = equipe;
+    /* chaque segment = un buteur. On découpe sur virgule/point-virgule/slash/middot/retour ligne */
+    String(re.buteurs).split(/[,;\n\/·]/).map(s=>s.trim()).filter(Boolean).forEach(seg=>{
+      if(/csc/i.test(seg)) return; /* but contre son camp : ignoré */
+      /* nombre de buts du segment : doublé si "&" ou "et" entre deux minutes */
+      let nbButs = 1;
+      const paren = seg.match(/\(([^)]*)\)/);
+      if(paren){ const amp = (paren[1].match(/&|\bet\b/g)||[]).length; if(amp>0) nbButs = amp+1; }
+      /* NETTOYAGE du nom :
+         - retirer tout ce qui est entre parenthèses (minutes)
+         - retirer une parenthèse orpheline éventuelle
+         - retirer minutes isolées, sp, pen, csc
+         - retirer les codes pays en MAJUSCULES (IRN, NZL, KSA, URU...) */
+      let nom = seg
+        .replace(/\([^)]*\)/g,'')      /* (45e+5sp & 88e) */
+        .replace(/\(.*$/,'')            /* parenthèse orpheline non fermée */
+        .replace(/\d+\s*e?\s*\+?\s*\d*/g,'') /* minutes 45e, 90e+6 */
+        .replace(/\b(sp|pen|csc|but|contre son camp)\b/gi,'')
+        .replace(/\b[A-ZÉÈÀ]{2,4}\b/g,'') /* codes pays 2-4 lettres majuscules */
+        .replace(/[·\-–—]+/g,' ')
+        .trim();
+      /* retirer un nom d'équipe collé en fin (ex "Nakamura Japon" -> "Nakamura") */
+      Object.keys(EQUIPES).forEach(eqNom=>{
+        const re2 = new RegExp('\\s+'+eqNom.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*$','i');
+        nom = nom.replace(re2,'').trim();
       });
+      if(!nom) return;
+      const cle = normNom(nom);
+      if(!cle) return;
+      if(nomsEquipes.has(cle)) return; /* c'est un nom d'équipe, pas un joueur */
+      if(cle.length < 2) return;       /* résidu trop court */
+      /* deviner l'équipe : dans quelle équipe du match ce nom figure-t-il ? */
+      let equipe = '';
+      [m.a, m.b].forEach(eq=>{
+        const liste = joueursDe(eq).map(parseJoueur).map(j=>normNom(j.nom));
+        if(liste.some(jn=>jn && (jn===cle || jn.split(' ').includes(cle) || cle.split(' ').includes(jn)))) equipe = eq;
+      });
+      if(!compteurs[cle]) compteurs[cle] = {nom, equipe, buts:0};
+      compteurs[cle].buts += nbButs;
+      if(equipe && !compteurs[cle].equipe) compteurs[cle].equipe = equipe;
     });
   });
   return Object.values(compteurs).filter(x=>x.buts>0).sort((a,b)=> b.buts-a.buts || a.nom.localeCompare(b.nom,'fr'));
