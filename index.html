@@ -379,7 +379,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.38';
+const APP_VERSION = '9.39';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -581,19 +581,25 @@ function statsButeurs(){
   const map = {};
   Object.values(resultats||{}).forEach(re=>{
     if(!re || !re.buteurs) return;
-    /* on découpe la liste des buteurs ; un même nom peut revenir (doublé) */
-    String(re.buteurs).split(/[,;\n\/]/).map(s=>s.trim()).filter(Boolean).forEach(seg=>{
-      /* doublé/triplé détecté par les séparateurs explicites "&" ou "et" entre minutes,
-         ex "Havertz (45e+5sp & 88e)" = 2 buts. On NE compte PAS les nombres (45e+5 = 1 but). */
+    /* découpage SÛR : ne pas couper sur les virgules à l'intérieur des parenthèses */
+    const segments = [];
+    let buf = '', prof = 0;
+    for(const ch of String(re.buteurs)){
+      if(ch==='(') prof++;
+      if(ch===')') prof = Math.max(0, prof-1);
+      if(prof===0 && /[,;\n\/·]/.test(ch)){ if(buf.trim()) segments.push(buf.trim()); buf=''; }
+      else buf += ch;
+    }
+    if(buf.trim()) segments.push(buf.trim());
+    segments.forEach(seg=>{
+      /* nombre de buts : compter les groupes de minutes dans la parenthèse (séparés par & et , ;) */
       let nbButs = 1;
       const paren = seg.match(/\(([^)]*)\)/);
       if(paren){
-        const sep = paren[1].match(/&|\bet\b|\+(?=\s*\d+e)/g);
-        /* on compte les "&"/"et" séparant deux minutes distinctes ; +5sp n'en est pas un */
-        const amp = (paren[1].match(/&|\bet\b/g)||[]).length;
-        if(amp>0) nbButs = amp + 1;
+        const minutes = paren[1].split(/&|\bet\b|,|;/).map(s=>s.trim()).filter(s=>/\d/.test(s));
+        if(minutes.length>1) nbButs = minutes.length;
       }
-      const nom = seg.replace(/\([^)]*\)/g,'').replace(/\d+e?\+?\d*/g,'').replace(/\bsp\b|\bcsc\b|·/gi,'').replace(/\b[A-ZÉÈ]{3,}\b/g,'').trim();
+      const nom = seg.replace(/\([^)]*\)/g,'').replace(/\(.*$/,'').replace(/\d+e?\+?\d*/g,'').replace(/\bsp\b|\bcsc\b|·/gi,'').replace(/\b[A-ZÉÈ]{3,}\b/g,'').trim();
       if(!nom) return;
       const cle = normNom(nom);
       if(!cle) return;
@@ -1321,13 +1327,27 @@ function classementButeurs(){
   const nomsEquipes = new Set(Object.keys(EQUIPES).map(normNom));
   M.forEach(m=>{
     const re = resultats[m.id]; if(!re || !re.buteurs) return;
-    /* chaque segment = un buteur. On découpe sur virgule/point-virgule/slash/middot/retour ligne */
-    String(re.buteurs).split(/[,;\n\/·]/).map(s=>s.trim()).filter(Boolean).forEach(seg=>{
+    /* Découpage SÛR : on ne coupe PAS sur les virgules/séparateurs situés DANS des parenthèses
+       (ex "Havertz (45e+5 sp, 88e)" doit rester un seul segment = doublé). */
+    const segments = [];
+    let buf = '', prof = 0;
+    for(const ch of String(re.buteurs)){
+      if(ch==='(') prof++;
+      if(ch===')') prof = Math.max(0, prof-1);
+      if(prof===0 && /[,;\n\/·]/.test(ch)){ if(buf.trim()) segments.push(buf.trim()); buf=''; }
+      else buf += ch;
+    }
+    if(buf.trim()) segments.push(buf.trim());
+    segments.forEach(seg=>{
       if(/csc/i.test(seg)) return; /* but contre son camp : ignoré */
-      /* nombre de buts du segment : doublé si "&" ou "et" entre deux minutes */
+      /* nombre de buts du segment : compter les minutes dans la parenthèse (séparées par & , et ;) */
       let nbButs = 1;
       const paren = seg.match(/\(([^)]*)\)/);
-      if(paren){ const amp = (paren[1].match(/&|\bet\b/g)||[]).length; if(amp>0) nbButs = amp+1; }
+      if(paren){
+        /* on compte les groupes de minutes distincts : "45e+5 sp, 88e" = 2 ; "45e+5 sp" = 1 */
+        const minutes = paren[1].split(/&|\bet\b|,|;/).map(s=>s.trim()).filter(s=>/\d/.test(s));
+        if(minutes.length>1) nbButs = minutes.length;
+      }
       /* NETTOYAGE du nom :
          - retirer tout ce qui est entre parenthèses (minutes)
          - retirer une parenthèse orpheline éventuelle
