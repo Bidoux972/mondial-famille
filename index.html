@@ -165,6 +165,15 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .grp-ligne .c-diff.pos{color:var(--lagon)}
 .grp-ligne .c-diff.neg{color:var(--corail)}
 .grp-ligne .c-pts{text-align:center;font-weight:800;color:var(--or);font-family:'Space Grotesk',monospace;font-size:14px}
+.but-liste{margin-top:6px}
+.but-ligne{display:grid;grid-template-columns:34px 26px 1fr auto;align-items:center;column-gap:8px;padding:8px 0;border-top:1px solid var(--ligne)}
+.but-ligne:first-child{border-top:none}
+.but-rang{text-align:center;font-size:15px;font-family:'Space Grotesk',monospace;color:var(--gris)}
+.but-dra{font-size:18px;text-align:center}
+.but-nom{font-weight:600;font-size:14px;display:flex;flex-direction:column;line-height:1.2}
+.but-eq{font-size:10px;color:var(--gris);font-weight:400;letter-spacing:.3px}
+.but-nb{font-weight:800;color:var(--or);font-family:'Space Grotesk',monospace;font-size:17px;display:flex;align-items:center;gap:2px}
+.but-ball{font-size:12px}
 .classement .total{font-family:'Space Grotesk',monospace;font-size:22px;font-weight:700;color:var(--or)}
 /* écuries */
 .ecurie{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:14px;margin-bottom:10px}
@@ -328,6 +337,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     <div class="filtres" id="filtres-equipes">
       <button data-vue="fiches" class="actif">Les fiches</button>
       <button data-vue="groupes">Classements des groupes</button>
+      <button data-vue="buteurs">Buteurs</button>
     </div>
     <div id="zone-equipes"></div>
   </section>
@@ -369,7 +379,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.36';
+const APP_VERSION = '9.37';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1305,6 +1315,56 @@ function classementGroupe(g, filtreMatch){
   });
   return Object.values(t).sort((x,y)=> y.pts-x.pts || (y.bp-y.bc)-(x.bp-x.bc) || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
 }
+function classementButeurs(){
+  /* on repart des résultats : pour chaque but, on retrouve le nom affichable + l'équipe.
+     L'équipe est devinée via le suffixe (ex "Just (7e & 54e) NZL") ou via les listes de joueurs. */
+  const compteurs = {}; /* clé = nom normalisé -> {nom, equipe, buts} */
+  M.forEach(m=>{
+    const re = resultats[m.id]; if(!re || !re.buteurs) return;
+    /* on sépare par " · " ou "/" pour distinguer les deux équipes si présent */
+    String(re.buteurs).split(/[\/·]/).forEach(part=>{
+      /* deviner l'équipe : un code pays en fin de segment (NZL, IRN...) ou par défaut via les joueurs */
+      part.split(/[,;\n]/).map(s=>s.trim()).filter(Boolean).forEach(seg=>{
+        let nbButs = 1;
+        const paren = seg.match(/\(([^)]*)\)/);
+        if(paren){ const amp = (paren[1].match(/&|\bet\b/g)||[]).length; if(amp>0) nbButs = amp+1; }
+        const nom = seg.replace(/\([^)]*\)/g,'').replace(/\d+e?\+?\d*/g,'').replace(/\bsp\b|\bcsc\b|·/gi,'').replace(/\b[A-ZÉÈ]{3,}\b/g,'').trim();
+        if(!nom) return;
+        const cle = normNom(nom); if(!cle) return;
+        if(/csc/i.test(seg)) return; /* on ignore les buts contre son camp */
+        /* deviner l'équipe du buteur : on cherche dans quelle équipe du match ce joueur figure */
+        let equipe = '';
+        [m.a, m.b].forEach(eq=>{
+          const liste = joueursDe(eq).map(parseJoueur).map(j=>normNom(j.nom));
+          if(liste.some(jn=>jn===cle || jn.includes(cle) || cle.includes(jn))) equipe = eq;
+        });
+        if(!compteurs[cle]) compteurs[cle] = {nom, equipe, buts:0};
+        compteurs[cle].buts += nbButs;
+        if(equipe && !compteurs[cle].equipe) compteurs[cle].equipe = equipe;
+      });
+    });
+  });
+  return Object.values(compteurs).filter(x=>x.buts>0).sort((a,b)=> b.buts-a.buts || a.nom.localeCompare(b.nom,'fr'));
+}
+function vueButeurs(){
+  const liste = classementButeurs();
+  if(!liste.length){
+    return `<div class="grp-card"><div class="grp-titre">⚽ Soulier d'Or</div><p style="color:var(--gris);font-size:13px;margin:6px 0 0">Aucun but marqué pour l'instant. Le classement se remplira au fil des matchs.</p></div>`;
+  }
+  let rang = 0, prevButs = null, rangAff = 0;
+  const lignes = liste.map((x,i)=>{
+    rang++;
+    if(x.buts !== prevButs){ rangAff = rang; prevButs = x.buts; }
+    const medaille = rangAff===1 ? '🥇' : rangAff===2 ? '🥈' : rangAff===3 ? '🥉' : `${rangAff}`;
+    return `<div class="but-ligne">
+      <span class="but-rang">${medaille}</span>
+      <span class="but-dra">${x.equipe?F[x.equipe]||'⚽':'⚽'}</span>
+      <span class="but-nom">${x.nom}${x.equipe?`<span class="but-eq">${x.equipe}</span>`:''}</span>
+      <span class="but-nb">${x.buts}<span class="but-ball">⚽</span></span>
+    </div>`;
+  }).join('');
+  return `<div class="grp-card"><div class="grp-titre">⚽ Soulier d'Or — meilleurs buteurs</div><div class="but-liste">${lignes}</div></div>`;
+}
 function vueGroupes(){
   const aujourdhui = jourCle({dt: new Date()});
   return 'ABCDEFGHIJKL'.split('').map(g=>{
@@ -1377,6 +1437,8 @@ function zoneEquipes(){
     </div>`;
   } else if(vueEquipes === 'groupes'){
     z.innerHTML = vueGroupes();
+  } else if(vueEquipes === 'buteurs'){
+    z.innerHTML = vueButeurs();
   } else {
     const noms = Object.keys(EQUIPES).sort((a,b)=> eqData(b).niv-eqData(a).niv || a.localeCompare(b,'fr'));
     z.innerHTML = `<div class="eq-grille">` + noms.map(n=>`
