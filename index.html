@@ -36,6 +36,10 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .mini-cl .fleche{margin-left:auto;color:var(--gris);font-size:12px}
 /* bannière écurie */
 .ecurie-banniere{display:flex;align-items:center;gap:12px;background:var(--panneau);border:1px solid var(--ligne);border-left-width:4px;border-radius:12px;padding:12px 14px;margin:10px 0;cursor:pointer}
+.ecurie-banniere.dday{background:linear-gradient(135deg,rgba(245,180,60,.16),rgba(255,107,94,.08));border-color:var(--or)}
+.dday-tag{display:inline-block;background:var(--or);color:#0E1B2C;font-size:10px;font-weight:800;letter-spacing:1px;padding:2px 8px;border-radius:20px;text-transform:uppercase}
+.dday-pulse{animation:ddayPulse 1.6s ease-in-out infinite;display:inline-block}
+@keyframes ddayPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 .ecurie-banniere.vide{border-left-color:var(--or);border-left-style:dashed}
 .ecurie-banniere .f{font-size:30px}
 .ecurie-banniere .ban-tete{font-size:14px;margin-bottom:3px}
@@ -379,7 +383,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.39';
+const APP_VERSION = '9.40';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1554,7 +1558,34 @@ function banniereEcurie(){
   const grp = classementGroupe(eqData(eq).g);
   const rang = grp.findIndex(x=>x.e===eq)+1;
   const bonus = bonusEcurie(pseudo);
+  /* D-DAY : un match de l'écurie a-t-il lieu aujourd'hui (heure Martinique) ? */
+  const auj = jourCle({dt:new Date()});
+  const matchDuJour = mEq.find(m=> jourCle(m)===auj);
   z.style.display='';
+  if(matchDuJour){
+    const adv = matchDuJour.a===eq ? matchDuJour.b : matchDuJour.a;
+    const r = resultats[matchDuJour.id];
+    const enCours = joue(matchDuJour) && !r;
+    const fini = !!r;
+    let etat;
+    if(fini){
+      const moi=matchDuJour.a===eq?r.score_a:r.score_b, lui=matchDuJour.a===eq?r.score_b:r.score_a;
+      etat = moi>lui ? `VICTOIRE ${moi}-${lui} ! Ton écurie a assuré 🎉` : moi===lui ? `Match nul ${moi}-${lui}. Un point de pris.` : `Défaite ${moi}-${lui}. Dure soirée pour ton écurie...`;
+    } else if(enCours){
+      etat = `LE MATCH EST EN COURS ! Ton écurie est sur le terrain 🔥`;
+    } else {
+      etat = `Coup d'envoi à ${fmtHeure(matchDuJour.dt)} 🇲🇶 — prépare les snacks !`;
+    }
+    z.innerHTML = `<div class="ecurie-banniere dday" onclick="voirEquipe('${eq.replace(/'/g,"\\'")}')" style="border-color:${id?id.c:'var(--or)'}">
+      <span class="f dday-pulse">${F[eq]||'🏳️'}</span>
+      <div style="flex:1">
+        <div class="ban-tete"><span class="dday-tag">🏟️ JOUR DE MATCH</span></div>
+        <div class="ban-tete" style="margin-top:3px"><b>${eq}</b> vs ${adv} ${F[adv]||''}</div>
+        <div class="sub" style="color:${id?id.c:'var(--or)'};font-weight:700;margin-top:2px">${etat}</div>
+      </div>
+      <span class="chev">›</span></div>`;
+    return;
+  }
   z.innerHTML = `<div class="ecurie-banniere" onclick="voirEquipe('${eq.replace(/'/g,"\\'")}')" style="border-color:${id?id.c:'var(--or)'}">
     <span class="f">${F[eq]||'🏳️'}</span>
     <div style="flex:1">
