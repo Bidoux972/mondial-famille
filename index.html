@@ -383,7 +383,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.46';
+const APP_VERSION = '9.48';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1536,6 +1536,25 @@ function bonusEcurie(p){
   if(palmares.finaliste === eq) return 5;
   return 0;
 }
+/* Formulation correcte du nom d'écurie avec possessif : "ta France", "ton Brésil"... */
+function monEq(eq){
+  const fem = new Set(["France","Espagne","Argentine","Angleterre","Allemagne","Belgique","Croatie","Bosnie","Tchéquie","Norvège","Suède","Suisse","Tunisie","Jordanie","Australie","Colombie","Corée du Sud","Côte d'Ivoire","Arabie Saoudite","Nouvelle-Zélande","Afrique du Sud","RD Congo"]);
+  return (fem.has(eq) ? 'ta ' : 'ton ') + eq;
+}
+/* Accroches HISTORIQUES sur mesure pour les matchs d'ENTRÉE des écuries de la famille.
+   Clé = "ECURIE|ADVERSAIRE". {pseudo} et {rivaux} injectés au rendu. */
+const DDAY_HISTOIRE = {
+  "France|Sénégal": [
+    "{pseudo}, le Sénégal a déjà fait tomber la France en 2002. Si ça recommence, {rivaux} ne te lâchera plus.",
+    "{pseudo}, méfiance : tes Bleus favoris, le Sénégal en a déjà fait du petit bois en 2002. Le piège parfait pour te faire chambrer.",
+    "{pseudo}, 2002, le Sénégal humilie la France. Un remake ce soir et {rivaux} encadre la capture."
+  ],
+  "Brésil|Haïti": [
+    "{pseudo}, ton Brésil doit écraser Haïti. S'il bafouille, c'est toi la risée — pas la Seleção.",
+    "{pseudo}, cinq étoiles contre le petit poucet : zéro excuse. Un faux pas et {rivaux} ne te rate pas.",
+    "{pseudo}, Haïti après 52 ans d'absence face à ton Brésil. Si ça coince, prépare-toi à entendre {rivaux} ricaner longtemps."
+  ]
+};
 function banniereEcurie(){
   const z = $('banniere-ecurie');
   if(!pseudo){ z.style.display='none'; return; }
@@ -1618,27 +1637,37 @@ function banniereEcurie(){
       const dejaJoue = mEq.some(mm=> mm.id!==matchDuJour.id && resultats[mm.id]);
       const h = fmtHeure(matchDuJour.dt);
       const opts = [];
-      if(gros){
-        if(!dejaJoue){
-          opts.push(`${pseudo}, ton ${eq} entre en lice face à ${adv} (${h}). Si ton favori se loupe d'entrée, ${rivaux.length?nomsRivaux:'la famille'} te le ressortira jusqu'en finale.`);
-          opts.push(`${eq} part archi-favorite contre ${adv} (${h}), ${pseudo}. Tu as parié sur la valeur sûre — autant dire que tu n'as aucune excuse si ça capote.`);
-        } else {
-          opts.push(`${pseudo}, ${eq} affronte ${adv} (${h}). Avec un favori pareil, une contre-performance et c'est TOI qu'on accusera d'avoir porté la poisse.`);
-          opts.push(`${eq} contre ${adv} (${h}), ${pseudo}. Sur le papier ton écurie écrase tout — sauf que le papier ne remplit pas ta feuille de pari.`);
-        }
-        if(rivaux.length) opts.push(`${pseudo}, ${nomsRivaux} ${rivaux.length>1?'attendent':'attend'} qu'${eq} se prenne les pieds dans le tapis pour fêter ça. Croise les doigts très fort (${h}).`);
-      } else if(petit){
-        if(!dejaJoue) opts.push(`${pseudo}, ${eq} entre en lice face à ${adv} (${h}). Personne n'a misé sur ton outsider — si ça passe, tu seras le génie incompris de la famille.`);
-        else opts.push(`${pseudo}, ${eq} défie ${adv} (${h}). Tu as parié avec le cœur, pas avec la raison. On admire le courage.`);
-        if(rivaux.length) opts.push(`${pseudo}, si ton petit ${eq} fait tomber ${adv} (${h}), ${nomsRivaux} en avalera${rivaux.length>1?'ont':''} son écharpe. Rêve un peu, ça fait du bien.`);
+      /* PRIORITÉ : si c'est un match d'entrée ET qu'on a une accroche historique sur mesure */
+      const cleHist = eq+'|'+adv;
+      if(!dejaJoue && DDAY_HISTOIRE[cleHist]){
+        const rivTxt = rivaux.length ? nomsRivaux : 'la famille';
+        DDAY_HISTOIRE[cleHist].forEach(t=>{
+          opts.push(t.replace(/\{pseudo\}/g, pseudo).replace(/\{rivaux\}/g, rivTxt));
+        });
+        etat = pioche(opts);
       } else {
-        if(!dejaJoue) opts.push(`${pseudo}, ${eq} lance son tournoi contre ${adv} (${h}). Ton pari n'est ni fou ni gagné d'avance — exactement le genre qui rend la soirée intéressante.`);
-        else opts.push(`${pseudo}, ${eq} contre ${adv} (${h}). Tout peut basculer — et ta feuille de pari avec.`);
-        if(rivaux.length) opts.push(`${pseudo}, une victoire d'${eq} (${h}) et tu fais taire ${nomsRivaux} pour la soirée. La balle est dans le camp de ton écurie.`);
+        if(gros){
+          if(!dejaJoue){
+            opts.push(`${pseudo}, ${monEq(eq)} entre en lice face à ${adv} (${h}). Si ton favori se loupe d'entrée, ${rivaux.length?nomsRivaux:'la famille'} te le ressortira jusqu'en finale.`);
+            opts.push(`${eq} part archi-favorite contre ${adv} (${h}), ${pseudo}. Tu as parié sur la valeur sûre — autant dire que tu n'as aucune excuse si ça capote.`);
+          } else {
+            opts.push(`${pseudo}, ${eq} affronte ${adv} (${h}). Avec un favori pareil, une contre-performance et c'est TOI qu'on accusera d'avoir porté la poisse.`);
+            opts.push(`${eq} contre ${adv} (${h}), ${pseudo}. Sur le papier ton écurie écrase tout — sauf que le papier ne remplit pas ta feuille de pari.`);
+          }
+          if(rivaux.length) opts.push(`${pseudo}, ${nomsRivaux} ${rivaux.length>1?'attendent':'attend'} qu'${eq} se prenne les pieds dans le tapis pour fêter ça. Croise les doigts très fort (${h}).`);
+        } else if(petit){
+          if(!dejaJoue) opts.push(`${pseudo}, ${eq} entre en lice face à ${adv} (${h}). Personne n'a misé sur ton outsider — si ça passe, tu seras le génie incompris de la famille.`);
+          else opts.push(`${pseudo}, ${eq} défie ${adv} (${h}). Tu as parié avec le cœur, pas avec la raison. On admire le courage.`);
+          if(rivaux.length) opts.push(`${pseudo}, si ${monEq(eq)} fait tomber ${adv} (${h}), ${nomsRivaux} en avalera${rivaux.length>1?'ont':''} son écharpe. Rêve un peu, ça fait du bien.`);
+        } else {
+          if(!dejaJoue) opts.push(`${pseudo}, ${eq} lance son tournoi contre ${adv} (${h}). Ton pari n'est ni fou ni gagné d'avance — exactement le genre qui rend la soirée intéressante.`);
+          else opts.push(`${pseudo}, ${eq} contre ${adv} (${h}). Tout peut basculer — et ta feuille de pari avec.`);
+          if(rivaux.length) opts.push(`${pseudo}, une victoire d'${eq} (${h}) et tu fais taire ${nomsRivaux} pour la soirée. La balle est dans le camp de ton écurie.`);
+        }
+        if(allies.length) opts.push(`${pseudo}, toi et ${nomsAllies} avez tous misé sur ${eq} (${h}). Si elle coule, vous coulez en groupe — et personne pour vous consoler.`);
+        else if(rivaux.length && !gros) opts.push(`${pseudo}, tu es le seul à croire en ${eq} face à ${nomsRivaux} (${h}). De quoi leur clouer le bec, ou te faire chambrer jusqu'à la fin du Mondial.`);
+        etat = pioche(opts);
       }
-      if(allies.length) opts.push(`${pseudo}, toi et ${nomsAllies} avez tous misé sur ${eq} (${h}). Si elle coule, vous coulez en groupe — et personne pour vous consoler.`);
-      else if(rivaux.length && !gros) opts.push(`${pseudo}, tu es le seul à croire en ${eq} face à ${nomsRivaux} (${h}). De quoi leur clouer le bec, ou te faire chambrer jusqu'à la fin du Mondial.`);
-      etat = pioche(opts);
     }
     z.innerHTML = `<div class="ecurie-banniere dday" onclick="voirEquipe('${eq.replace(/'/g,"\\'")}')" style="border-color:${id?id.c:'var(--or)'}">
       <span class="f dday-pulse">${F[eq]||'🏳️'}</span>
