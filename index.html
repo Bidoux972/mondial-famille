@@ -37,6 +37,7 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 /* bannière écurie */
 .ecurie-banniere{display:flex;align-items:center;gap:12px;background:var(--panneau);border:1px solid var(--ligne);border-left-width:4px;border-radius:12px;padding:12px 14px;margin:10px 0;cursor:pointer}
 .ecurie-banniere.dday{background:linear-gradient(135deg,rgba(245,180,60,.16),rgba(255,107,94,.08));border-color:var(--or)}
+.ecurie-banniere.dday-rival{background:linear-gradient(135deg,rgba(255,107,94,.14),rgba(46,196,169,.05));border-color:var(--corail)}
 .dday-tag{display:inline-block;background:var(--or);color:#0E1B2C;font-size:10px;font-weight:800;letter-spacing:1px;padding:2px 8px;border-radius:20px;text-transform:uppercase}
 .dday-pulse{animation:ddayPulse 1.6s ease-in-out infinite;display:inline-block}
 @keyframes ddayPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -383,7 +384,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.48';
+const APP_VERSION = '9.49';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1675,6 +1676,58 @@ function banniereEcurie(){
         <div class="ban-tete"><span class="dday-tag">🏟️ JOUR DE MATCH</span></div>
         <div class="ban-tete" style="margin-top:3px"><b>${eq}</b> vs ${adv} ${F[adv]||''}</div>
         <div class="sub" style="color:${id?id.c:'var(--or)'};font-weight:700;margin-top:2px">${etat}</div>
+      </div>
+      <span class="chev">›</span></div>`;
+    return;
+  }
+  /* D-DAY RIVAL : mon écurie ne joue pas aujourd'hui, mais celle d'un concurrent oui */
+  const rivalsDuJour = PARTICIPANTS.filter(p=>{
+    if(p===pseudo) return false;
+    const req = ecurieDe(p);
+    if(!req || req===eq) return false;
+    return M.some(m=>(m.a===req||m.b===req) && jourCle(m)===auj);
+  });
+  if(rivalsDuJour.length){
+    /* on prend le premier rival qui joue (s'il y en a plusieurs on cite le match du premier) */
+    const rp = rivalsDuJour[0];
+    const req = ecurieDe(rp);
+    const mr = M.find(m=>(m.a===req||m.b===req) && jourCle(m)===auj);
+    const advR = mr.a===req ? mr.b : mr.a;
+    const rr = resultats[mr.id];
+    const idR = ECURIES[req];
+    let txtR;
+    if(rr){
+      const moiR = mr.a===req?rr.score_a:rr.score_b, luiR = mr.a===req?rr.score_b:rr.score_a;
+      if(moiR>luiR) txtR = pioche([
+        `${req} (l'écurie de ${rp}) a gagné ${moiR}-${luiR}. Prépare-toi : ${rp} va être insupportable. Ta seule défense : que TON écurie fasse mieux.`,
+        `Mauvaise nouvelle, ${pseudo} : ${rp} et son ${req} l'emportent ${moiR}-${luiR}. Le silence radio est ta meilleure option ce soir.`
+      ]);
+      else if(moiR===luiR) txtR = pioche([
+        `Match nul ${moiR}-${luiR} pour ${req}, l'écurie de ${rp}. Ni triomphe ni naufrage — tu peux remballer les vannes, pour l'instant.`,
+        `${rp} s'en sort avec un nul (${req}, ${moiR}-${luiR}). De quoi le chambrer gentiment sans en faire trop.`
+      ]);
+      else txtR = pioche([
+        `${req} (écurie de ${rp}) s'est vautrée ${luiR}-${moiR} ! ${pseudo}, c'est Noël avant l'heure : sors les vannes, ${rp} l'a bien cherché.`,
+        `Régale-toi ${pseudo} : le ${req} de ${rp} a coulé ${luiR}-${moiR}. La capture d'écran s'impose, à ressortir au prochain repas.`
+      ]);
+    } else if(joue(mr)){
+      txtR = pioche([
+        `${req} (l'écurie de ${rp}) joue EN CE MOMENT contre ${advR}. ${pseudo}, croise les doigts pour que ça tourne mal — tu sais pourquoi.`,
+        `Ça se joue là, maintenant : ${req} de ${rp} affronte ${advR}. ${pseudo}, prie pour un naufrage et garde ton clavier à portée.`
+      ]);
+    } else {
+      txtR = pioche([
+        `Aujourd'hui, c'est l'écurie de ${rp} qui entre en piste : ${req} contre ${advR}. ${pseudo}, surveille le match de près — un faux pas de ${rp} et c'est toi qui tiens le micro ce soir.`,
+        `${pseudo}, jour de match pour ${rp} : son ${req} défie ${advR}. Prépare ton plus beau chambrage au cas où ça tournerait mal pour ${ilElle(rp)}.`,
+        `L'écurie de ${rp} (${req}) joue contre ${advR} aujourd'hui. ${pseudo}, tu n'es pas concerné·e directement... mais un échec de ${rp}, ça se savoure entre rivaux.`
+      ]);
+    }
+    z.innerHTML = `<div class="ecurie-banniere dday-rival" onclick="voirEquipe('${req.replace(/'/g,"\\'")}')" style="border-color:${idR?idR.c:'var(--corail)'}">
+      <span class="f">👀</span>
+      <div style="flex:1">
+        <div class="ban-tete"><span class="dday-tag" style="background:var(--corail);color:#fff">JOUR DE L'ADVERSAIRE</span></div>
+        <div class="ban-tete" style="margin-top:3px"><b>${req}</b> vs ${advR} ${F[advR]||''} · écurie de ${rp}</div>
+        <div class="sub" style="font-weight:700;margin-top:2px">${txtR}</div>
       </div>
       <span class="chev">›</span></div>`;
     return;
