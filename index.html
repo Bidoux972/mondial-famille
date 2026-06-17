@@ -38,6 +38,21 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .ecurie-banniere{display:flex;align-items:center;gap:12px;background:var(--panneau);border:1px solid var(--ligne);border-left-width:4px;border-radius:12px;padding:12px 14px;margin:10px 0;cursor:pointer}
 .ecurie-banniere.dday{background:linear-gradient(135deg,rgba(245,180,60,.16),rgba(255,107,94,.08));border-color:var(--or)}
 .ecurie-banniere.dday-rival{background:linear-gradient(135deg,rgba(255,107,94,.14),rgba(46,196,169,.05));border-color:var(--corail)}
+#mur-gloire{margin:18px 0 8px}
+.mur-titre{font-size:17px;font-weight:800;color:var(--or);margin:6px 0 12px;letter-spacing:.3px}
+.mur-sous-titre{font-size:13px;font-weight:700;color:var(--gris);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.5px}
+.mur-carte{display:flex;gap:12px;align-items:flex-start;background:var(--panneau);border:1px solid var(--ligne);border-radius:12px;padding:13px 14px;margin-bottom:9px}
+.mur-carte.mur-grave{border:1px solid var(--or);background:linear-gradient(135deg,rgba(245,180,60,.16),rgba(245,180,60,.04))}
+.mur-carte.mur-gloire-c{border-left:4px solid var(--or)}
+.mur-carte.mur-honte-c{border-left:4px solid var(--corail)}
+.mur-carte.mur-mini{padding:10px 12px}
+.mur-ico{font-size:26px;line-height:1;flex-shrink:0}
+.mur-mini .mur-ico{font-size:20px}
+.mur-corps{flex:1;min-width:0}
+.mur-label{font-size:11px;font-weight:800;letter-spacing:.6px;color:var(--gris);text-transform:uppercase;margin-bottom:3px}
+.mur-grave .mur-label{color:var(--or)}
+.mur-nom{font-size:20px;font-weight:800;color:var(--creme);margin-bottom:4px}
+.mur-vanne{font-size:13.5px;line-height:1.5;color:var(--creme)}
 .dday-tag{display:inline-block;background:var(--or);color:#0E1B2C;font-size:10px;font-weight:800;letter-spacing:1px;padding:2px 8px;border-radius:20px;text-transform:uppercase}
 .dday-pulse{animation:ddayPulse 1.6s ease-in-out infinite;display:inline-block}
 @keyframes ddayPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -332,6 +347,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     <div id="bouton-recap-jour"></div>
     <p class="note" id="commentaire-jour" style="display:none;font-size:13px;color:var(--creme);background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--or);border-radius:10px;padding:12px"></p>
     <p class="note" id="note-classement"></p>
+    <div id="mur-gloire"></div>
     <p class="note">📐 Barème : score exact <b>3</b> · tendance <b>1</b> · buteur <b>+2/−1</b> · « les 2 marquent » <b>+1/−1</b> · 🌟 Match en Or = tout ×2 (de −4 à +12).</p>
     <h2>⚔️ Les duels <small>Pendant un match en direct : défie quelqu'un EN LIGNE 🟢 avec une question construite (but, buteur, carton — par mi-temps ou fin de match). Il a 10 minutes chrono pour répondre OUI ou NON. Juste : il TE vole 1 point. Faux : tu lui voles 1 point. Pas de réponse : duel expiré sans conséquence et remboursé. Seuls les événements survenus APRÈS la réponse comptent — tout est horodaté, le commissaire tranche.</small></h2>
     <div id="zone-duels"></div>
@@ -384,7 +400,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.55';
+const APP_VERSION = '9.57';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1317,7 +1333,135 @@ function classement(){
     c.innerHTML = `🎙️ <i>${COMMENTAIRES[graine % COMMENTAIRES.length](lignes)}</i>`;
   } else c.style.display='none';
   boutonRecapJour();
+  murGloire();
 }
+
+/* ============ MUR DE LA GLOIRE ET DE LA HONTE ============ */
+/* "À jamais le premier" : gravé en dur (premier leader de l'histoire de l'app) */
+const PREMIER_GRAVE = 'Bidou';
+/* vannes de GLOIRE par rang (1er, 2e, 3e du top) */
+const VANNES_GLOIRE = {
+  1: [
+    (p,d,pts,ctx) => `👑 ${p} domine le panthéon : ${ctx}, ${d}. ${pts} points. Le sommet, tout simplement.`,
+    (p,d,pts,ctx) => `Numéro 1 incontesté : ${p}, ${d}, a sorti ${ctx}. ${pts} points. Du grand art, qu'on se le dise.`,
+    (p,d,pts,ctx) => `Au sommet : ${p} et son chef-d'œuvre du ${d} — ${ctx}. ${pts} points. Personne ne fait mieux.`
+  ],
+  2: [
+    (p,d,pts,ctx) => `${p} sur la 2e marche : ${ctx}, ${d}. ${pts} points. Insiste, mais rate la 1re place. Essaie encore, petit scarabée.`,
+    (p,d,pts,ctx) => `Vice-champion ${p} (${d}) : ${ctx}. ${pts} points. Premier des seconds. Félicitations, on suppose.`,
+    (p,d,pts,ctx) => `${p} si près du sommet avec ${ctx} (${d}, ${pts} pts)… et pourtant si loin.`
+  ],
+  3: [
+    (p,d,pts,ctx) => `${p} complète le podium : ${ctx}, ${d}, ${pts} pts. Le bronze, la couleur de la résignation tranquille.`,
+    (p,d,pts,ctx) => `3e place pour ${p} (${d}, ${pts} pts) : ${ctx}. Sur le podium par défaut, mais sur le podium.`,
+    (p,d,pts,ctx) => `${p} grappille le bronze avec ${ctx} (${d}). ${pts} points. On applaudit poliment.`
+  ]
+};
+/* vannes de HONTE par rang (1er, 2e, 3e du flop — 1 = LE pire) */
+const VANNES_HONTE = {
+  1: [
+    (p,d,pts,ctx) => `💀 Roi des naufrageurs : ${p}, ${d}, a osé ${ctx}. ${pts} points. À ressortir à chaque repas de famille jusqu'en 2030.`,
+    (p,d,pts,ctx) => `Minute de silence pour ${p} (${d}) : ${ctx}. ${pts} points. Le néant a une nouvelle adresse.`,
+    (p,d,pts,ctx) => `Pire prono de l'histoire, signé ${p} le ${d} : ${ctx}. ${pts} points. Un prono ou un sabotage ? Le jury rit encore.`
+  ],
+  2: [
+    (p,d,pts,ctx) => `${p}, vice-champion du désastre (${d}) : ${ctx}. ${pts} points. Si près du pire, si loin du génie.`,
+    (p,d,pts,ctx) => `Médaille d'argent de la honte pour ${p} : ${ctx}, ${d}. ${pts} points. Presque un exploit, dans l'autre sens.`,
+    (p,d,pts,ctx) => `2e plus gros vautrage : ${p}, ${d}, ${ctx}. ${pts} points. La régularité dans la médiocrité, ça force le respect.`
+  ],
+  3: [
+    (p,d,pts,ctx) => `${p} ferme le podium des bras cassés (${d}) : ${ctx}. ${pts} points. Bronze de la boulette.`,
+    (p,d,pts,ctx) => `3e pire prono : ${p}, ${d}, ${ctx}. ${pts} points. Il s'en sort presque bien. Presque.`,
+    (p,d,pts,ctx) => `${p} complète le flop avec ${ctx} (${d}, ${pts} pts). Pas le pire, mais pas loin.`
+  ]
+};
+/* mention "entrée fracassante" pour un nouvel entrant (prono de la dernière journée) */
+const ENTREE_GLOIRE = [
+  ` 🆕 Entrée fracassante dans le top grâce à son génie !`,
+  ` 🆕 Le petit nouveau débarque au sommet, ni vu ni connu !`,
+  ` 🆕 Nouvel entrant : il bouscule la hiérarchie d'un coup de maître !`
+];
+const ENTREE_HONTE = [
+  ` 🆕 Entrée fracassante dans le flop… grâce à son « génie » ! 🙃`,
+  ` 🆕 Le petit nouveau débarque direct dans la honte. Quelle performance !`,
+  ` 🆕 Nouvel entrant au flop : il n'a pas chômé pour se ridiculiser !`
+];
+
+function murGloire(){
+  const z = $('mur-gloire'); if(!z) return;
+  /* récolter tous les pronos jugés, avec points et contexte, regroupés par jour */
+  const tousJuges = [];
+  PARTICIPANTS.forEach(p=>{
+    Object.values(pronos[p]||{}).forEach(pr=>{
+      const re = resultats[pr.match_id]; if(!re) return;
+      const pts = ptsTotal(pr, re); if(pts===null) return;
+      const m = M.find(x=>x.id===pr.match_id); if(!m) return;
+      const jour = jourCle(m);
+      const scorePr = `${pr.score_a}-${pr.score_b}`;
+      const scoreRe = `${re.score_a}-${re.score_b}`;
+      const detailBut = pr.buteur ? ` + buteur ${pr.buteur}` : '';
+      const detailBtts = (pr.btts===true?' + « 2 marquent »':'');
+      const detailOr = pr.en_or ? ' 🌟' : '';
+      const ctxGloire = `${m.a}–${m.b}, annoncé ${scorePr}${detailBut}${detailBtts}${detailOr} (résultat ${scoreRe})`;
+      const ctxHonte = `${scorePr}${detailBut}${detailBtts}${detailOr} sur ${m.a}–${m.b} (fini ${scoreRe})`;
+      tousJuges.push({p, jour, pts, m, ctxGloire, ctxHonte, dt:m.dt});
+    });
+  });
+  if(!tousJuges.length){ z.innerHTML=''; return; }
+
+  /* dernière journée jouée -> sert à détecter les "nouveaux entrants" */
+  const dernierJour = tousJuges.slice().sort((a,b)=>b.dt-a.dt)[0].jour;
+
+  /* TOP 3 et FLOP 3 ALL-TIME. À points égaux : le plus récent chasse l'ancien (b.dt-a.dt). */
+  const top3  = tousJuges.slice().sort((a,b)=> b.pts-a.pts || b.dt-a.dt).slice(0,3);
+  const flop3 = tousJuges.slice().sort((a,b)=> a.pts-b.pts || b.dt-a.dt).slice(0,3);
+
+  /* graine qui change chaque jour/heure pour faire tourner les vannes */
+  const graine = new Date().getDate() + new Date().getHours();
+  const v = (arr,off=0) => arr[(graine+off) % arr.length];
+
+  let html = `<div class="mur-titre">🏛️ Le Mur de la Gloire et de la Honte</div>`;
+
+  /* 1. À JAMAIS LE PREMIER (gravé) */
+  html += `<div class="mur-carte mur-grave">
+    <div class="mur-ico">🥇</div>
+    <div class="mur-corps">
+      <div class="mur-label">À JAMAIS LE PREMIER</div>
+      <div class="mur-nom">${PREMIER_GRAVE}</div>
+      <div class="mur-vanne">Premier leader de l'histoire de l'app. C'est gravé dans le marbre, façon Ligue des Champions 93. Tu peux le dépasser au classement — tu ne lui prendras jamais CE titre. T-shirt mérité.</div>
+    </div></div>`;
+
+  /* 2. TOP 3 ALL-TIME */
+  const medailles = ['🥇','🥈','🥉'];
+  html += `<div class="mur-sous-titre">🏆 Top 3 des pronos de légende (depuis le début)</div>`;
+  top3.forEach((t,i)=>{
+    const rang = i+1;
+    const nouveau = (t.jour===dernierJour) ? v(ENTREE_GLOIRE, rang) : '';
+    html += `<div class="mur-carte mur-gloire-c${i===0?'':' mur-mini'}">
+      <div class="mur-ico">${medailles[i]}</div>
+      <div class="mur-corps">
+        <div class="mur-label">${rang}<sup>${rang===1?'er':'e'}</sup> · ${t.pts} pts</div>
+        <div class="mur-vanne">${v(VANNES_GLOIRE[rang], rang)(t.p, 'le '+t.jour, t.pts, t.ctxGloire)}${nouveau}</div>
+      </div></div>`;
+  });
+
+  /* 3. FLOP 3 ALL-TIME */
+  const bonnets = ['💀','🤡','🙈'];
+  html += `<div class="mur-sous-titre">💀 Flop 3 des naufrages (depuis le début)</div>`;
+  flop3.forEach((t,i)=>{
+    const rang = i+1;
+    const nouveau = (t.jour===dernierJour) ? v(ENTREE_HONTE, rang) : '';
+    html += `<div class="mur-carte mur-honte-c${i===0?'':' mur-mini'}">
+      <div class="mur-ico">${bonnets[i]}</div>
+      <div class="mur-corps">
+        <div class="mur-label">${rang}<sup>${rang===1?'er':'e'}</sup> pire · ${t.pts} pts</div>
+        <div class="mur-vanne">${v(VANNES_HONTE[rang], rang)(t.p, 'le '+t.jour, t.pts, t.ctxHonte)}${nouveau}</div>
+      </div></div>`;
+  });
+
+  z.innerHTML = html;
+}
+
 
 /* ============ FICHES ÉQUIPES ============ */
 function classementGroupe(g, filtreMatch){
