@@ -400,7 +400,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.58';
+const APP_VERSION = '9.60';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1293,7 +1293,7 @@ function calculTotaux(filtreMatch){
   }).sort((x,y)=>y.total-x.total || y.exacts-x.exacts);
 }
 const COMMENTAIRES = [
-  l => `${l[0].p} en tête. Profite, la gloire des pronostiqueurs est plus fragile qu'une défense panaméenne.`,
+  l => `${l[0].p} en tête. Profite, la gloire des pronostiqueurs est plus fragile que la défense de Curaçao.`,
   l => `${l[l.length-1].p} ferme la marche. C'est une stratégie, paraît-il. Une stratégie audacieuse.`,
   l => `Écart de ${l[0].total - l[l.length-1].total} point${(l[0].total-l[l.length-1].total)>1?'s':''} entre la tête et la lanterne rouge. Tout reste possible. Surtout le pire.`,
   l => `${l[0].p} domine, mais rappelons qu'en 2022 personne n'avait vu l'Arabie Saoudite battre Messi. L'humilité, toujours.`,
