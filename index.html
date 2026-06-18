@@ -400,7 +400,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.60';
+const APP_VERSION = '9.61';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -715,12 +715,13 @@ function bonus(pr, re){
        puis on découpe, puis on compare sur les mots significatifs (nom de famille) */
     const brut = String(re.buteurs||'').replace(/\([^)]*\)/g,' ');
     const motsSignif = s => normNom(s).split(' ').filter(w=>w.length>1);
-    const motsCible = motsSignif(pr.buteur);
+    /* nom de famille du prono = dernier mot significatif (on ignore le prénom pour éviter
+       les faux positifs : "Luis Suárez" ne doit pas matcher "Luis Díaz" via "luis").
+       On le compare à TOUS les mots de chaque buteur réel (le nom de famille peut ne pas
+       être en dernier à cause des codes pays ARG/COL collés au segment). */
+    const famCible = (motsSignif(pr.buteur).slice(-1)[0]) || '';
     const buteursReels = brut.split(/[,;\n·]/).map(seg=>motsSignif(seg)).filter(m=>m.length);
-    /* match si un nom de famille du prono apparaît dans un buteur réel */
-    const trouve = motsCible.length && buteursReels.some(motsR =>
-      motsR.some(mr => motsCible.includes(mr))
-    );
+    const trouve = famCible && famCible.length>1 && buteursReels.some(motsR => motsR.includes(famCible));
     but = trouve ? 2 : -1;
   }
   if(pr.btts === true || pr.btts === false){
