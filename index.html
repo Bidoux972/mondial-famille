@@ -174,6 +174,7 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .grp-ligne .c-rang{display:flex;align-items:center;gap:3px;justify-content:flex-start}
 .grp-pos{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris)}
 .grp-ligne.qualif .grp-pos{color:var(--lagon);font-weight:700}
+.badge-q{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:6px;background:var(--lagon);color:#fff;font-size:10px;font-weight:800;border-radius:50%;font-family:'Space Grotesk',monospace;vertical-align:middle}
 .grp-fleche{font-size:9px;line-height:1;width:9px;display:inline-block;text-align:center}
 .grp-fleche.up{color:var(--lagon)}
 .grp-fleche.down{color:var(--corail)}
@@ -408,7 +409,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.65';
+const APP_VERSION = '9.66';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1502,6 +1503,14 @@ function classementGroupe(g, filtreMatch){
   });
   return Object.values(t).sort((x,y)=> y.pts-x.pts || (y.bp-y.bc)-(x.bp-x.bc) || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
 }
+/* Qualification NIVEAU 1 (certaine) : un groupe de 4 est terminé quand chaque équipe
+   a joué ses 3 matchs. Alors les 2 premiers sont qualifiés à coup sûr.
+   Renvoie un Set des noms d'équipes qualifiées certaines (vide si groupe non terminé). */
+function qualifiesCertains(lignes){
+  const termine = lignes.length===4 && lignes.every(l=>l.j>=3);
+  if(!termine) return new Set();
+  return new Set([lignes[0].e, lignes[1].e]);
+}
 /* ============ BAROMÈTRE DE FORME (V1) ============ */
 /* Renvoie le picto de forme d'un nom (joueur ou équipe), ou '' si aucune forme.
    On matche sur le nom de famille (dernier mot significatif) pour les joueurs,
@@ -1652,6 +1661,7 @@ function vueGroupes(){
   const aujourdhui = jourCle({dt: new Date()});
   return 'ABCDEFGHIJKL'.split('').map(g=>{
     const lignes = classementGroupe(g);
+    const qualifies = qualifiesCertains(lignes);
     /* classement de la veille (matchs avant aujourd'hui) pour les flèches de mouvement */
     const lignesHier = classementGroupe(g, m => jourCle(m) !== aujourdhui);
     const aJoueHier = lignesHier.some(l=>l.j>0);
@@ -1668,7 +1678,7 @@ function vueGroupes(){
         const diff = l.bp-l.bc;
         return `<div class="grp-ligne${i<2?' qualif':''}">
           <span class="c-rang">${fleche}<span class="grp-pos">${i+1}</span></span>
-          <span class="c-nom" onclick="voirEquipe('${l.e.replace(/'/g,"\\'")}')">${F[l.e]} ${l.e}</span>
+          <span class="c-nom" onclick="voirEquipe('${l.e.replace(/'/g,"\\'")}')">${F[l.e]} ${l.e}${qualifies.has(l.e)?'<span class="badge-q" title="Qualifié pour les 16es">Q</span>':''}</span>
           <span class="c-j">${l.j}</span>
           <span class="c-vnd">${l.v}-${l.n}-${l.d}</span>
           <span class="c-diff ${diff>0?'pos':diff<0?'neg':''}">${diff>0?'+':''}${diff}</span>
