@@ -191,8 +191,10 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .but-rang{text-align:center;font-size:15px;font-family:'Space Grotesk',monospace;color:var(--gris)}
 .but-dra{font-size:18px;text-align:center}
 .but-nom{font-weight:600;font-size:14px;display:flex;flex-direction:column;line-height:1.2}
-.but-nom-l1{display:flex;align-items:center;gap:4px}
-.forme-picto{font-size:13px;line-height:1}
+.but-nom-l1{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.forme-badge{font-size:10px;line-height:1;padding:2px 6px;border-radius:6px;white-space:nowrap;font-weight:600}
+.forme-feu{background:#FAEEDA;color:#854F0B}
+.forme-glace{background:#E6F1FB;color:#0C447C}
 .but-eq{font-size:10px;color:var(--gris);font-weight:400;letter-spacing:.3px}
 .but-nb{font-weight:800;color:var(--or);font-family:'Space Grotesk',monospace;font-size:17px;display:flex;align-items:center;gap:2px}
 .but-ball{font-size:12px}
@@ -402,7 +404,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.62';
+const APP_VERSION = '9.63';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1500,8 +1502,8 @@ function pictoForme(nom){
     const fam = mots.slice(-1)[0];
     if(fam && fam.length>1) f = formesCloud[fam];
   }
-  if(f==='feu')   return '<span class="forme-picto" title="En feu">🔥</span>';
-  if(f==='glace') return '<span class="forme-picto" title="En froid">🧊</span>';
+  if(f==='feu')   return '<span class="forme-badge forme-feu" title="Bouillant">🔥 bouillant</span>';
+  if(f==='glace') return '<span class="forme-badge forme-glace" title="Congelé">🧊 congelé</span>';
   return '';
 }
 
