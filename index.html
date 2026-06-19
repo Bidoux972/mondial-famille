@@ -191,6 +191,8 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .but-rang{text-align:center;font-size:15px;font-family:'Space Grotesk',monospace;color:var(--gris)}
 .but-dra{font-size:18px;text-align:center}
 .but-nom{font-weight:600;font-size:14px;display:flex;flex-direction:column;line-height:1.2}
+.but-nom-l1{display:flex;align-items:center;gap:4px}
+.forme-picto{font-size:13px;line-height:1}
 .but-eq{font-size:10px;color:var(--gris);font-weight:400;letter-spacing:.3px}
 .but-nb{font-weight:800;color:var(--or);font-family:'Space Grotesk',monospace;font-size:17px;display:flex;align-items:center;gap:2px}
 .but-ball{font-size:12px}
@@ -400,7 +402,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.61';
+const APP_VERSION = '9.62';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -643,6 +645,7 @@ function butsDe(nom){
 /* ============ ÉTAT ============ */
 let pseudo = null, admin = false, filtreMatchs = 'venir', pseudoEnAttente = null, ficheOuverte = null, avmOuvert = null;
 let avmCloud = {};
+let formesCloud = {}; /* baromètre de forme : clé = nom normalisé (joueur OU équipe) -> 'feu' | 'glace' */
 let joueursCloud = {};
 let fichesCloud = {};
 let duelsCloud = [];
@@ -682,6 +685,10 @@ async function chargerTout() {
     joueursCloud = {}; (jo||[]).forEach(x => joueursCloud[x.equipe] = x.joueurs);
     fichesCloud = {}; (fi||[]).forEach(x => fichesCloud[x.equipe] = x);
     duelsCloud = du || [];
+    try {
+      const fo = await sb('mondial_formes?select=*').catch(()=>[]);
+      formesCloud = {}; (fo||[]).forEach(x => { if(x.cle) formesCloud[normNom(x.cle)] = x.forme; });
+    } catch(e){ formesCloud = {}; }
     try{ const pal = await sb('mondial_palmares?select=*'); palmares = (pal && pal[0]) ? pal[0] : null; }catch(e){ palmares = null; }
   } catch(e) {
     console.error(e);
@@ -878,7 +885,7 @@ function renduAvm(){
   z.innerHTML = `<div class="fiche">
     <button class="retour" onclick="ouvrirAvm(${avmOuvert})">✕ Fermer l'avant-match</button>
     <div class="tete"><span class="f">${F[m.a]}</span>
-      <div><h3 style="font-size:16px">${m.a} – ${m.b}</h3>
+      <div><h3 style="font-size:16px">${m.a}${pictoForme(m.a)} – ${m.b}${pictoForme(m.b)}</h3>
       <div class="surnom">Groupe ${m.g} · ${fmtJour(m.dt)} · ${fmtHeure(m.dt)} 🇲🇶</div></div>
       <span class="f">${F[m.b]}</span></div>
     ${corps}
@@ -1479,6 +1486,25 @@ function classementGroupe(g, filtreMatch){
   });
   return Object.values(t).sort((x,y)=> y.pts-x.pts || (y.bp-y.bc)-(x.bp-x.bc) || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
 }
+/* ============ BAROMÈTRE DE FORME (V1) ============ */
+/* Renvoie le picto de forme d'un nom (joueur ou équipe), ou '' si aucune forme.
+   On matche sur le nom de famille (dernier mot significatif) pour les joueurs,
+   et sur le nom complet pour les équipes. */
+function pictoForme(nom){
+  if(!nom) return '';
+  const cleComplete = normNom(nom);
+  let f = formesCloud[cleComplete];
+  if(!f){
+    /* essai sur le nom de famille (dernier mot significatif) pour les joueurs */
+    const mots = cleComplete.split(' ').filter(w=>w.length>1);
+    const fam = mots.slice(-1)[0];
+    if(fam && fam.length>1) f = formesCloud[fam];
+  }
+  if(f==='feu')   return '<span class="forme-picto" title="En feu">🔥</span>';
+  if(f==='glace') return '<span class="forme-picto" title="En froid">🧊</span>';
+  return '';
+}
+
 function classementButeurs(){
   const compteurs = {}; /* clé = nom normalisé -> {nom, equipe, buts} */
   /* ensemble des noms d'équipes connus (pour ne JAMAIS les compter comme buteurs) */
@@ -1572,7 +1598,7 @@ function vueButeurs(){
     return `<div class="but-ligne">
       <span class="but-rang">${medaille}</span>
       <span class="but-dra">${x.equipe?F[x.equipe]||'⚽':'⚽'}</span>
-      <span class="but-nom">${x.nom}${x.equipe?`<span class="but-eq">${x.equipe}</span>`:''}</span>
+      <span class="but-nom"><span class="but-nom-l1">${x.nom}${pictoForme(x.nom)}</span>${x.equipe?`<span class="but-eq">${x.equipe}</span>`:''}</span>
       <span class="but-nb">${x.buts}<span class="but-ball">⚽</span></span>
     </div>`;
   }).join('');
@@ -2753,6 +2779,21 @@ async function appliquerMajJour(){
       try{
         await sb('mondial_fiches?on_conflict=equipe', {method:'POST', prefer:'resolution=merge-duplicates',
           body: JSON.stringify({equipe:f.equipe, niv:f.niv||null, surnom:f.surnom||null, leaders:f.leaders||null, surveiller:f.surveiller||null, histoire:f.histoire||null})});
+        ok++;
+      }catch(e){ ko++; }
+    }
+    /* Baromètre de forme : {"formes":{"Mbappé":"feu","Neymar":"glace","Ronaldo":""}}
+       'feu'->🔥, 'glace'->🧊, '' ou autre -> on retire la forme du joueur/équipe */
+    for(const [cle, val] of Object.entries(data.formes||{})){
+      try{
+        const v = String(val||'').trim().toLowerCase();
+        if(v==='feu' || v==='glace'){
+          await sb('mondial_formes?on_conflict=cle', {method:'POST', prefer:'resolution=merge-duplicates',
+            body: JSON.stringify({cle, forme:v})});
+        } else {
+          /* valeur vide -> suppression de la forme */
+          await sb(`mondial_formes?cle=eq.${encodeURIComponent(cle)}`, {method:'DELETE', prefer:'return=minimal'}).catch(()=>{});
+        }
         ok++;
       }catch(e){ ko++; }
     }
