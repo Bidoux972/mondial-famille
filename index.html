@@ -195,6 +195,9 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .forme-badge{font-size:10px;line-height:1;padding:2px 6px;border-radius:6px;white-space:nowrap;font-weight:600}
 .forme-feu{background:#FAEEDA;color:#854F0B}
 .forme-glace{background:#E6F1FB;color:#0C447C}
+.forme-encart{margin-top:10px}
+.forme-eq-ligne{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0}
+.forme-eq-nom{font-size:12px;font-weight:600;color:var(--gris);min-width:90px}
 .but-eq{font-size:10px;color:var(--gris);font-weight:400;letter-spacing:.3px}
 .but-nb{font-weight:800;color:var(--or);font-family:'Space Grotesk',monospace;font-size:17px;display:flex;align-items:center;gap:2px}
 .but-ball{font-size:12px}
@@ -404,7 +407,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.63';
+const APP_VERSION = '9.64';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -880,6 +883,15 @@ function renduAvm(){
   const corps = c ? `<div class="bloc"><div class="eti">${c.titre||'Avant-match'}</div>
       <p>${(c.contenu||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</p></div>`
     : `<p class="note">Pas encore d'avant-match pour cette rencontre — le commissaire le publie en général la veille du match.</p>`;
+  /* encart forme ciblé sur les 2 équipes du match (pas de liste globale en vrac) */
+  const fA = formeJoueursEquipe(m.a), fB = formeJoueursEquipe(m.b);
+  const ligneForme = (eq, fr) => {
+    const items = [...fr.feu.map(n=>`<span class="forme-badge forme-feu">🔥 ${n}</span>`),
+                   ...fr.glace.map(n=>`<span class="forme-badge forme-glace">🧊 ${n}</span>`)];
+    return items.length ? `<div class="forme-eq-ligne"><span class="forme-eq-nom">${F[eq]||''} ${eq}</span>${items.join('')}</div>` : '';
+  };
+  const blocForme = (fA.feu.length+fA.glace.length+fB.feu.length+fB.glace.length) ?
+    `<div class="bloc forme-encart"><div class="eti">📊 Forme du moment</div>${ligneForme(m.a,fA)}${ligneForme(m.b,fB)}</div>` : '';
   const adminBloc = admin ? `<div class="admin-bloc"><div class="eti">Publier / corriger l'avant-match (commissaire)</div>
       <input type="text" id="avm-titre" placeholder="Titre" value="${c&&avmCloud[avmOuvert]?String(c.titre||'').replace(/"/g,'&quot;'):''}">
       <textarea id="avm-contenu" placeholder="Colle ici le bloc avant-match préparé avec Claude" style="min-height:140px">${c&&avmCloud[avmOuvert]?String(c.contenu||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'):''}</textarea>
@@ -891,6 +903,7 @@ function renduAvm(){
       <div class="surnom">Groupe ${m.g} · ${fmtJour(m.dt)} · ${fmtHeure(m.dt)} 🇲🇶</div></div>
       <span class="f">${F[m.b]}</span></div>
     ${corps}
+    ${blocForme}
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="btn" style="flex:1;background:var(--panneau2);color:var(--creme);border:1px solid var(--ligne)" onclick="voirEquipe('${m.a.replace(/'/g,"\\'")}')">Fiche ${m.a}</button>
       <button class="btn" style="flex:1;background:var(--panneau2);color:var(--creme);border:1px solid var(--ligne)" onclick="voirEquipe('${m.b.replace(/'/g,"\\'")}')">Fiche ${m.b}</button>
@@ -1505,6 +1518,24 @@ function pictoForme(nom){
   if(f==='feu')   return '<span class="forme-badge forme-feu" title="Bouillant">🔥 bouillant</span>';
   if(f==='glace') return '<span class="forme-badge forme-glace" title="Congelé">🧊 congelé</span>';
   return '';
+}
+
+/* Pour une équipe donnée, renvoie la liste de SES joueurs ayant une forme (bouillant/congelé).
+   Utilisé dans l'avant-match pour montrer la forme ciblée des 2 équipes, sans liste globale en vrac. */
+function formeJoueursEquipe(equipe){
+  const feu=[], glace=[];
+  for(const j of joueursDe(equipe)){
+    const nom = parseJoueur(j).nom;
+    const cle = normNom(nom);
+    let f = formesCloud[cle];
+    if(!f){
+      const fam = cle.split(' ').filter(w=>w.length>1).slice(-1)[0];
+      if(fam && fam.length>1) f = formesCloud[fam];
+    }
+    if(f==='feu')   feu.push(nom);
+    else if(f==='glace') glace.push(nom);
+  }
+  return {feu, glace};
 }
 
 function classementButeurs(){
