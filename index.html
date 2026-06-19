@@ -196,6 +196,7 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .forme-feu{background:#FAEEDA;color:#854F0B}
 .forme-glace{background:#E6F1FB;color:#0C447C}
 .forme-encart{margin-top:10px}
+.forme-eq-picto{font-size:14px;margin-left:5px}
 .forme-eq-ligne{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0}
 .forme-eq-nom{font-size:12px;font-weight:600;color:var(--gris);min-width:90px}
 .but-eq{font-size:10px;color:var(--gris);font-weight:400;letter-spacing:.3px}
@@ -407,7 +408,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.64';
+const APP_VERSION = '9.65';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -899,7 +900,7 @@ function renduAvm(){
   z.innerHTML = `<div class="fiche">
     <button class="retour" onclick="ouvrirAvm(${avmOuvert})">✕ Fermer l'avant-match</button>
     <div class="tete"><span class="f">${F[m.a]}</span>
-      <div><h3 style="font-size:16px">${m.a}${pictoForme(m.a)} – ${m.b}${pictoForme(m.b)}</h3>
+      <div><h3 style="font-size:16px">${m.a}${pictoFormeEquipe(m.a)} – ${m.b}${pictoFormeEquipe(m.b)}</h3>
       <div class="surnom">Groupe ${m.g} · ${fmtJour(m.dt)} · ${fmtHeure(m.dt)} 🇲🇶</div></div>
       <span class="f">${F[m.b]}</span></div>
     ${corps}
@@ -1517,6 +1518,16 @@ function pictoForme(nom){
   }
   if(f==='feu')   return '<span class="forme-badge forme-feu" title="Bouillant">🔥 bouillant</span>';
   if(f==='glace') return '<span class="forme-badge forme-glace" title="Congelé">🧊 congelé</span>';
+  return '';
+}
+
+/* Variante pour les ÉQUIPES : emoji seul, discret, sans le mot "bouillant/congelé"
+   (qui ne convient qu'aux joueurs et empiète sur le nom dans l'affiche). */
+function pictoFormeEquipe(nom){
+  if(!nom) return '';
+  const f = formesCloud[normNom(nom)];
+  if(f==='feu')   return '<span class="forme-eq-picto" title="En forme">🔥</span>';
+  if(f==='glace') return '<span class="forme-eq-picto" title="En méforme">🧊</span>';
   return '';
 }
 
