@@ -196,6 +196,7 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .forme-badge{font-size:10px;line-height:1;padding:2px 6px;border-radius:6px;white-space:nowrap;font-weight:600}
 .forme-feu{background:#FAEEDA;color:#854F0B}
 .forme-glace{background:#E6F1FB;color:#0C447C}
+.forme-transition{background:#F3F4DE;color:#6B6B2E;display:inline-flex;align-items:center;gap:3px}
 .forme-encart{margin-top:10px}
 .forme-eq-picto{font-size:14px;margin-left:5px}
 .forme-eq-ligne{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0}
@@ -409,7 +410,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.66';
+const APP_VERSION = '9.67';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -889,10 +890,11 @@ function renduAvm(){
   const fA = formeJoueursEquipe(m.a), fB = formeJoueursEquipe(m.b);
   const ligneForme = (eq, fr) => {
     const items = [...fr.feu.map(n=>`<span class="forme-badge forme-feu">🔥 ${n}</span>`),
+                   ...fr.transition.map(n=>`<span class="forme-badge forme-transition">${SVG_SOLEIL_NUAGE} ${n}</span>`),
                    ...fr.glace.map(n=>`<span class="forme-badge forme-glace">🧊 ${n}</span>`)];
     return items.length ? `<div class="forme-eq-ligne"><span class="forme-eq-nom">${F[eq]||''} ${eq}</span>${items.join('')}</div>` : '';
   };
-  const blocForme = (fA.feu.length+fA.glace.length+fB.feu.length+fB.glace.length) ?
+  const blocForme = (fA.feu.length+fA.glace.length+fA.transition.length+fB.feu.length+fB.glace.length+fB.transition.length) ?
     `<div class="bloc forme-encart"><div class="eti">📊 Forme du moment</div>${ligneForme(m.a,fA)}${ligneForme(m.b,fB)}</div>` : '';
   const adminBloc = admin ? `<div class="admin-bloc"><div class="eti">Publier / corriger l'avant-match (commissaire)</div>
       <input type="text" id="avm-titre" placeholder="Titre" value="${c&&avmCloud[avmOuvert]?String(c.titre||'').replace(/"/g,'&quot;'):''}">
@@ -1512,6 +1514,8 @@ function qualifiesCertains(lignes){
   return new Set([lignes[0].e, lignes[1].e]);
 }
 /* ============ BAROMÈTRE DE FORME (V1) ============ */
+/* SVG soleil-nuage pour l'état de transition "réchauffé" (gros soleil + un nuage net) */
+const SVG_SOLEIL_NUAGE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;flex-shrink:0"><circle cx="10" cy="9" r="5.5" fill="#F7B71E"/><g stroke="#F7B71E" stroke-width="2" stroke-linecap="round"><line x1="10" y1="0.5" x2="10" y2="2.5"/><line x1="1.5" y1="9" x2="-0.3" y2="9"/><line x1="3.7" y1="2.7" x2="2.3" y2="1.3"/><line x1="16.3" y1="2.7" x2="17.7" y2="1.3"/></g><path d="M7 21 a4.5 4.5 0 0 1 0.5 -9 a5.5 5.5 0 0 1 10.5 1.6 a4 4 0 0 1 -0.8 7.4 Z" fill="#fff" stroke="#9AA8B6" stroke-width="1.3"/></svg>';
 /* Renvoie le picto de forme d'un nom (joueur ou équipe), ou '' si aucune forme.
    On matche sur le nom de famille (dernier mot significatif) pour les joueurs,
    et sur le nom complet pour les équipes. */
@@ -1527,6 +1531,7 @@ function pictoForme(nom){
   }
   if(f==='feu')   return '<span class="forme-badge forme-feu" title="Bouillant">🔥 bouillant</span>';
   if(f==='glace') return '<span class="forme-badge forme-glace" title="Congelé">🧊 congelé</span>';
+  if(f==='transition') return '<span class="forme-badge forme-transition" title="En transition">'+SVG_SOLEIL_NUAGE+' réchauffé</span>';
   return '';
 }
 
@@ -1537,13 +1542,14 @@ function pictoFormeEquipe(nom){
   const f = formesCloud[normNom(nom)];
   if(f==='feu')   return '<span class="forme-eq-picto" title="En forme">🔥</span>';
   if(f==='glace') return '<span class="forme-eq-picto" title="En méforme">🧊</span>';
+  if(f==='transition') return '<span class="forme-eq-picto" title="En transition">'+SVG_SOLEIL_NUAGE+'</span>';
   return '';
 }
 
 /* Pour une équipe donnée, renvoie la liste de SES joueurs ayant une forme (bouillant/congelé).
    Utilisé dans l'avant-match pour montrer la forme ciblée des 2 équipes, sans liste globale en vrac. */
 function formeJoueursEquipe(equipe){
-  const feu=[], glace=[];
+  const feu=[], glace=[], transition=[];
   for(const j of joueursDe(equipe)){
     const nom = parseJoueur(j).nom;
     const cle = normNom(nom);
@@ -1554,8 +1560,9 @@ function formeJoueursEquipe(equipe){
     }
     if(f==='feu')   feu.push(nom);
     else if(f==='glace') glace.push(nom);
+    else if(f==='transition') transition.push(nom);
   }
-  return {feu, glace};
+  return {feu, glace, transition};
 }
 
 function classementButeurs(){
@@ -2841,7 +2848,7 @@ async function appliquerMajJour(){
     for(const [cle, val] of Object.entries(data.formes||{})){
       try{
         const v = String(val||'').trim().toLowerCase();
-        if(v==='feu' || v==='glace'){
+        if(v==='feu' || v==='glace' || v==='transition'){
           await sb('mondial_formes?on_conflict=cle', {method:'POST', prefer:'resolution=merge-duplicates',
             body: JSON.stringify({cle, forme:v})});
         } else {
