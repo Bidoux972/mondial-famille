@@ -183,6 +183,9 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .course-head span{font-size:10px;color:var(--gris);font-weight:700;text-align:center}
 .course-ligne.q-trois{background:rgba(46,196,169,.13);box-shadow:inset 3px 0 0 var(--lagon)}
 .course-ligne.q-out{opacity:.45}
+.course-ligne.c-elim{opacity:.4}
+.course-trait.rouge span{background:var(--corail)}
+.course-trait.rouge b{color:var(--corail)}
 .course-rang{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris);font-weight:700;text-align:center;display:flex;align-items:center;gap:2px;justify-content:center}
 .course-eq{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .course-grp{font-size:10px;color:var(--gris);text-align:right;white-space:nowrap}
@@ -191,8 +194,8 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .course-diff{font-size:11px;color:var(--gris);text-align:center}
 .course-pts{font-size:13px;font-weight:700;text-align:center}
 .course-trait{display:flex;align-items:center;gap:8px;margin:7px 2px}
-.course-trait span{flex:1;height:2px;background:var(--corail)}
-.course-trait b{font-size:10px;color:var(--corail);font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.course-trait span{flex:1;height:2px;background:var(--lagon)}
+.course-trait b{font-size:10px;color:var(--lagon);font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .grp-ligne .c-rang{display:flex;align-items:center;gap:6px;justify-content:flex-start;padding-left:7px}
 .grp-pos{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris)}
 .grp-ligne.qualif .grp-pos{color:var(--lagon);font-weight:700}
@@ -433,7 +436,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.73';
+const APP_VERSION = '9.74';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1570,7 +1573,6 @@ function calculQualification(filtreMatch){
     .filter(Boolean)
     .sort((x,y)=> y.pts-x.pts || y.diff-x.diff || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
   const les8 = new Set(troisiemes.slice(0,8).map(t=>t.e));
-  const course = troisiemes.map((t,i)=> ({...t, rang:i+1, dansLes8: i<8}));
 
   /* 2. Statut courant de chaque équipe */
   const statuts = {};
@@ -1619,6 +1621,29 @@ function calculQualification(filtreMatch){
       }
     });
   });
+
+  /* 4. Construction de la COURSE : tous les prétendants à une place de meilleur 3e.
+     = les 3es actuels de chaque groupe + les 4es PAS ENCORE éliminés (qui peuvent
+       encore remonter 3e). On les classe ensemble (pts, diff, bp). On marque :
+       - dansLes8 : les 8 meilleurs 3es virtuels (qualifiables) -> au-dessus de la ligne verte
+       - elimine  : équipe mathématiquement éliminée -> sous la ligne rouge, estompée
+     Les 1ers/2es ne figurent PAS dans la course (ils visent la qualif directe). */
+  const pretendants = [];
+  groupes.forEach(g => {
+    const c = classements[g];
+    [2,3].forEach(idx => {
+      const l = c[idx];
+      if(!l) return;
+      pretendants.push({e:l.e, g, pts:l.pts, diff:l.bp-l.bc, bp:l.bp, j:l.j, v:l.v, n:l.n, d:l.d,
+                        elimine: statuts[l.e]==='elimine'});
+    });
+  });
+  /* Tri : les non-éliminés d'abord (par pts/diff/bp), puis les éliminés à la fin (même tri) */
+  pretendants.sort((x,y)=>
+    (x.elimine?1:0)-(y.elimine?1:0) ||
+    y.pts-x.pts || y.diff-x.diff || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
+  /* rang affiché + dansLes8 calculé sur les 3es réels (les8 déjà défini) */
+  const course = pretendants.map((t,i)=> ({...t, rang:i+1, dansLes8: les8.has(t.e)}));
 
   return { statuts, certains, course };
 }
@@ -1818,13 +1843,15 @@ function vueGroupes(){
     const courseHier = calculQualification(m => jourCle(m) !== refJour).course;
     const rangHier = {}; courseHier.forEach(t => rangHier[t.e] = t.rang);
     const courseAJoueHier = courseHier.some(t => t.j>0);
+    const premierElimine = Q.course.findIndex(t => t.elimine);
     const rangs = Q.course.map((t,idx)=>{
       let fleche = '<span class="grp-fleche vide"></span>';
       if(courseAJoueHier && t.e in rangHier){
         const d = rangHier[t.e]-t.rang;
         fleche = d>0 ? `<span class="grp-fleche up">▲</span>` : d<0 ? `<span class="grp-fleche down">▼</span>` : `<span class="grp-fleche eg">＝</span>`;
       }
-      const ligne = `<div class="course-ligne${t.dansLes8?' q-trois':' q-out'}">
+      const cls = t.elimine ? ' c-elim' : t.dansLes8 ? ' q-trois' : '';
+      const ligne = `<div class="course-ligne${cls}">
         <span class="course-rang">${fleche}${t.rang}</span>
         <span class="course-eq">${F[t.e]||''} ${t.e}</span>
         <span class="course-grp">gr. ${t.g}</span>
@@ -1833,12 +1860,13 @@ function vueGroupes(){
         <span class="course-diff">${t.diff>0?'+':''}${t.diff}</span>
         <span class="course-pts">${t.pts}</span>
       </div>`;
-      const trait = (idx===7 && Q.course.length>8) ? `<div class="course-trait"><span></span><b>ligne de qualification</b><span></span></div>` : '';
-      return ligne + trait;
+      const traitVert = (idx===7 && Q.course.length>8) ? `<div class="course-trait"><span></span><b>ligne de qualification</b><span></span></div>` : '';
+      const traitRouge = (premierElimine>=0 && idx===premierElimine) ? `<div class="course-trait rouge"><span></span><b>ligne d'élimination</b><span></span></div>` : '';
+      return traitRouge + ligne + traitVert;
     }).join('');
     courseHtml = `<div class="grp-card course-card">
       <div class="grp-titre">🎟️ La course aux meilleurs 3es</div>
-      <div class="course-soustitre">Les 8 premiers sont repêchés pour les 16es · évolue à chaque match</div>
+      <div class="course-soustitre">3es et 4es encore en lice · les 8 meilleurs 3es sont repêchés · évolue à chaque match</div>
       <div class="course-head"><span class="course-rang"></span><span class="course-eq"></span><span class="course-grp"></span><span class="course-j">J</span><span class="course-vnd">V-N-D</span><span class="course-diff">Diff</span><span class="course-pts">Pts</span></div>
       ${rangs}
     </div>`;
