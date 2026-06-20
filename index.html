@@ -186,6 +186,9 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .course-ligne.c-elim{opacity:.4}
 .course-trait.rouge span{background:var(--corail)}
 .course-trait.rouge b{color:var(--corail)}
+.course-sep4e{display:flex;align-items:center;gap:7px;margin:6px 2px 5px}
+.course-sep4e span{flex:1;height:1px;background:rgba(255,255,255,.12)}
+.course-sep4e b{font-size:9px;color:#6b7888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .course-rang{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris);font-weight:700;text-align:center;display:flex;align-items:center;gap:2px;justify-content:center}
 .course-eq{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .course-grp{font-size:10px;color:var(--gris);text-align:right;white-space:nowrap}
@@ -436,7 +439,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.78';
+const APP_VERSION = '9.79';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1849,6 +1852,8 @@ function vueGroupes(){
     const rangHier = {}; courseHier.forEach(t => rangHier[t.e] = t.rang);
     const courseAJoueHier = courseHier.some(t => t.j>0);
     const premierElimine = Q.course.findIndex(t => t.elimine);
+    /* premier 4e non éliminé : pour la séparation légère 3es -> 4es */
+    const premier4e = Q.course.findIndex(t => !t.estTroisieme && !t.elimine);
     /* le trait vert se place après la DERNIÈRE équipe qualifiable (dansLes8) */
     let dernierQualifiable = -1;
     Q.course.forEach((t,i)=>{ if(t.dansLes8) dernierQualifiable = i; });
@@ -1870,8 +1875,9 @@ function vueGroupes(){
       </div>`;
       const neuvieme = Q.course[dernierQualifiable+1];
       const traitVert = (dernierQualifiable>=0 && idx===dernierQualifiable && neuvieme && !neuvieme.elimine) ? `<div class="course-trait"><span></span><b>ligne de qualification</b><span></span></div>` : '';
+      const sep4e = (premier4e>=0 && idx===premier4e) ? `<div class="course-sep4e"><span></span><b>4es · peuvent remonter</b><span></span></div>` : '';
       const traitRouge = (premierElimine>=0 && idx===premierElimine) ? `<div class="course-trait rouge"><span></span><b>ligne d'élimination</b><span></span></div>` : '';
-      return traitRouge + ligne + traitVert;
+      return traitRouge + sep4e + ligne + traitVert;
     }).join('');
     courseHtml = `<div class="grp-card course-card">
       <div class="grp-titre">🎟️ La course aux meilleurs 3es</div>
