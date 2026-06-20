@@ -439,7 +439,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.82';
+const APP_VERSION = '9.83';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1597,31 +1597,63 @@ function qualifiesCertainsSimul(g){
     if(r.score_a>r.score_b)A.pts+=3; else if(r.score_a<r.score_b)B.pts+=3; else {A.pts++;B.pts++;}
   });
 
-  /* énumère les 3^restants scénarios (0=victoire A, 1=nul, 2=victoire B).
-     Pour rester RIGOUREUX sans dépendre d'une diff de buts arbitraire, on ne tranche pas les
-     égalités de points par une diff fictive : une équipe n'est "certaine" que si, dans chaque
-     scénario, AU PLUS une autre équipe atteint ou dépasse son total de points (donc elle est
-     garantie top2 même si tous les départages lui sont défavorables). */
+  /* énumère les 3^restants scénarios. Pour CHAQUE scénario on construit un classement final
+     avec le VRAI départage CdM 2026 et on déclare top2 ceux qui finissent 1er ou 2e dans TOUS
+     les scénarios. Départage 2026 (ordre) : points, puis CONFRONTATION DIRECTE (points entre
+     équipes à égalité), puis diff de buts en confrontation directe, puis diff de buts générale,
+     puis buts marqués. La confrontation directe prime sur le goal-average général (nouveauté 2026).
+     On simule des scores réels (vainqueur +1 but) pour pouvoir appliquer ces critères. */
   const n = restants.length;
   const nbScenarios = Math.pow(3, n);
+
+  /* matchs déjà joués, avec scores réels, pour la confrontation directe */
+  const matchsScores = joues.map(m=>({a:m.a, b:m.b, sa:resultats[m.id].score_a, sb:resultats[m.id].score_b}));
+
+  /* classe les 4 équipes d'un groupe selon le règlement 2026 à partir d'une liste de matchs (a,b,sa,sb) */
+  function classerScenario(matchs){
+    const st = {}; equipes.forEach(e=>st[e]={e,pts:0,bp:0,bc:0});
+    matchs.forEach(m=>{ const A=st[m.a], B=st[m.b];
+      A.bp+=m.sa; A.bc+=m.sb; B.bp+=m.sb; B.bc+=m.sa;
+      if(m.sa>m.sb) A.pts+=3; else if(m.sa<m.sb) B.pts+=3; else { A.pts++; B.pts++; }
+    });
+    return Object.values(st).sort((x,y)=>{
+      if(y.pts!==x.pts) return y.pts-x.pts;
+      /* égalité de points : confrontation directe entre les équipes à ce total de points */
+      const aEgalite = Object.values(st).filter(o=>o.pts===x.pts).map(o=>o.e);
+      if(aEgalite.length>1){
+        const h = {}; aEgalite.forEach(e=>h[e]={pts:0,bp:0,bc:0});
+        matchs.forEach(m=>{ if(aEgalite.includes(m.a)&&aEgalite.includes(m.b)){
+          const A=h[m.a],B=h[m.b]; A.bp+=m.sa;A.bc+=m.sb;B.bp+=m.sb;B.bc+=m.sa;
+          if(m.sa>m.sb)A.pts+=3; else if(m.sa<m.sb)B.pts+=3; else {A.pts++;B.pts++;}
+        }});
+        const hx=h[x.e], hy=h[y.e];
+        if(hx&&hy){
+          if(hy.pts!==hx.pts) return hy.pts-hx.pts;
+          const dx=hx.bp-hx.bc, dy=hy.bp-hy.bc;
+          if(dy!==dx) return dy-dx;
+          if(hy.bp!==hx.bp) return hy.bp-hx.bp;
+        }
+      }
+      /* puis diff de buts générale, puis buts marqués */
+      const dgx=x.bp-x.bc, dgy=y.bp-y.bc;
+      if(dgy!==dgx) return dgy-dgx;
+      if(y.bp!==x.bp) return y.bp-x.bp;
+      return x.e.localeCompare(y.e,'fr');
+    });
+  }
+
   let toujoursTop2 = new Set(equipes);
   for(let s=0; s<nbScenarios; s++){
-    const st = {}; equipes.forEach(e=>st[e]={pts:base[e].pts});
     let code = s;
-    restants.forEach(m=>{
+    const simMatchs = restants.map(m=>{
       const issue = code%3; code=Math.floor(code/3);
-      if(issue===0) st[m.a].pts+=3;
-      else if(issue===2) st[m.b].pts+=3;
-      else { st[m.a].pts++; st[m.b].pts++; }
+      if(issue===0) return {a:m.a, b:m.b, sa:1, sb:0};
+      if(issue===2) return {a:m.a, b:m.b, sa:0, sb:1};
+      return {a:m.a, b:m.b, sa:0, sb:0};
     });
-    /* pour chaque équipe : combien d'AUTRES ont un total >= au sien dans ce scénario ?
-       si au plus 1 -> garantie top2 (même en perdant tous les départages). */
-    equipes.forEach(e=>{
-      if(!toujoursTop2.has(e)) return;
-      const mien = st[e].pts;
-      const auMoinsEgales = equipes.filter(o=> o!==e && st[o].pts >= mien).length;
-      if(auMoinsEgales > 1) toujoursTop2.delete(e); /* pas garantie top2 dans ce scénario */
-    });
+    const clf = classerScenario(matchsScores.concat(simMatchs));
+    const top2 = new Set([clf[0].e, clf[1].e]);
+    toujoursTop2.forEach(e=>{ if(!top2.has(e)) toujoursTop2.delete(e); });
     if(toujoursTop2.size===0) break;
   }
   return toujoursTop2;
