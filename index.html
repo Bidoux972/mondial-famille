@@ -433,7 +433,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.71';
+const APP_VERSION = '9.72';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -775,6 +775,17 @@ function ptsTotal(pr, re){
   return (base + b.but + b.btts) * (pr.en_or ? 2 : 1);
 }
 const jourCle = m => m.dt.toLocaleDateString('fr-FR',{timeZone:'America/Martinique'});
+/* Renvoie le jourCle du DERNIER jour où des matchs ont été joués (résultat saisi),
+   ou null si aucun. Sert de repère pour les flèches de mouvement : on compare le
+   classement actuel à celui d'AVANT cette dernière journée jouée — ainsi les flèches
+   restent visibles en permanence, pas seulement le jour calendaire des matchs. */
+function dernierJourJoue(){
+  const jours = M.filter(m=>resultats[m.id]).map(m=>m.dt.getTime());
+  if(!jours.length) return null;
+  const maxT = Math.max(...jours);
+  const mDernier = M.find(m=>resultats[m.id] && m.dt.getTime()===maxT);
+  return mDernier ? jourCle(mDernier) : null;
+}
 function joueursDe(equipe){
   const brut = joueursCloud[equipe] || JOUEURS_BASE[equipe] || '';
   return brut.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
@@ -1768,11 +1779,11 @@ function vueButeurs(){
   return `<div class="grp-card"><div class="grp-titre">⚽ Soulier d'Or — meilleurs buteurs</div><div class="but-liste">${lignes}</div></div>`;
 }
 function vueGroupes(){
-  const aujourdhui = jourCle({dt: new Date()});
+  const refJour = dernierJourJoue();
   const Q = calculQualification();
   const groupesHtml = 'ABCDEFGHIJKL'.split('').map(g=>{
     const lignes = classementGroupe(g);
-    const lignesHier = classementGroupe(g, m => jourCle(m) !== aujourdhui);
+    const lignesHier = classementGroupe(g, m => jourCle(m) !== refJour);
     const aJoueHier = lignesHier.some(l=>l.j>0);
     const posHier = {}; lignesHier.forEach((l,i)=>posHier[l.e]=i);
     return `<div class="grp-card">
@@ -1804,7 +1815,7 @@ function vueGroupes(){
   let courseHtml = '';
   if(Q.course.length){
     /* rangs d'hier dans la course, pour les flèches de mouvement */
-    const courseHier = calculQualification(m => jourCle(m) !== aujourdhui).course;
+    const courseHier = calculQualification(m => jourCle(m) !== refJour).course;
     const rangHier = {}; courseHier.forEach(t => rangHier[t.e] = t.rang);
     const courseAJoueHier = courseHier.some(t => t.j>0);
     const rangs = Q.course.map((t,idx)=>{
