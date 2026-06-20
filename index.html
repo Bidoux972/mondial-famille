@@ -171,6 +171,24 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .grp-head .c-nom{text-align:left}
 .grp-ligne{padding:7px 0;border-top:1px solid var(--ligne)}
 .grp-ligne.qualif{background:linear-gradient(90deg,rgba(46,196,169,.07),transparent)}
+.grp-ligne.q-top2{background:#D8EFC4}
+.grp-ligne.q-trois{background:#EAF3DE}
+.grp-ligne.q-out{opacity:.5}
+.grp-ligne.q-top2 .grp-pos{color:#3B6D11;font-weight:700}
+.grp-ligne.q-trois .grp-pos{color:#639922;font-weight:700}
+.course-card{margin-top:6px}
+.course-soustitre{font-size:11px;color:var(--gris);margin-bottom:8px}
+.course-ligne{display:grid;grid-template-columns:22px 1fr 34px 28px;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin-bottom:2px}
+.course-ligne.q-trois{background:#EAF3DE}
+.course-ligne.q-out{opacity:.55}
+.course-rang{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris);font-weight:700;text-align:center}
+.course-eq{font-size:13px;display:flex;align-items:center;gap:5px}
+.course-grp{font-size:10px;color:var(--gris)}
+.course-diff{font-size:11px;color:var(--gris);text-align:center}
+.course-pts{font-size:13px;font-weight:700;text-align:center}
+.course-trait{display:flex;align-items:center;gap:8px;margin:7px 2px}
+.course-trait span{flex:1;height:2px;background:var(--corail)}
+.course-trait b{font-size:10px;color:var(--corail);font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .grp-ligne .c-rang{display:flex;align-items:center;gap:3px;justify-content:flex-start}
 .grp-pos{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris)}
 .grp-ligne.qualif .grp-pos{color:var(--lagon);font-weight:700}
@@ -411,7 +429,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.68';
+const APP_VERSION = '9.69';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1515,6 +1533,80 @@ function qualifiesCertains(lignes){
   if(!termine) return new Set();
   return new Set([lignes[0].e, lignes[1].e]);
 }
+
+/* ====== COURSE AUX MEILLEURS 3es (calcul transversal sur les 12 groupes) ======
+   Format CdM 48 : 2 premiers de chaque groupe + 8 meilleurs 3es -> 32 qualifiés.
+   On calcule pour CHAQUE équipe un statut courant (provisoire tant que tout n'est pas joué) :
+   'top2'      = actuellement dans les 2 premiers de son groupe
+   'troisQ'    = actuellement 3e ET dans les 8 meilleurs 3es -> qualifiable
+   'troisOut'  = actuellement 3e mais hors des 8 meilleurs 3es
+   'elimine'   = mathématiquement éliminé (ne peut plus finir top2 ni meilleur 3e)
+   'autre'     = 4e non encore éliminé, etc.
+   Renvoie { statuts: {equipe->statut}, certains: Set(equipes qualifiées certaines),
+             course: [ {e, g, pts, diff, bp, dansLes8} ... ] (les 12 troisièmes classés) */
+function calculQualification(){
+  const groupes = 'ABCDEFGHIJKL'.split('');
+  const classements = {};
+  groupes.forEach(g => classements[g] = classementGroupe(g));
+
+  /* 1. Les 12 troisièmes, classés selon critères FIFA (pts, diff, bp) */
+  const troisiemes = groupes
+    .map(g => { const c = classements[g]; return c[2] ? {e:c[2].e, g, pts:c[2].pts, diff:c[2].bp-c[2].bc, bp:c[2].bp, j:c[2].j} : null; })
+    .filter(Boolean)
+    .sort((x,y)=> y.pts-x.pts || y.diff-x.diff || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
+  const les8 = new Set(troisiemes.slice(0,8).map(t=>t.e));
+  const course = troisiemes.map((t,i)=> ({...t, rang:i+1, dansLes8: i<8}));
+
+  /* 2. Statut courant de chaque équipe */
+  const statuts = {};
+  const certains = new Set();
+  groupes.forEach(g => {
+    const c = classements[g];
+    const termine = c.length===4 && c.every(l=>l.j>=3);
+    c.forEach((l,i)=>{
+      if(i<2) statuts[l.e] = 'top2';
+      else if(i===2) statuts[l.e] = les8.has(l.e) ? 'troisQ' : 'troisOut';
+      else statuts[l.e] = 'autre';
+      if(termine && i<2) certains.add(l.e);
+    });
+    /* 3. Élimination mathématique : une équipe ne peut plus finir top2.
+       maxAtteignable = pts + 3*(matchs restants). matchs joués = l.j, total 3 par équipe. */
+    c.forEach((l,i)=>{
+      const restants = 3 - l.j;
+      const maxAtteignable = l.pts + 3*restants;
+      /* combien d'équipes du groupe ont DÉJÀ un total que l ne peut plus dépasser ? */
+      const devant = c.filter(o => o.e!==l.e && o.pts > maxAtteignable).length;
+      /* si au moins 2 équipes sont hors d'atteinte -> ne peut plus finir top2.
+         Et si elle est 4e avec maxAtteignable < pts des 2 premiers ET ne peut pas viser 3e qualifiable -> éliminée.
+         Cas sûr : 4e dont le max ne dépasse pas le 3e actuel non plus. */
+      if(restants>=0){
+        const peutTop2 = devant < 2;
+        const troisActuel = c[2];
+        /* Pour viser la 3e place, il faut pouvoir DÉPASSER le 3e actuel, ou l'égaler avec
+           un meilleur départage. Cas sûr d'élimination : le max atteignable est < pts du 3e
+           (strictement) -> aucun espoir. Si égalité possible (max == pts du 3e), on regarde
+           la différence de buts : si elle est déjà nettement défavorable et non rattrapable
+           au point de rester derrière, on considère éliminé. Par prudence, on n'élimine sur
+           égalité QUE si l'équipe est 4e (dernière) ET que son max égale juste le 3e. */
+        let peutAu3e;
+        if(!troisActuel) peutAu3e = true;
+        else if(maxAtteignable > troisActuel.pts) peutAu3e = true;
+        else if(maxAtteignable < troisActuel.pts) peutAu3e = false;
+        else {
+          /* égalité de points possible : départage. Si l est 4e (dernière) et que le 3e
+             a déjà une bien meilleure différence de buts, on considère que l ne repasse pas.
+             Cas Haïti : 4e, diff très négative, battu en direct -> éliminé. */
+          const diffL = l.bp - l.bc;
+          const diff3 = troisActuel.bp - troisActuel.bc;
+          peutAu3e = (i < 3) || (diffL >= diff3);
+        }
+        if(!peutTop2 && !peutAu3e) statuts[l.e] = 'elimine';
+      }
+    });
+  });
+
+  return { statuts, certains, course };
+}
 /* ============ BAROMÈTRE DE FORME (V1) ============ */
 /* SVG soleil-nuage pour l'état de transition "réchauffé" (gros soleil + un nuage net) */
 const SVG_SOLEIL_NUAGE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;flex-shrink:0"><circle cx="10" cy="9" r="5.5" fill="#F7B71E"/><g stroke="#F7B71E" stroke-width="2" stroke-linecap="round"><line x1="10" y1="0.5" x2="10" y2="2.5"/><line x1="1.5" y1="9" x2="-0.3" y2="9"/><line x1="3.7" y1="2.7" x2="2.3" y2="1.3"/><line x1="16.3" y1="2.7" x2="17.7" y2="1.3"/></g><path d="M7 21 a4.5 4.5 0 0 1 0.5 -9 a5.5 5.5 0 0 1 10.5 1.6 a4 4 0 0 1 -0.8 7.4 Z" fill="#fff" stroke="#9AA8B6" stroke-width="1.3"/></svg>';
@@ -1673,10 +1765,9 @@ function vueButeurs(){
 }
 function vueGroupes(){
   const aujourdhui = jourCle({dt: new Date()});
-  return 'ABCDEFGHIJKL'.split('').map(g=>{
+  const Q = calculQualification();
+  const groupesHtml = 'ABCDEFGHIJKL'.split('').map(g=>{
     const lignes = classementGroupe(g);
-    const qualifies = qualifiesCertains(lignes);
-    /* classement de la veille (matchs avant aujourd'hui) pour les flèches de mouvement */
     const lignesHier = classementGroupe(g, m => jourCle(m) !== aujourdhui);
     const aJoueHier = lignesHier.some(l=>l.j>0);
     const posHier = {}; lignesHier.forEach((l,i)=>posHier[l.e]=i);
@@ -1690,9 +1781,12 @@ function vueGroupes(){
           fleche = d>0 ? `<span class="grp-fleche up">▲</span>` : d<0 ? `<span class="grp-fleche down">▼</span>` : `<span class="grp-fleche eg">＝</span>`;
         }
         const diff = l.bp-l.bc;
-        return `<div class="grp-ligne${i<2?' qualif':''}">
+        const st = Q.statuts[l.e] || 'autre';
+        const cls = st==='top2' ? ' q-top2' : st==='troisQ' ? ' q-trois' : st==='elimine' ? ' q-out' : '';
+        const badgeQ = Q.certains.has(l.e) ? '<span class="badge-q" title="Qualifié pour les 16es">Q</span>' : '';
+        return `<div class="grp-ligne${cls}">
           <span class="c-rang">${fleche}<span class="grp-pos">${i+1}</span></span>
-          <span class="c-nom" onclick="voirEquipe('${l.e.replace(/'/g,"\\'")}')">${F[l.e]} ${l.e}${qualifies.has(l.e)?'<span class="badge-q" title="Qualifié pour les 16es">Q</span>':''}</span>
+          <span class="c-nom" onclick="voirEquipe('${l.e.replace(/'/g,"\\'")}')">${F[l.e]} ${l.e}${badgeQ}</span>
           <span class="c-j">${l.j}</span>
           <span class="c-vnd">${l.v}-${l.n}-${l.d}</span>
           <span class="c-diff ${diff>0?'pos':diff<0?'neg':''}">${diff>0?'+':''}${diff}</span>
@@ -1701,6 +1795,28 @@ function vueGroupes(){
       }).join('')}
     </div>`;
   }).join('');
+
+  /* Encart "Course aux meilleurs 3es" en bas */
+  let courseHtml = '';
+  if(Q.course.length){
+    const rangs = Q.course.map((t,idx)=>{
+      const ligne = `<div class="course-ligne${t.dansLes8?' q-trois':' q-out'}">
+        <span class="course-rang">${t.rang}</span>
+        <span class="course-eq">${F[t.e]||''} ${t.e}<span class="course-grp">gr. ${t.g}</span></span>
+        <span class="course-diff">${t.diff>0?'+':''}${t.diff}</span>
+        <span class="course-pts">${t.pts}</span>
+      </div>`;
+      const trait = (idx===7 && Q.course.length>8) ? `<div class="course-trait"><span></span><b>ligne de qualification</b><span></span></div>` : '';
+      return ligne + trait;
+    }).join('');
+    courseHtml = `<div class="grp-card course-card">
+      <div class="grp-titre">🎟️ La course aux meilleurs 3es</div>
+      <div class="course-soustitre">Les 8 premiers sont repêchés pour les 16es · évolue à chaque match</div>
+      ${rangs}
+    </div>`;
+  }
+
+  return groupesHtml + courseHtml;
 }
 let vueEquipes = 'fiches';
 function eqData(n){
