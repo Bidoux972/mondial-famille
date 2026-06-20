@@ -439,7 +439,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.79';
+const APP_VERSION = '9.80';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1555,6 +1555,60 @@ function qualifiesCertains(lignes){
   return new Set([lignes[0].e, lignes[1].e]);
 }
 
+/* Qualification CERTAINE (anticipée incluse) par SIMULATION de tous les scénarios restants.
+   Pour un groupe donné, on énumère chaque résultat possible des matchs restants (victoire A /
+   nul / victoire B), on calcule le classement final FIFA dans chaque scénario, et une équipe
+   est "qualifiée certaine" si elle finit dans le TOP 2 dans 100% des scénarios.
+   Exact par construction : gère diff de buts, buts marqués, confrontation directe, cas tordus. */
+function qualifiesCertainsSimul(g){
+  const matchsG = M.filter(m=>m.g===g);
+  const equipes = [...new Set(matchsG.flatMap(m=>[m.a,m.b]))];
+  if(equipes.length!==4) return new Set();
+  const joues = matchsG.filter(m=>resultats[m.id]);
+  const restants = matchsG.filter(m=>!resultats[m.id]);
+  if(restants.length===0){ /* groupe terminé : top2 direct */
+    const c = classementGroupe(g);
+    return new Set([c[0].e, c[1].e]);
+  }
+  if(restants.length>4) return new Set(); /* trop de scénarios (groupe à peine commencé) : on ne se prononce pas */
+
+  /* base : stats acquises sur les matchs déjà joués */
+  const base = {}; equipes.forEach(e=>base[e]={e,pts:0,bp:0,bc:0});
+  joues.forEach(m=>{ const r=resultats[m.id], A=base[m.a], B=base[m.b];
+    A.bp+=r.score_a;A.bc+=r.score_b;B.bp+=r.score_b;B.bc+=r.score_a;
+    if(r.score_a>r.score_b)A.pts+=3; else if(r.score_a<r.score_b)B.pts+=3; else {A.pts++;B.pts++;}
+  });
+
+  /* énumère les 3^restants scénarios (0=victoire A, 1=nul, 2=victoire B).
+     Pour rester RIGOUREUX sans dépendre d'une diff de buts arbitraire, on ne tranche pas les
+     égalités de points par une diff fictive : une équipe n'est "certaine" que si, dans chaque
+     scénario, AU PLUS une autre équipe atteint ou dépasse son total de points (donc elle est
+     garantie top2 même si tous les départages lui sont défavorables). */
+  const n = restants.length;
+  const nbScenarios = Math.pow(3, n);
+  let toujoursTop2 = new Set(equipes);
+  for(let s=0; s<nbScenarios; s++){
+    const st = {}; equipes.forEach(e=>st[e]={pts:base[e].pts});
+    let code = s;
+    restants.forEach(m=>{
+      const issue = code%3; code=Math.floor(code/3);
+      if(issue===0) st[m.a].pts+=3;
+      else if(issue===2) st[m.b].pts+=3;
+      else { st[m.a].pts++; st[m.b].pts++; }
+    });
+    /* pour chaque équipe : combien d'AUTRES ont un total >= au sien dans ce scénario ?
+       si au plus 1 -> garantie top2 (même en perdant tous les départages). */
+    equipes.forEach(e=>{
+      if(!toujoursTop2.has(e)) return;
+      const mien = st[e].pts;
+      const auMoinsEgales = equipes.filter(o=> o!==e && st[o].pts >= mien).length;
+      if(auMoinsEgales > 1) toujoursTop2.delete(e); /* pas garantie top2 dans ce scénario */
+    });
+    if(toujoursTop2.size===0) break;
+  }
+  return toujoursTop2;
+}
+
 /* ====== COURSE AUX MEILLEURS 3es (calcul transversal sur les 12 groupes) ======
    Format CdM 48 : 2 premiers de chaque groupe + 8 meilleurs 3es -> 32 qualifiés.
    On calcule pour CHAQUE équipe un statut courant (provisoire tant que tout n'est pas joué) :
@@ -1582,12 +1636,15 @@ function calculQualification(filtreMatch){
   const certains = new Set();
   groupes.forEach(g => {
     const c = classements[g];
-    const termine = c.length===4 && c.every(l=>l.j>=3);
+    /* qualifiés certains : simulation de tous les scénarios restants (qualif anticipée incluse).
+       On ne la lance que sur l'état réel (sans filtre), pour ne pas fausser le calcul "d'hier". */
+    if(!filtreMatch){
+      qualifiesCertainsSimul(g).forEach(e=>certains.add(e));
+    }
     c.forEach((l,i)=>{
       if(i<2) statuts[l.e] = 'top2';
       else if(i===2) statuts[l.e] = les8.has(l.e) ? 'troisQ' : 'troisOut';
       else statuts[l.e] = 'autre';
-      if(termine && i<2) certains.add(l.e);
     });
     /* 3. Élimination mathématique : une équipe ne peut plus finir top2 NI viser le 3e qualifiable.
        maxAtteignable = pts + 3*(matchs restants). On gère le départage à égalité de points
