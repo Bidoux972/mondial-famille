@@ -439,7 +439,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.80';
+const APP_VERSION = '9.81';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -672,10 +672,25 @@ function statsButeurs(){
 function butsDe(nom){
   const map = statsButeurs(), cible = normNom(nom);
   if(!cible) return 0;
-  /* correspondance souple : "Havertz" matche "Kai Havertz" */
-  let total = 0, exact = map[cible];
-  if(exact) return exact;
-  for(const cle in map){ if(cle.includes(cible) || cible.includes(cle)){ total = Math.max(total, map[cle]); } }
+  /* correspondance exacte d'abord */
+  if(map[cible]) return map[cible];
+  /* correspondance souple SÛRE : on matche seulement si le nom de famille (dernier mot)
+     du buteur saisi == dernier mot recherché, OU si l'un est un sous-ENSEMBLE de MOTS de l'autre.
+     On NE matche PLUS sur des sous-chaînes de lettres (qui faisait que "Kluivert" héritait
+     des buts d'un autre via includes). */
+  const motsCible = cible.split(/\s+/).filter(Boolean);
+  const dernierCible = motsCible[motsCible.length-1];
+  let total = 0;
+  for(const cle in map){
+    const motsCle = cle.split(/\s+/).filter(Boolean);
+    const dernierCle = motsCle[motsCle.length-1];
+    /* match si même nom de famille (dernier mot), ou si tous les mots de l'un sont dans l'autre,
+       ou s'ils partagent un mot DISTINCTIF (>=4 lettres) — gère "Vinicius Jr" = "Vinicius Junior". */
+    const memeNomFamille = dernierCle === dernierCible;
+    const inclusMots = motsCible.every(m=>motsCle.includes(m)) || motsCle.every(m=>motsCible.includes(m));
+    const motDistinctifCommun = motsCible.some(m=>m.length>=4 && motsCle.includes(m));
+    if(memeNomFamille || inclusMots || motDistinctifCommun) total = Math.max(total, map[cle]);
+  }
   return total;
 }
 
