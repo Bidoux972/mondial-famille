@@ -178,12 +178,16 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .grp-ligne.q-trois .grp-pos{color:var(--lagon);font-weight:700}
 .course-card{margin-top:6px}
 .course-soustitre{font-size:11px;color:var(--gris);margin-bottom:8px}
-.course-ligne{display:grid;grid-template-columns:22px 1fr 38px 34px 26px;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin-bottom:2px}
+.course-ligne,.course-head{display:grid;grid-template-columns:30px 1fr 38px 22px 46px 34px 26px;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin-bottom:2px}
+.course-head{padding:2px 8px 5px;margin-bottom:3px}
+.course-head span{font-size:10px;color:var(--gris);font-weight:700;text-align:center}
 .course-ligne.q-trois{background:rgba(46,196,169,.13);box-shadow:inset 3px 0 0 var(--lagon)}
 .course-ligne.q-out{opacity:.45}
-.course-rang{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris);font-weight:700;text-align:center}
+.course-rang{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris);font-weight:700;text-align:center;display:flex;align-items:center;gap:2px;justify-content:center}
 .course-eq{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .course-grp{font-size:10px;color:var(--gris);text-align:right;white-space:nowrap}
+.course-j{font-size:11px;color:var(--gris);text-align:center}
+.course-vnd{font-size:11px;color:var(--gris);text-align:center}
 .course-diff{font-size:11px;color:var(--gris);text-align:center}
 .course-pts{font-size:13px;font-weight:700;text-align:center}
 .course-trait{display:flex;align-items:center;gap:8px;margin:7px 2px}
@@ -429,7 +433,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.70';
+const APP_VERSION = '9.71';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1544,14 +1548,14 @@ function qualifiesCertains(lignes){
    'autre'     = 4e non encore éliminé, etc.
    Renvoie { statuts: {equipe->statut}, certains: Set(equipes qualifiées certaines),
              course: [ {e, g, pts, diff, bp, dansLes8} ... ] (les 12 troisièmes classés) */
-function calculQualification(){
+function calculQualification(filtreMatch){
   const groupes = 'ABCDEFGHIJKL'.split('');
   const classements = {};
-  groupes.forEach(g => classements[g] = classementGroupe(g));
+  groupes.forEach(g => classements[g] = classementGroupe(g, filtreMatch));
 
   /* 1. Les 12 troisièmes, classés selon critères FIFA (pts, diff, bp) */
   const troisiemes = groupes
-    .map(g => { const c = classements[g]; return c[2] ? {e:c[2].e, g, pts:c[2].pts, diff:c[2].bp-c[2].bc, bp:c[2].bp, j:c[2].j} : null; })
+    .map(g => { const c = classements[g]; return c[2] ? {e:c[2].e, g, pts:c[2].pts, diff:c[2].bp-c[2].bc, bp:c[2].bp, j:c[2].j, v:c[2].v, n:c[2].n, d:c[2].d} : null; })
     .filter(Boolean)
     .sort((x,y)=> y.pts-x.pts || y.diff-x.diff || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
   const les8 = new Set(troisiemes.slice(0,8).map(t=>t.e));
@@ -1799,11 +1803,22 @@ function vueGroupes(){
   /* Encart "Course aux meilleurs 3es" en bas */
   let courseHtml = '';
   if(Q.course.length){
+    /* rangs d'hier dans la course, pour les flèches de mouvement */
+    const courseHier = calculQualification(m => jourCle(m) !== aujourdhui).course;
+    const rangHier = {}; courseHier.forEach(t => rangHier[t.e] = t.rang);
+    const courseAJoueHier = courseHier.some(t => t.j>0);
     const rangs = Q.course.map((t,idx)=>{
+      let fleche = '<span class="grp-fleche vide"></span>';
+      if(courseAJoueHier && t.e in rangHier){
+        const d = rangHier[t.e]-t.rang;
+        fleche = d>0 ? `<span class="grp-fleche up">▲</span>` : d<0 ? `<span class="grp-fleche down">▼</span>` : `<span class="grp-fleche eg">＝</span>`;
+      }
       const ligne = `<div class="course-ligne${t.dansLes8?' q-trois':' q-out'}">
-        <span class="course-rang">${t.rang}</span>
+        <span class="course-rang">${fleche}${t.rang}</span>
         <span class="course-eq">${F[t.e]||''} ${t.e}</span>
         <span class="course-grp">gr. ${t.g}</span>
+        <span class="course-j">${t.j}</span>
+        <span class="course-vnd">${t.v}-${t.n}-${t.d}</span>
         <span class="course-diff">${t.diff>0?'+':''}${t.diff}</span>
         <span class="course-pts">${t.pts}</span>
       </div>`;
@@ -1813,6 +1828,7 @@ function vueGroupes(){
     courseHtml = `<div class="grp-card course-card">
       <div class="grp-titre">🎟️ La course aux meilleurs 3es</div>
       <div class="course-soustitre">Les 8 premiers sont repêchés pour les 16es · évolue à chaque match</div>
+      <div class="course-head"><span class="course-rang"></span><span class="course-eq"></span><span class="course-grp"></span><span class="course-j">J</span><span class="course-vnd">V-N-D</span><span class="course-diff">Diff</span><span class="course-pts">Pts</span></div>
       ${rangs}
     </div>`;
   }
