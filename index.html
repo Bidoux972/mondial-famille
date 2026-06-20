@@ -171,19 +171,19 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .grp-head .c-nom{text-align:left}
 .grp-ligne{padding:7px 0;border-top:1px solid var(--ligne)}
 .grp-ligne.qualif{background:linear-gradient(90deg,rgba(46,196,169,.07),transparent)}
-.grp-ligne.q-top2{background:#D8EFC4}
-.grp-ligne.q-trois{background:#EAF3DE}
-.grp-ligne.q-out{opacity:.5}
-.grp-ligne.q-top2 .grp-pos{color:#3B6D11;font-weight:700}
-.grp-ligne.q-trois .grp-pos{color:#639922;font-weight:700}
+.grp-ligne.q-top2{background:rgba(46,196,169,.20);box-shadow:inset 3px 0 0 var(--lagon)}
+.grp-ligne.q-trois{background:rgba(46,196,169,.09);box-shadow:inset 3px 0 0 rgba(46,196,169,.45)}
+.grp-ligne.q-out{opacity:.4}
+.grp-ligne.q-top2 .grp-pos{color:var(--lagon);font-weight:700}
+.grp-ligne.q-trois .grp-pos{color:var(--lagon);font-weight:700}
 .course-card{margin-top:6px}
 .course-soustitre{font-size:11px;color:var(--gris);margin-bottom:8px}
-.course-ligne{display:grid;grid-template-columns:22px 1fr 34px 28px;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin-bottom:2px}
-.course-ligne.q-trois{background:#EAF3DE}
-.course-ligne.q-out{opacity:.55}
+.course-ligne{display:grid;grid-template-columns:22px 1fr 38px 34px 26px;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin-bottom:2px}
+.course-ligne.q-trois{background:rgba(46,196,169,.13);box-shadow:inset 3px 0 0 var(--lagon)}
+.course-ligne.q-out{opacity:.45}
 .course-rang{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris);font-weight:700;text-align:center}
-.course-eq{font-size:13px;display:flex;align-items:center;gap:5px}
-.course-grp{font-size:10px;color:var(--gris)}
+.course-eq{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.course-grp{font-size:10px;color:var(--gris);text-align:right;white-space:nowrap}
 .course-diff{font-size:11px;color:var(--gris);text-align:center}
 .course-pts{font-size:13px;font-weight:700;text-align:center}
 .course-trait{display:flex;align-items:center;gap:8px;margin:7px 2px}
@@ -429,7 +429,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.69';
+const APP_VERSION = '9.70';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1802,7 +1802,8 @@ function vueGroupes(){
     const rangs = Q.course.map((t,idx)=>{
       const ligne = `<div class="course-ligne${t.dansLes8?' q-trois':' q-out'}">
         <span class="course-rang">${t.rang}</span>
-        <span class="course-eq">${F[t.e]||''} ${t.e}<span class="course-grp">gr. ${t.g}</span></span>
+        <span class="course-eq">${F[t.e]||''} ${t.e}</span>
+        <span class="course-grp">gr. ${t.g}</span>
         <span class="course-diff">${t.diff>0?'+':''}${t.diff}</span>
         <span class="course-pts">${t.pts}</span>
       </div>`;
