@@ -436,7 +436,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.75';
+const APP_VERSION = '9.77';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1586,39 +1586,35 @@ function calculQualification(filtreMatch){
       else statuts[l.e] = 'autre';
       if(termine && i<2) certains.add(l.e);
     });
-    /* 3. Élimination mathématique : une équipe ne peut plus finir top2.
-       maxAtteignable = pts + 3*(matchs restants). matchs joués = l.j, total 3 par équipe. */
+    /* 3. Élimination mathématique : une équipe ne peut plus finir top2 NI viser le 3e qualifiable.
+       maxAtteignable = pts + 3*(matchs restants). On gère le départage à égalité de points
+       par la différence de buts (une équipe à égalité mais avec meilleure diff est hors d'atteinte). */
     c.forEach((l,i)=>{
       const restants = 3 - l.j;
       const maxAtteignable = l.pts + 3*restants;
-      /* combien d'équipes du groupe ont DÉJÀ un total que l ne peut plus dépasser ? */
-      const devant = c.filter(o => o.e!==l.e && o.pts > maxAtteignable).length;
-      /* si au moins 2 équipes sont hors d'atteinte -> ne peut plus finir top2.
-         Et si elle est 4e avec maxAtteignable < pts des 2 premiers ET ne peut pas viser 3e qualifiable -> éliminée.
-         Cas sûr : 4e dont le max ne dépasse pas le 3e actuel non plus. */
-      if(restants>=0){
-        const peutTop2 = devant < 2;
-        const troisActuel = c[2];
-        /* Pour viser la 3e place, il faut pouvoir DÉPASSER le 3e actuel, ou l'égaler avec
-           un meilleur départage. Cas sûr d'élimination : le max atteignable est < pts du 3e
-           (strictement) -> aucun espoir. Si égalité possible (max == pts du 3e), on regarde
-           la différence de buts : si elle est déjà nettement défavorable et non rattrapable
-           au point de rester derrière, on considère éliminé. Par prudence, on n'élimine sur
-           égalité QUE si l'équipe est 4e (dernière) ET que son max égale juste le 3e. */
-        let peutAu3e;
-        if(!troisActuel) peutAu3e = true;
-        else if(maxAtteignable > troisActuel.pts) peutAu3e = true;
+      const diffL = l.bp - l.bc;
+      if(restants<0) return;
+      /* Une équipe "o" est HORS D'ATTEINTE pour l si :
+         - o a déjà plus de points que le max de l, OU
+         - o a déjà autant de points que le max de l ET une meilleure diff (départage défavorable à l).
+         (cas prudent : on ne compte pas l'égalité parfaite de diff comme hors d'atteinte) */
+      const horsAtteinte = c.filter(o => {
+        if(o.e===l.e) return false;
+        const diffO = o.bp - o.bc;
+        return o.pts > maxAtteignable || (o.pts === maxAtteignable && diffO > diffL);
+      }).length;
+      const peutTop2 = horsAtteinte < 2;
+      /* Pour viser le 3e qualifiable : il faut pouvoir dépasser (ou égaler au départage) le 3e actuel. */
+      const troisActuel = c[2];
+      let peutAu3e;
+      if(!troisActuel) peutAu3e = true;
+      else {
+        const diff3 = troisActuel.bp - troisActuel.bc;
+        if(maxAtteignable > troisActuel.pts) peutAu3e = true;
         else if(maxAtteignable < troisActuel.pts) peutAu3e = false;
-        else {
-          /* égalité de points possible : départage. Si l est 4e (dernière) et que le 3e
-             a déjà une bien meilleure différence de buts, on considère que l ne repasse pas.
-             Cas Haïti : 4e, diff très négative, battu en direct -> éliminé. */
-          const diffL = l.bp - l.bc;
-          const diff3 = troisActuel.bp - troisActuel.bc;
-          peutAu3e = (i < 3) || (diffL >= diff3);
-        }
-        if(!peutTop2 && !peutAu3e) statuts[l.e] = 'elimine';
+        else peutAu3e = (i < 3) || (diffL >= diff3); /* égalité : 4e perd au départage si diff inférieure */
       }
+      if(!peutTop2 && !peutAu3e) statuts[l.e] = 'elimine';
     });
   });
 
@@ -1635,6 +1631,7 @@ function calculQualification(filtreMatch){
       const l = c[idx];
       if(!l) return;
       pretendants.push({e:l.e, g, pts:l.pts, diff:l.bp-l.bc, bp:l.bp, j:l.j, v:l.v, n:l.n, d:l.d,
+                        estTroisieme: idx===2,
                         elimine: statuts[l.e]==='elimine'});
     });
   });
@@ -1642,9 +1639,15 @@ function calculQualification(filtreMatch){
   pretendants.sort((x,y)=>
     (x.elimine?1:0)-(y.elimine?1:0) ||
     y.pts-x.pts || y.diff-x.diff || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
-  /* rang affiché ; dansLes8 = simplement les 8 premiers de la course (au-dessus du trait vert).
-     Cohérent avec l'affichage : tout ce qui est au-dessus de la ligne de qualification est vert. */
-  const course = pretendants.map((t,i)=> ({...t, rang:i+1, dansLes8: i<8 && !t.elimine}));
+  /* La ZONE VERTE (qualifiable) est réservée aux équipes ACTUELLEMENT 3es de leur groupe :
+     on prend les 8 meilleurs PARMI LES 3es seulement. Un 4e figure dans la course (il peut
+     remonter) mais n'est jamais coloré qualifiable tant qu'il est 4e. */
+  let compteur3es = 0;
+  const course = pretendants.map((t,i)=> {
+    let qualifiable = false;
+    if(!t.elimine && t.estTroisieme){ compteur3es++; qualifiable = compteur3es <= 8; }
+    return {...t, rang:i+1, dansLes8: qualifiable};
+  });
 
   return { statuts, certains, course };
 }
@@ -1845,6 +1848,9 @@ function vueGroupes(){
     const rangHier = {}; courseHier.forEach(t => rangHier[t.e] = t.rang);
     const courseAJoueHier = courseHier.some(t => t.j>0);
     const premierElimine = Q.course.findIndex(t => t.elimine);
+    /* le trait vert se place après la DERNIÈRE équipe qualifiable (dansLes8) */
+    let dernierQualifiable = -1;
+    Q.course.forEach((t,i)=>{ if(t.dansLes8) dernierQualifiable = i; });
     const rangs = Q.course.map((t,idx)=>{
       let fleche = '<span class="grp-fleche vide"></span>';
       if(courseAJoueHier && t.e in rangHier){
@@ -1861,8 +1867,8 @@ function vueGroupes(){
         <span class="course-diff">${t.diff>0?'+':''}${t.diff}</span>
         <span class="course-pts">${t.pts}</span>
       </div>`;
-      const neuvieme = Q.course[8];
-      const traitVert = (idx===7 && neuvieme && !neuvieme.elimine) ? `<div class="course-trait"><span></span><b>ligne de qualification</b><span></span></div>` : '';
+      const neuvieme = Q.course[dernierQualifiable+1];
+      const traitVert = (dernierQualifiable>=0 && idx===dernierQualifiable && neuvieme && !neuvieme.elimine) ? `<div class="course-trait"><span></span><b>ligne de qualification</b><span></span></div>` : '';
       const traitRouge = (premierElimine>=0 && idx===premierElimine) ? `<div class="course-trait rouge"><span></span><b>ligne d'élimination</b><span></span></div>` : '';
       return traitRouge + ligne + traitVert;
     }).join('');
