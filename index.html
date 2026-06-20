@@ -439,7 +439,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.81';
+const APP_VERSION = '9.82';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -684,12 +684,15 @@ function butsDe(nom){
   for(const cle in map){
     const motsCle = cle.split(/\s+/).filter(Boolean);
     const dernierCle = motsCle[motsCle.length-1];
-    /* match si même nom de famille (dernier mot), ou si tous les mots de l'un sont dans l'autre,
-       ou s'ils partagent un mot DISTINCTIF (>=4 lettres) — gère "Vinicius Jr" = "Vinicius Junior". */
-    const memeNomFamille = dernierCle === dernierCible;
-    const inclusMots = motsCible.every(m=>motsCle.includes(m)) || motsCle.every(m=>motsCible.includes(m));
-    const motDistinctifCommun = motsCible.some(m=>m.length>=4 && motsCle.includes(m));
-    if(memeNomFamille || inclusMots || motDistinctifCommun) total = Math.max(total, map[cle]);
+    /* RÈGLE PRINCIPALE : le nom de famille (dernier mot) doit correspondre.
+       C'est ce qui distingue "Alexander Isak" (famille=isak) de "Isak Hien" (famille=hien)
+       -> pas de match croisé. Gère aussi "Havertz"=="Kai Havertz" (même dernier mot). */
+    if(dernierCle === dernierCible){ total = Math.max(total, map[cle]); continue; }
+    /* exception "Jr/Junior" : si l'un finit par jr/junior et que le reste correspond */
+    const finJr = m => m[m.length-1]==='jr' || m[m.length-1]==='junior';
+    const sansJr = m => finJr(m) ? m.slice(0,-1) : m;
+    const a = sansJr(motsCle), b = sansJr(motsCible);
+    if(a.length && b.length && a[a.length-1]===b[b.length-1]){ total = Math.max(total, map[cle]); }
   }
   return total;
 }
