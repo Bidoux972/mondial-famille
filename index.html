@@ -436,7 +436,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.77';
+const APP_VERSION = '9.78';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1635,13 +1635,14 @@ function calculQualification(filtreMatch){
                         elimine: statuts[l.e]==='elimine'});
     });
   });
-  /* Tri : les non-éliminés d'abord (par pts/diff/bp), puis les éliminés à la fin (même tri) */
+  /* Tri par CATÉGORIE d'abord (pour ne JAMAIS mélanger 3es et 4es), puis par points/diff :
+     rang 0 = 3e non éliminé (les vrais meilleurs 3es), rang 1 = 4e non éliminé (outsiders),
+     rang 2 = éliminé (Haïti, Turquie...). À l'intérieur de chaque catégorie : pts, diff, bp. */
+  const categorie = t => t.elimine ? 2 : (t.estTroisieme ? 0 : 1);
   pretendants.sort((x,y)=>
-    (x.elimine?1:0)-(y.elimine?1:0) ||
+    categorie(x)-categorie(y) ||
     y.pts-x.pts || y.diff-x.diff || y.bp-x.bp || x.e.localeCompare(y.e,'fr'));
-  /* La ZONE VERTE (qualifiable) est réservée aux équipes ACTUELLEMENT 3es de leur groupe :
-     on prend les 8 meilleurs PARMI LES 3es seulement. Un 4e figure dans la course (il peut
-     remonter) mais n'est jamais coloré qualifiable tant qu'il est 4e. */
+  /* La ZONE VERTE (qualifiable) = les 8 meilleurs PARMI LES 3es (qui sont en tête du tri). */
   let compteur3es = 0;
   const course = pretendants.map((t,i)=> {
     let qualifiable = false;
