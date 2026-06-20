@@ -165,7 +165,7 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .badge-ok{background:rgba(46,196,169,.14);color:var(--lagon)}
 .grp-card{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .grp-titre{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--or);font-weight:800;margin-bottom:8px}
-.grp-head,.grp-ligne{display:grid;grid-template-columns:34px 1fr 26px 52px 38px 30px;align-items:center;column-gap:4px}
+.grp-head,.grp-ligne{display:grid;grid-template-columns:46px 1fr 26px 52px 38px 30px;align-items:center;column-gap:4px}
 .grp-head{font-size:10px;letter-spacing:.5px;color:var(--gris);text-transform:uppercase;padding-bottom:4px}
 .grp-head span{text-align:center}
 .grp-head .c-nom{text-align:left}
@@ -193,11 +193,11 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .course-trait{display:flex;align-items:center;gap:8px;margin:7px 2px}
 .course-trait span{flex:1;height:2px;background:var(--corail)}
 .course-trait b{font-size:10px;color:var(--corail);font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
-.grp-ligne .c-rang{display:flex;align-items:center;gap:3px;justify-content:flex-start}
+.grp-ligne .c-rang{display:flex;align-items:center;gap:6px;justify-content:flex-start;padding-left:7px}
 .grp-pos{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris)}
 .grp-ligne.qualif .grp-pos{color:var(--lagon);font-weight:700}
 .badge-q{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:6px;background:var(--lagon);color:#fff;font-size:10px;font-weight:800;border-radius:50%;font-family:'Space Grotesk',monospace;vertical-align:middle}
-.grp-fleche{font-size:9px;line-height:1;width:9px;display:inline-block;text-align:center}
+.grp-fleche{font-size:11px;line-height:1;width:11px;display:inline-block;text-align:center}
 .grp-fleche.up{color:var(--lagon)}
 .grp-fleche.down{color:var(--corail)}
 .grp-fleche.eg{color:var(--gris)}
@@ -433,7 +433,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.72';
+const APP_VERSION = '9.73';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
