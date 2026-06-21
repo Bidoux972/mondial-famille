@@ -439,7 +439,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.87';
+const APP_VERSION = '9.88';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1879,18 +1879,32 @@ function classementButeurs(){
          - si une initiale de prénom est fournie ("T. Hernandez"), elle départage les homonymes
          - l'identité retenue = nom complet du joueur trouvé (pour distinguer les frères/homonymes) */
       const initiale = (nom.match(/^([A-Za-zÀ-ÿ])\.\s/) || [])[1]; /* "T." -> "T" */
-      const nomFamille = normNom(nom).split(' ').filter(w=>w.length>1).slice(-1)[0] || normNom(nom);
-      let equipe = '', joueurResolu = null;
+      const motsNom = normNom(nom).split(' ').filter(w=>w.length>1);
+      const nomFamille = motsNom.slice(-1)[0] || normNom(nom);
+      const prenomSaisi = motsNom.length>1 ? motsNom[0] : ''; /* prénom complet saisi, si présent */
+      let equipe = '', joueurResolu = null, scoreMatch = -1;
       [m.a, m.b].forEach(eq=>{
         joueursDe(eq).map(parseJoueur).forEach(j=>{
           const motsJ = normNom(j.nom).split(' ').filter(w=>w.length>1);
           if(!motsJ.length) return;
-          const famJ = motsJ.slice(-1)[0];        /* nom de famille du joueur de la liste */
-          const prenomJ = motsJ.length>1 ? motsJ[0] : ''; /* prénom éventuel */
+          const famJ = motsJ.slice(-1)[0];
+          const prenomJ = motsJ.length>1 ? motsJ[0] : '';
           if(famJ !== nomFamille) return;          /* pas le même nom de famille */
-          /* nom de famille identique : si une initiale est donnée, elle doit correspondre au prénom */
-          if(initiale && prenomJ && prenomJ[0] !== normNom(initiale)) return;
-          equipe = eq; joueurResolu = j.nom;        /* on a notre joueur */
+          /* score de correspondance : prénom complet identique = meilleur (2),
+             initiale compatible = bon (1), nom de famille seul = faible (0).
+             On garde la MEILLEURE correspondance, donc un homonyme dans l'autre équipe
+             n'écrase pas un match plus précis déjà trouvé. */
+          let sc = 0;
+          if(prenomSaisi && prenomJ){
+            if(prenomSaisi === prenomJ) sc = 2;       /* "Yasin" == "Yasin" */
+            else return;                              /* prénoms différents -> PAS ce joueur */
+          } else if(initiale && prenomJ){
+            if(prenomJ[0] === normNom(initiale)) sc = 1;
+            else return;
+          } else {
+            sc = 0;                                   /* nom de famille seul */
+          }
+          if(sc > scoreMatch){ scoreMatch = sc; equipe = eq; joueurResolu = j.nom; }
         });
       });
       /* identité : nom complet du joueur résolu, sinon le nom tel qu'écrit */
