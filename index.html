@@ -439,7 +439,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.83';
+const APP_VERSION = '9.85';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1966,9 +1966,23 @@ function vueGroupes(){
     Q.course.forEach((t,i)=>{ if(t.dansLes8) dernierQualifiable = i; });
     const rangs = Q.course.map((t,idx)=>{
       let fleche = '<span class="grp-fleche vide"></span>';
-      if(courseAJoueHier && t.e in rangHier){
-        const d = rangHier[t.e]-t.rang;
-        fleche = d>0 ? `<span class="grp-fleche up">▲</span>` : d<0 ? `<span class="grp-fleche down">▼</span>` : `<span class="grp-fleche eg">＝</span>`;
+      if(courseAJoueHier){
+        if(t.e in rangHier){
+          const d = rangHier[t.e]-t.rang;
+          fleche = d>0 ? `<span class="grp-fleche up">▲</span>` : d<0 ? `<span class="grp-fleche down">▼</span>` : `<span class="grp-fleche eg">＝</span>`;
+        } else {
+          /* l'équipe vient d'ENTRER dans la course. Le sens dépend de son rang DANS SON GROUPE :
+             - si elle était top 2 (1re/2e) et tombe 3e/4e -> déclin -> ▼
+             - si elle était 4e et remonte 3e -> progression -> ▲
+             On compare son rang en groupe avant (refJour) et maintenant. */
+          const clGroupeAvant = classementGroupe(t.g, m => jourCle(m) !== refJour);
+          const rangAvant = clGroupeAvant.findIndex(l=>l.e===t.e);
+          const clGroupeNow = classementGroupe(t.g);
+          const rangNow = clGroupeNow.findIndex(l=>l.e===t.e);
+          if(rangAvant>=0 && rangNow>rangAvant) fleche = `<span class="grp-fleche down">▼</span>`;
+          else if(rangAvant>=0 && rangNow<rangAvant) fleche = `<span class="grp-fleche up">▲</span>`;
+          else fleche = `<span class="grp-fleche eg">＝</span>`;
+        }
       }
       const cls = t.elimine ? ' c-elim' : t.dansLes8 ? ' q-trois' : '';
       const ligne = `<div class="course-ligne${cls}">
