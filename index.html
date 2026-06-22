@@ -459,7 +459,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.90';
+const APP_VERSION = '9.91';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -3122,7 +3122,7 @@ function confettiReveal(overlay){
   }
   setTimeout(()=>{ if(c) c.innerHTML=''; }, 4200);
 }
-function toutAfficher(){ lisereEcurie(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); $('admin-maj').style.display = admin ? '' : 'none';
+function toutAfficher(){ lisereEcurie(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); if(document.getElementById('sec-tableau') && document.getElementById('sec-tableau').classList.contains('actif')) renduBracket(); $('admin-maj').style.display = admin ? '' : 'none';
   if(admin && palmares){ const pf=$('pal-finaliste'), pv=$('pal-vainqueur'); if(pf&&!pf.value)pf.value=palmares.finaliste||''; if(pv&&!pv.value)pv.value=palmares.vainqueur||''; } }
 
 function goTab(sec){ document.querySelector(`nav button[data-sec=${sec}]`).click(); }
@@ -3238,8 +3238,8 @@ const finaleFixed  = { M104:["W101","W102"] };
 
 /* groupes possibles pour chaque slot THIRD selon le tableau FIFA (provisoire couche 1) */
 const thirdGroupesPossibles = {
-  M74:"A/B/C/D/F", M77:"C/D/F/G/H", M79:"A/B/C/D/F", M80:"E/H/I/J/K",
-  M81:"B/E/F/I/J", M82:"A/E/H/I/J", M85:"E/G/H/I/J", M87:"D/G/H/J/L"
+  M74:"A/B/C/D/F", M77:"C/D/F/G/H", M79:"C/E/F/H/I", M80:"E/H/I/J/K",
+  M81:"B/E/F/I/J", M82:"A/E/H/I/J", M85:"E/G/H/I/J", M87:"D/E/I/J/L"
 };
 
 /* resout un slot en equipe reelle quand c'est possible.
@@ -3273,18 +3273,47 @@ function libelleSlot(code, matchId){
   return `<span class="brk-prov">${code}</span>`;
 }
 
-/* une equipe-cle (France) est-elle impliquee dans ce match (en l'etat) ? */
-function matchContient(slots, matchId, equipeCle){
+/* une equipe-cle (France) est-elle DIRECTEMENT placee dans ce match (1er/2e resolu) ? */
+function matchContientDirect(slots, equipeCle){
   return slots.some(c=>resoudreSlot(c)===equipeCle);
+}
+
+/* calcule l'ensemble des match_id du COULOIR de l'equipe-cle : on part des 16es ou elle
+   apparait directement, puis on propage — si Mxx est dans le couloir, tout match dont un
+   slot vaut "Wxx" (ou "Lxx") est aussi dans le couloir (l'equipe PEUT y arriver). */
+function couloirDe(equipeCle){
+  const tousTours = Object.assign({}, round32Fixed, round16Fixed, quartsFixed, demiesFixed, petiteFinale, finaleFixed);
+  const couloir = new Set();
+  /* depart : 16es ou l'equipe est placee directement */
+  for(const [id,slots] of Object.entries(round32Fixed)){
+    if(matchContientDirect(slots, equipeCle)) couloir.add(id);
+  }
+  if(!couloir.size) return couloir;
+  /* propagation : on ajoute tout match dont un slot reference (Wxx/Lxx) un match deja dans le couloir */
+  let change = true;
+  while(change){
+    change = false;
+    for(const [id,slots] of Object.entries(tousTours)){
+      if(couloir.has(id)) continue;
+      const lie = slots.some(c=>{
+        const m = c.match(/^[WL](\d+)$/);   /* "W74" -> "74" */
+        if(!m) return false;
+        return couloir.has('M'+m[1]);        /* couloir contient-il M74 ? */
+      });
+      if(lie){ couloir.add(id); change = true; }
+    }
+  }
+  return couloir;
 }
 
 function renduBracket(){
   const wrap = $('bracket-wrap'); if(!wrap) return;
   /* repere : ou est l'ecurie du joueur courant ? sinon France par defaut */
   const cle = (pseudo && ecurieDe(pseudo)) || 'France';
+  const couloir = couloirDe(cle);
 
   const carteMatch = (id, slots, tour) => {
-    const surveille = matchContient(slots, id, cle);
+    const surveille = couloir.has(id);
     return `<div class="brk-match${surveille?' brk-hot':''}">
       <div class="brk-id">${id.slice(1)} · ${tour}</div>
       <div class="brk-slots">${libelleSlot(slots[0], id)}<span class="brk-vs">vs</span>${libelleSlot(slots[1], id)}</div>
@@ -3298,11 +3327,10 @@ function renduBracket(){
 
   /* bandeau couloir si l'equipe-cle est placee quelque part */
   let bandeau = '';
-  const placee = Object.values(round32Fixed).some(s=>matchContient(s,null,cle));
-  if(placee){
+  if(couloir.size){
     bandeau = `<div class="brk-bandeau">
       <span class="brk-bandeau-t">${F[cle]||''} Couloir de ${cle}</span>
-      <span class="brk-bandeau-s">Surligne en orange : son chemin possible, en l'etat des classements</span>
+      <span class="brk-bandeau-s">Surligne en or : son chemin possible jusqu'a la finale, en l'etat des classements</span>
     </div>`;
   }
 
