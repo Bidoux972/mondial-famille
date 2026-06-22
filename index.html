@@ -314,6 +314,20 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .reveal .suite{position:absolute;bottom:26px;left:0;right:0;color:var(--gris);font-size:12px;letter-spacing:1px}
 .reveal .etape{animation:apparait .45s ease}
 @keyframes apparait{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#bracket-wrap{display:flex;flex-direction:column;gap:18px}
+.brk-bandeau{background:var(--panneau2);border:1px solid var(--lagon);border-radius:10px;padding:10px 14px}
+.brk-bandeau-t{display:block;color:var(--lagon);font-weight:600;font-size:13px}
+.brk-bandeau-s{display:block;color:var(--gris);font-size:11px;margin-top:2px}
+.brk-tour-tete{color:var(--or);font-weight:600;font-size:13px;margin-bottom:8px;letter-spacing:.3px}
+.brk-tour{display:flex;flex-direction:column;gap:8px}
+.brk-match{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:8px 12px}
+.brk-match.brk-hot{border-color:var(--or);border-width:1.5px;background:var(--panneau2)}
+.brk-id{color:var(--gris);font-size:11px;font-family:'Space Grotesk',monospace;margin-bottom:4px}
+.brk-slots{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brk-eq{color:#fff;font-weight:600;font-size:13px}
+.brk-prov{color:var(--gris);font-size:12px;font-style:italic}
+.brk-vs{color:var(--or);font-size:12px;font-weight:600}
+.brk-note{color:var(--gris);font-size:11px;font-style:italic;border-top:1px solid var(--ligne);padding-top:10px}
 </style>
 </head>
 <body>
@@ -419,6 +433,11 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     </div>
   </section>
 
+  <section id="sec-tableau">
+    <h2>Le tableau final <small>Qui pourrait croiser qui, en l'état des classements</small></h2>
+    <div id="bracket-wrap"></div>
+  </section>
+
   <div class="admin-bloc" id="bloc-admin" style="display:none">
     <div class="eti">Mode commissaire</div>
     <p class="note">Permet de valider les scores des matchs et publier des potins.</p>
@@ -433,13 +452,14 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   <button data-sec="classement"><span class="ico">🏆</span>Classt</button>
   <button data-sec="equipes"><span class="ico">⚽</span>Équipes</button>
   <button data-sec="ecuries"><span class="ico">🐎</span>Écuries</button>
+  <button data-sec="tableau"><span class="ico">🗺️</span>Tableau</button>
   <button data-sec="potins"><span class="ico">🍿</span>Potins</button>
 </nav>
 <div class="toast" id="toast"></div>
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.88';
+const APP_VERSION = '9.90';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -3197,12 +3217,112 @@ async function appliquerMajJour(){
   }catch(e){ toast('Échec de la mise à jour'); }
 }
 
+/* ===================== TABLEAU FINAL (bracket des 16es) — ETAPE 1 =====================
+   Bracket FIXE officiel FIFA 2026 (M73->M104). Les 1ers/2es sont resolus en live selon
+   les classements actuels. Les slots "THIRD" (meilleurs 3es) restent provisoires en
+   attendant l'Annexe C (couche 2) : on affiche les groupes possibles. */
+const round32Fixed = {
+  M73:["2A","2B"], M74:["1E","THIRD"], M75:["1F","2C"], M76:["1C","2F"],
+  M77:["1I","THIRD"], M78:["2E","2I"], M79:["1A","THIRD"], M80:["1L","THIRD"],
+  M81:["1D","THIRD"], M82:["1G","THIRD"], M83:["2K","2L"], M84:["1H","2J"],
+  M85:["1B","THIRD"], M86:["1J","2H"], M87:["1K","THIRD"], M88:["2D","2G"]
+};
+const round16Fixed = {
+  M89:["W74","W77"], M90:["W73","W75"], M91:["W76","W78"], M92:["W79","W80"],
+  M93:["W83","W84"], M94:["W81","W82"], M95:["W86","W88"], M96:["W85","W87"]
+};
+const quartsFixed = { M97:["W89","W90"], M98:["W93","W94"], M99:["W91","W92"], M100:["W95","W96"] };
+const demiesFixed = { M101:["W97","W98"], M102:["W99","W100"] };
+const petiteFinale = { M103:["L101","L102"] };
+const finaleFixed  = { M104:["W101","W102"] };
+
+/* groupes possibles pour chaque slot THIRD selon le tableau FIFA (provisoire couche 1) */
+const thirdGroupesPossibles = {
+  M74:"A/B/C/D/F", M77:"C/D/F/G/H", M79:"A/B/C/D/F", M80:"E/H/I/J/K",
+  M81:"B/E/F/I/J", M82:"A/E/H/I/J", M85:"E/G/H/I/J", M87:"D/G/H/J/L"
+};
+
+/* resout un slot en equipe reelle quand c'est possible.
+   "1G"/"2G" -> 1er/2e du groupe G via classement live.
+   "THIRD"   -> null (provisoire). "Wxx"/"Lxx" -> null (match a venir). */
+function resoudreSlot(code, matchId){
+  if(!code) return null;
+  if(code==='THIRD') return null;
+  const m = code.match(/^([12])([A-L])$/);
+  if(m){
+    const rang = +m[1], grp = m[2];
+    const cl = classementGroupe(grp);
+    if(cl.length >= rang && cl[rang-1] && cl[rang-1].j>0) return cl[rang-1].e;
+    return null;
+  }
+  return null; /* Wxx / Lxx : vainqueur/perdant pas encore connu */
+}
+
+/* libelle d'un slot pour l'affichage */
+function libelleSlot(code, matchId){
+  const eq = resoudreSlot(code);
+  if(eq) return `<span class="brk-eq">${F[eq]||'⚽'} ${eq}</span>`;
+  if(code==='THIRD'){
+    const grp = thirdGroupesPossibles[matchId] || '?';
+    return `<span class="brk-prov">meilleur 3e ${grp}</span>`;
+  }
+  const m = code.match(/^([12])([A-L])$/);
+  if(m) return `<span class="brk-prov">${m[1]==='1'?'1er':'2e'} groupe ${m[2]}</span>`;
+  if(code[0]==='W') return `<span class="brk-prov">vainqueur ${code.slice(1)}</span>`;
+  if(code[0]==='L') return `<span class="brk-prov">perdant ${code.slice(1)}</span>`;
+  return `<span class="brk-prov">${code}</span>`;
+}
+
+/* une equipe-cle (France) est-elle impliquee dans ce match (en l'etat) ? */
+function matchContient(slots, matchId, equipeCle){
+  return slots.some(c=>resoudreSlot(c)===equipeCle);
+}
+
+function renduBracket(){
+  const wrap = $('bracket-wrap'); if(!wrap) return;
+  /* repere : ou est l'ecurie du joueur courant ? sinon France par defaut */
+  const cle = (pseudo && ecurieDe(pseudo)) || 'France';
+
+  const carteMatch = (id, slots, tour) => {
+    const surveille = matchContient(slots, id, cle);
+    return `<div class="brk-match${surveille?' brk-hot':''}">
+      <div class="brk-id">${id.slice(1)} · ${tour}</div>
+      <div class="brk-slots">${libelleSlot(slots[0], id)}<span class="brk-vs">vs</span>${libelleSlot(slots[1], id)}</div>
+    </div>`;
+  };
+
+  const bloc = (titre, obj, tour) => {
+    const cartes = Object.entries(obj).map(([id,slots])=>carteMatch(id,slots,tour)).join('');
+    return `<div class="brk-tour"><div class="brk-tour-tete">${titre}</div>${cartes}</div>`;
+  };
+
+  /* bandeau couloir si l'equipe-cle est placee quelque part */
+  let bandeau = '';
+  const placee = Object.values(round32Fixed).some(s=>matchContient(s,null,cle));
+  if(placee){
+    bandeau = `<div class="brk-bandeau">
+      <span class="brk-bandeau-t">${F[cle]||''} Couloir de ${cle}</span>
+      <span class="brk-bandeau-s">Surligne en orange : son chemin possible, en l'etat des classements</span>
+    </div>`;
+  }
+
+  wrap.innerHTML = bandeau +
+    bloc('16es de finale', round32Fixed, '16e') +
+    bloc('8es de finale', round16Fixed, '8e') +
+    bloc('Quarts de finale', quartsFixed, 'Q') +
+    bloc('Demi-finales', demiesFixed, 'D') +
+    bloc('Petite finale', petiteFinale, '3e place') +
+    bloc('Finale', finaleFixed, 'Finale') +
+    `<div class="brk-note">Les 3es exacts seront resolus en couche 2 (Annexe C FIFA). Pour l'instant, on affiche les groupes possibles.</div>`;
+}
+
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('nav button').forEach(x=>x.classList.remove('actif'));
   document.querySelectorAll('section').forEach(x=>x.classList.remove('actif'));
   b.classList.add('actif'); $('sec-'+b.dataset.sec).classList.add('actif');
   ficheOuverte = null; avmOuvert = null; renduAvm(); zoneEquipes();
   if(b.dataset.sec==='potins') ouvrirOngletPotins();
+  if(b.dataset.sec==='tableau') renduBracket();
   window.scrollTo({top:0});
 }));
 document.querySelectorAll('#sec-matchs .filtres button').forEach(b=>b.addEventListener('click',()=>{
