@@ -327,6 +327,8 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-eq{color:#fff;font-weight:600;font-size:13px}
 .brk-prov{color:var(--gris);font-size:12px;font-style:italic}
 .brk-vs{color:var(--or);font-size:12px;font-weight:600}
+.brk-affiche{color:#cdd6e0;font-style:normal;font-weight:500;white-space:nowrap}
+.brk-affiche-vs{color:var(--gris);font-size:10px;font-weight:400;font-style:italic;margin:0 1px}
 .brk-note{color:var(--gris);font-size:11px;font-style:italic;border-top:1px solid var(--ligne);padding-top:10px}
 </style>
 </head>
@@ -459,7 +461,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.92';
+const APP_VERSION = '9.93';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -3320,9 +3322,34 @@ function libelleSlot(code, matchId){
   }
   const m = code.match(/^([12])([A-L])$/);
   if(m) return `<span class="brk-prov">${m[1]==='1'?'1er':'2e'} groupe ${m[2]}</span>`;
-  if(code[0]==='W') return `<span class="brk-prov">vainqueur ${code.slice(1)}</span>`;
-  if(code[0]==='L') return `<span class="brk-prov">perdant ${code.slice(1)}</span>`;
+  if(code[0]==='W' || code[0]==='L'){
+    const motA = code[0]==='W' ? 'vainqueur' : 'perdant';
+    const num = code.slice(1);                       /* "76" */
+    const aff = afficheMatch('M'+num);               /* "Espagne vs Côte d'Ivoire" ou null */
+    if(aff) return `<span class="brk-prov">${motA} de <span class="brk-affiche">${aff}</span></span>`;
+    return `<span class="brk-prov">${motA} ${num}</span>`;
+  }
   return `<span class="brk-prov">${code}</span>`;
+}
+
+/* Affiche d'un match du bracket : "Espagne vs Côte d'Ivoire" en resolvant ses deux slots.
+   Renvoie les libelles courts (drapeau + pays si resolu, sinon abrege). null si introuvable. */
+function afficheMatch(id){
+  const tousTours = Object.assign({}, round32Fixed, round16Fixed, quartsFixed, demiesFixed, petiteFinale, finaleFixed);
+  const slots = tousTours[id];
+  if(!slots) return null;
+  const cote = (code)=>{
+    const eq = resoudreSlot(code, id);
+    if(eq) return `${F[eq]||'⚽'} ${eq}`;
+    /* slot non resolu : on abrege sans recursion profonde */
+    if(code==='THIRD') return '3e';
+    const mg = code.match(/^([12])([A-L])$/);
+    if(mg) return `${mg[1]==='1'?'1er':'2e'} ${mg[2]}`;
+    if(code[0]==='W') return `vainq. ${code.slice(1)}`;
+    if(code[0]==='L') return `perd. ${code.slice(1)}`;
+    return code;
+  };
+  return `${cote(slots[0])} <span class="brk-affiche-vs">vs</span> ${cote(slots[1])}`;
 }
 
 /* une equipe-cle (France) est-elle DIRECTEMENT placee dans ce match (1er/2e/3e resolu) ? */
