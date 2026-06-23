@@ -475,7 +475,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.95';
+const APP_VERSION = '9.96';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2455,35 +2455,41 @@ function badgePotin(type){
 function _reactVus(){ try{ return JSON.parse(localStorage.getItem('mf_potin_reacts')||'{}'); }catch(e){ return {}; } }
 function _reactSet(o){ try{ localStorage.setItem('mf_potin_reacts', JSON.stringify(o)); }catch(e){} }
 function dejaReagi(id, type){ const o=_reactVus(); return !!(o[id] && o[id][type]); }
-function marquerReagi(id, type){ const o=_reactVus(); (o[id]=o[id]||{})[type]=1; _reactSet(o); }
+function marquerReagi(id, type, actif){
+  const o=_reactVus();
+  if(actif){ (o[id]=o[id]||{})[type]=1; }
+  else if(o[id]){ delete o[id][type]; if(Object.keys(o[id]).length===0) delete o[id]; }
+  _reactSet(o);
+}
 
 /* Config des réactions : type -> {emoji, champ Supabase, fonction RPC, classe active, titre} */
 const REACTS = {
-  coeur: {ico:'❤️', champ:'coeurs', rpc:'like_coeur', cls:'on-coeur', titre:"J'adore"},
-  rire:  {ico:'😂', champ:'rires',  rpc:'like_rire',  cls:'on-rire',  titre:"Ça m'a fait rire"},
-  pouce: {ico:'👍', champ:'pouces', rpc:'like_pouce', cls:'on-pouce', titre:"Bien vu"}
+  coeur: {ico:'❤️', champ:'coeurs', rpc:'like_coeur', rpcOff:'unlike_coeur', cls:'on-coeur', titre:"J'adore"},
+  rire:  {ico:'😂', champ:'rires',  rpc:'like_rire',  rpcOff:'unlike_rire',  cls:'on-rire',  titre:"Ça m'a fait rire"},
+  pouce: {ico:'👍', champ:'pouces', rpc:'like_pouce', rpcOff:'unlike_pouce', cls:'on-pouce', titre:"Bien vu"}
 };
 
 async function reagirPotin(id, type){
-  /* Compteur partagé via RPC atomique. 1 like/appareil/type. */
+  /* Toggle : si pas encore réagi -> +1, sinon -1. Compteur partagé via RPC atomique. */
   const cfg = REACTS[type]; if(!cfg) return;
-  if(dejaReagi(id, type)) return;                      /* déjà liké : on ne fait rien */
-  marquerReagi(id, type);                              /* mémorise tout de suite (anti double-clic) */
+  const actif = dejaReagi(id, type);
+  const delta = actif ? -1 : 1;                        /* on retire si déjà actif, sinon on ajoute */
+  marquerReagi(id, type, !actif);                      /* bascule l'état local tout de suite */
   /* maj optimiste à l'écran */
   const btn = document.querySelector(`.potin-react[data-id="${id}"][data-type="${type}"]`);
   if(btn){
-    btn.classList.add(cfg.cls,'pop');
+    btn.classList.toggle(cfg.cls, !actif);
+    if(!actif){ btn.classList.add('pop'); setTimeout(()=>btn.classList.remove('pop'), 360); }
     const n = btn.querySelector('.react-n');
-    if(n) n.textContent = (parseInt(n.textContent||'0',10)+1);
-    setTimeout(()=>btn.classList.remove('pop'), 360);
+    if(n) n.textContent = Math.max(0, parseInt(n.textContent||'0',10)+delta);
   }
   /* maj du cache local pour rester cohérent au prochain rendu */
   const p = potinsCloud.find(x=>x.id===id);
-  if(p) p[cfg.champ] = (p[cfg.champ]||0)+1;
-  /* appel réseau atomique en arrière-plan */
+  if(p) p[cfg.champ] = Math.max(0, (p[cfg.champ]||0)+delta);
+  /* appel réseau atomique en arrière-plan (like ou unlike) */
   try{
-    await sb(`rpc/${cfg.rpc}`, {method:'POST', body: JSON.stringify({pid:id})});
-  }catch(e){ /* silencieux : le like reste affiché, resync au prochain chargement */ }
+    await sb(`rpc/${actif ? cfg.rpcOff : cfg.rpc}`, {method:'POST', body: JSON.stringify({pid:id})});
+  }catch(e){ /* silencieux : l'état reste affiché, resync au prochain chargement */ }
 }
 
 /* HTML des trois boutons pour un potin donné (uniquement si le potin a un id Supabase) */
