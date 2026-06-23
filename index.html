@@ -284,6 +284,18 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .potin .tag{display:inline-block;margin-top:8px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--or);font-weight:700}
 .potin .tag-news{color:var(--lagon)}
 .potin .tag-potin{color:var(--or)}
+.potin-reacts{display:flex;gap:8px;margin-top:10px}
+.potin-react{display:inline-flex;align-items:center;gap:5px;background:var(--panneau2);border:1px solid var(--ligne);border-radius:20px;padding:4px 11px;font-size:13px;color:var(--gris);cursor:pointer;transition:transform .12s,background .15s,border-color .15s;user-select:none;-webkit-tap-highlight-color:transparent}
+.potin-react:hover{border-color:var(--gris)}
+.potin-react:active{transform:scale(.9)}
+.potin-react .react-ico{font-size:15px;line-height:1;filter:grayscale(1) opacity(.7)}
+.potin-react .react-n{font-weight:700;font-family:'Space Grotesk',monospace;min-width:10px;text-align:left}
+.potin-react.on-coeur{background:rgba(255,77,109,.16);border-color:rgba(255,77,109,.5);color:#ff8fa3}
+.potin-react.on-coeur .react-ico{filter:none}
+.potin-react.on-pouce{background:rgba(76,160,255,.16);border-color:rgba(76,160,255,.5);color:#8fc3ff}
+.potin-react.on-pouce .react-ico{filter:none}
+@keyframes reactPop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.potin-react.pop .react-ico{animation:reactPop .35s ease}
 .potin-news{border-left-color:var(--lagon)}
 .potin-potin{border-left-color:var(--corail)}
 textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);background:var(--nuit);color:var(--creme);font-family:'Public Sans';font-size:14px;min-height:70px;margin-top:8px}
@@ -461,7 +473,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.93';
+const APP_VERSION = '9.94';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2436,12 +2448,57 @@ function badgePotin(type){
     ? '<span class="tag tag-news">📰 INFO UTILE</span>'
     : '<span class="tag tag-potin">🍿 POTIN</span>';
 }
+/* ============ REACTIONS POTINS (coeur + pouce, compteur partagé Supabase) ============ */
+/* Mémoire locale : quels potins cet appareil a déjà likés (anti-spam, 1 like par appareil) */
+function _reactVus(){ try{ return JSON.parse(localStorage.getItem('mf_potin_reacts')||'{}'); }catch(e){ return {}; } }
+function _reactSet(o){ try{ localStorage.setItem('mf_potin_reacts', JSON.stringify(o)); }catch(e){} }
+function dejaReagi(id, type){ const o=_reactVus(); return !!(o[id] && o[id][type]); }
+function marquerReagi(id, type){ const o=_reactVus(); (o[id]=o[id]||{})[type]=1; _reactSet(o); }
+
+async function reagirPotin(id, type){
+  /* type = 'coeur' ou 'pouce'. Compteur partagé via RPC atomique. 1 like/appareil/type. */
+  if(dejaReagi(id, type)) return;                      /* déjà liké : on ne fait rien */
+  marquerReagi(id, type);                              /* mémorise tout de suite (anti double-clic) */
+  /* maj optimiste à l'écran */
+  const btn = document.querySelector(`.potin-react[data-id="${id}"][data-type="${type}"]`);
+  if(btn){
+    btn.classList.add(type==='coeur'?'on-coeur':'on-pouce','pop');
+    const n = btn.querySelector('.react-n');
+    if(n) n.textContent = (parseInt(n.textContent||'0',10)+1);
+    setTimeout(()=>btn.classList.remove('pop'), 360);
+  }
+  /* maj du cache local pour rester cohérent au prochain rendu */
+  const p = potinsCloud.find(x=>x.id===id);
+  const champ = type==='coeur' ? 'coeurs' : 'pouces';
+  if(p) p[champ] = (p[champ]||0)+1;
+  /* appel réseau atomique en arrière-plan */
+  try{
+    await sb(`rpc/${type==='coeur'?'like_coeur':'like_pouce'}`, {
+      method:'POST', body: JSON.stringify({pid:id})
+    });
+  }catch(e){ /* silencieux : le like reste affiché, resync au prochain chargement */ }
+}
+
+/* HTML des deux boutons pour un potin donné (uniquement si le potin a un id Supabase) */
+function reactsHtml(p){
+  if(!p || p.id==null) return '';                      /* POTINS_BASE (sans id) : pas de bouton */
+  const c = p.coeurs||0, t = p.pouces||0;
+  const onC = dejaReagi(p.id,'coeur') ? ' on-coeur' : '';
+  const onP = dejaReagi(p.id,'pouce') ? ' on-pouce' : '';
+  return `<div class="potin-reacts">
+    <button class="potin-react${onC}" data-id="${p.id}" data-type="coeur" onclick="reagirPotin(${p.id},'coeur')" title="J'adore">
+      <span class="react-ico">❤️</span><span class="react-n">${c}</span></button>
+    <button class="potin-react${onP}" data-id="${p.id}" data-type="pouce" onclick="reagirPotin(${p.id},'pouce')" title="Bien vu">
+      <span class="react-ico">👍</span><span class="react-n">${t}</span></button>
+  </div>`;
+}
+
 function potins(){
   const vus = new Set();
   const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
   const potinHtml = (p, nouveau, dateLabel, supprimable) => { const ty = typePotin(p); return `<div class="potin${nouveau?' potin-neuf':''} potin-${ty}">
     <div class="potin-meta">${nouveau?'<span class="pastille-neuf">● NOUVEAU</span>':''}${dateLabel?`<span class="potin-date">${dateLabel}</span>`:''}${supprimable&&admin?`<button class="potin-suppr" onclick="supprimerPotin(${p.id})" title="Supprimer ce potin">🗑</button>`:''}</div>
-    <div class="titre">${titrePropre(p.titre)}</div><div class="texte">${p.contenu}</div>${badgePotin(ty)}</div>`; };
+    <div class="titre">${titrePropre(p.titre)}</div><div class="texte">${p.contenu}</div>${badgePotin(ty)}${reactsHtml(p)}</div>`; };
   let html = '', jourCourant = '';
   potinsCloud.filter(unique).forEach(p=>{
     const d = p.created_at ? new Date(p.created_at) : null;
