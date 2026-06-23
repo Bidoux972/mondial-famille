@@ -294,6 +294,8 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .potin-react.on-coeur .react-ico{filter:none}
 .potin-react.on-pouce{background:rgba(76,160,255,.16);border-color:rgba(76,160,255,.5);color:#8fc3ff}
 .potin-react.on-pouce .react-ico{filter:none}
+.potin-react.on-rire{background:rgba(255,196,61,.16);border-color:rgba(255,196,61,.5);color:#ffd479}
+.potin-react.on-rire .react-ico{filter:none}
 @keyframes reactPop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
 .potin-react.pop .react-ico{animation:reactPop .35s ease}
 .potin-news{border-left-color:var(--lagon)}
@@ -473,7 +475,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.94';
+const APP_VERSION = '9.95';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2455,43 +2457,48 @@ function _reactSet(o){ try{ localStorage.setItem('mf_potin_reacts', JSON.stringi
 function dejaReagi(id, type){ const o=_reactVus(); return !!(o[id] && o[id][type]); }
 function marquerReagi(id, type){ const o=_reactVus(); (o[id]=o[id]||{})[type]=1; _reactSet(o); }
 
+/* Config des réactions : type -> {emoji, champ Supabase, fonction RPC, classe active, titre} */
+const REACTS = {
+  coeur: {ico:'❤️', champ:'coeurs', rpc:'like_coeur', cls:'on-coeur', titre:"J'adore"},
+  rire:  {ico:'😂', champ:'rires',  rpc:'like_rire',  cls:'on-rire',  titre:"Ça m'a fait rire"},
+  pouce: {ico:'👍', champ:'pouces', rpc:'like_pouce', cls:'on-pouce', titre:"Bien vu"}
+};
+
 async function reagirPotin(id, type){
-  /* type = 'coeur' ou 'pouce'. Compteur partagé via RPC atomique. 1 like/appareil/type. */
+  /* Compteur partagé via RPC atomique. 1 like/appareil/type. */
+  const cfg = REACTS[type]; if(!cfg) return;
   if(dejaReagi(id, type)) return;                      /* déjà liké : on ne fait rien */
   marquerReagi(id, type);                              /* mémorise tout de suite (anti double-clic) */
   /* maj optimiste à l'écran */
   const btn = document.querySelector(`.potin-react[data-id="${id}"][data-type="${type}"]`);
   if(btn){
-    btn.classList.add(type==='coeur'?'on-coeur':'on-pouce','pop');
+    btn.classList.add(cfg.cls,'pop');
     const n = btn.querySelector('.react-n');
     if(n) n.textContent = (parseInt(n.textContent||'0',10)+1);
     setTimeout(()=>btn.classList.remove('pop'), 360);
   }
   /* maj du cache local pour rester cohérent au prochain rendu */
   const p = potinsCloud.find(x=>x.id===id);
-  const champ = type==='coeur' ? 'coeurs' : 'pouces';
-  if(p) p[champ] = (p[champ]||0)+1;
+  if(p) p[cfg.champ] = (p[cfg.champ]||0)+1;
   /* appel réseau atomique en arrière-plan */
   try{
-    await sb(`rpc/${type==='coeur'?'like_coeur':'like_pouce'}`, {
-      method:'POST', body: JSON.stringify({pid:id})
-    });
+    await sb(`rpc/${cfg.rpc}`, {method:'POST', body: JSON.stringify({pid:id})});
   }catch(e){ /* silencieux : le like reste affiché, resync au prochain chargement */ }
 }
 
-/* HTML des deux boutons pour un potin donné (uniquement si le potin a un id Supabase) */
+/* HTML des trois boutons pour un potin donné (uniquement si le potin a un id Supabase) */
 function reactsHtml(p){
   if(!p || p.id==null) return '';                      /* POTINS_BASE (sans id) : pas de bouton */
-  const c = p.coeurs||0, t = p.pouces||0;
-  const onC = dejaReagi(p.id,'coeur') ? ' on-coeur' : '';
-  const onP = dejaReagi(p.id,'pouce') ? ' on-pouce' : '';
-  return `<div class="potin-reacts">
-    <button class="potin-react${onC}" data-id="${p.id}" data-type="coeur" onclick="reagirPotin(${p.id},'coeur')" title="J'adore">
-      <span class="react-ico">❤️</span><span class="react-n">${c}</span></button>
-    <button class="potin-react${onP}" data-id="${p.id}" data-type="pouce" onclick="reagirPotin(${p.id},'pouce')" title="Bien vu">
-      <span class="react-ico">👍</span><span class="react-n">${t}</span></button>
-  </div>`;
+  const btn = (type)=>{
+    const cfg = REACTS[type];
+    const n = p[cfg.champ]||0;
+    const on = dejaReagi(p.id,type) ? ' '+cfg.cls : '';
+    return `<button class="potin-react${on}" data-id="${p.id}" data-type="${type}" onclick="reagirPotin(${p.id},'${type}')" title="${cfg.titre}">
+      <span class="react-ico">${cfg.ico}</span><span class="react-n">${n}</span></button>`;
+  };
+  return `<div class="potin-reacts">${btn('coeur')}${btn('rire')}${btn('pouce')}</div>`;
 }
+
 
 function potins(){
   const vus = new Set();
