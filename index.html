@@ -269,6 +269,8 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 /* potins */
 .potin{background:var(--panneau);border:1px solid var(--ligne);border-left:4px solid var(--corail);border-radius:12px;padding:14px;margin-bottom:10px}
 .potin-neuf{border-left-color:var(--or);box-shadow:0 0 0 1px var(--or)}
+@keyframes potinFlash{0%{box-shadow:0 0 0 2px var(--or),0 0 22px rgba(196,151,58,.55);transform:scale(1.012)}100%{box-shadow:0 0 0 0 transparent;transform:scale(1)}}
+.potin-cible{animation:potinFlash 2.4s ease-out}
 .pastille-neuf{background:var(--or);color:#0E1B2C;font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 7px;border-radius:6px;vertical-align:middle}
 .potin-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .potin-date{font-size:11px;color:var(--gris);font-family:'Space Grotesk',monospace}
@@ -296,6 +298,10 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .potin-react.on-pouce .react-ico{filter:none}
 .potin-react.on-rire{background:rgba(255,196,61,.16);border-color:rgba(255,196,61,.5);color:#ffd479}
 .potin-react.on-rire .react-ico{filter:none}
+.potin-react.potin-share{margin-left:auto;color:#9fb3c8}
+.potin-react.potin-share .react-ico{filter:none}
+.potin-react.potin-share:hover{background:rgba(0,160,140,.14);border-color:rgba(0,160,140,.5);color:#5fd0bf}
+.potin-react .react-lbl{font-size:12px;font-weight:600}
 @keyframes reactPop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
 .potin-react.pop .react-ico{animation:reactPop .35s ease}
 .potin-news{border-left-color:var(--lagon)}
@@ -475,7 +481,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.96';
+const APP_VERSION = '9.98';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2492,9 +2498,47 @@ async function reagirPotin(id, type){
   }catch(e){ /* silencieux : l'état reste affiché, resync au prochain chargement */ }
 }
 
+/* Partage natif (mobile) avec fallback presse-papier (desktop) */
+function _texteDuPotin(titre, contenu, id){
+  /* nettoie les entités/balises HTML eventuelles pour un texte propre */
+  const tmp = document.createElement('div');
+  tmp.innerHTML = contenu||'';
+  const txt = (tmp.textContent||tmp.innerText||'').trim();
+  /* lien profond vers le potin precis si on a un id, sinon racine de l'appli */
+  const lien = (id!=null)
+    ? `https://mondial-famille.vercel.app/#potin-${id}`
+    : `https://mondial-famille.vercel.app`;
+  return `${(titre||'').trim()}\n\n${txt}\n\n— vu sur Mondial en Famille\n${lien}`;
+}
+async function partagerPotin(id){
+  /* retrouve le potin (cloud ou base) */
+  let p = potinsCloud.find(x=>x.id===id);
+  if(!p && typeof POTINS_BASE!=='undefined') p = POTINS_BASE.find(x=>x.id===id || x.titre===id);
+  if(!p) return;
+  const texte = _texteDuPotin(p.titre, p.contenu, p.id);
+  /* 1) partage natif si dispo (mobile) */
+  if(navigator.share){
+    try{ await navigator.share({title:'Mondial en Famille', text:texte}); return; }
+    catch(e){ if(e && e.name==='AbortError') return; /* l'utilisateur a annulé : on s'arrête */ }
+  }
+  /* 2) fallback presse-papier (desktop ou partage indispo) */
+  try{
+    await navigator.clipboard.writeText(texte);
+    toast('Potin copié 📋 — colle-le où tu veux');
+  }catch(e){
+    /* 3) ultime secours : sélection manuelle */
+    const ta=document.createElement('textarea'); ta.value=texte; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); toast('Potin copié 📋'); }catch(_){ toast('Copie impossible'); }
+    document.body.removeChild(ta);
+  }
+}
+
 /* HTML des trois boutons pour un potin donné (uniquement si le potin a un id Supabase) */
 function reactsHtml(p){
-  if(!p || p.id==null) return '';                      /* POTINS_BASE (sans id) : pas de bouton */
+  const ref = (p && p.id!=null) ? p.id : `'${String((p&&p.titre)||'').replace(/'/g,"\\'")}'`;
+  const partage = `<button class="potin-react potin-share" onclick="partagerPotin(${ref})" title="Partager ce potin">
+      <span class="react-ico">📤</span><span class="react-lbl">Partager</span></button>`;
+  if(!p || p.id==null) return `<div class="potin-reacts">${partage}</div>`;  /* base : partage seul */
   const btn = (type)=>{
     const cfg = REACTS[type];
     const n = p[cfg.champ]||0;
@@ -2502,14 +2546,14 @@ function reactsHtml(p){
     return `<button class="potin-react${on}" data-id="${p.id}" data-type="${type}" onclick="reagirPotin(${p.id},'${type}')" title="${cfg.titre}">
       <span class="react-ico">${cfg.ico}</span><span class="react-n">${n}</span></button>`;
   };
-  return `<div class="potin-reacts">${btn('coeur')}${btn('rire')}${btn('pouce')}</div>`;
+  return `<div class="potin-reacts">${btn('coeur')}${btn('rire')}${btn('pouce')}${partage}</div>`;
 }
 
 
 function potins(){
   const vus = new Set();
   const unique = p => { const t = String(p.titre||'').trim().toLowerCase(); if(vus.has(t)) return false; vus.add(t); return true; };
-  const potinHtml = (p, nouveau, dateLabel, supprimable) => { const ty = typePotin(p); return `<div class="potin${nouveau?' potin-neuf':''} potin-${ty}">
+  const potinHtml = (p, nouveau, dateLabel, supprimable) => { const ty = typePotin(p); return `<div class="potin${nouveau?' potin-neuf':''} potin-${ty}"${p.id!=null?` id="potin-${p.id}"`:''}>
     <div class="potin-meta">${nouveau?'<span class="pastille-neuf">● NOUVEAU</span>':''}${dateLabel?`<span class="potin-date">${dateLabel}</span>`:''}${supprimable&&admin?`<button class="potin-suppr" onclick="supprimerPotin(${p.id})" title="Supprimer ce potin">🗑</button>`:''}</div>
     <div class="titre">${titrePropre(p.titre)}</div><div class="texte">${p.contenu}</div>${badgePotin(ty)}${reactsHtml(p)}</div>`; };
   let html = '', jourCourant = '';
@@ -2538,6 +2582,23 @@ function ouvrirOngletPotins(){
   marquerVisitePotins();
   /* on ne met PAS à jour _refVisitePotins tout de suite : les NOUVEAU restent affichés pendant la lecture.
      À la prochaine ouverture de la page (ou prochain passage après rechargement), ils ne seront plus nouveaux. */
+}
+/* Deep link : ouvre l'onglet Potins, defile jusqu'au potin cible et le surligne brievement. */
+function ouvrirPotinCible(id){
+  goTab('potins');
+  /* on laisse le temps au rendu de l'onglet, puis on cible la carte */
+  setTimeout(()=>{
+    const el = document.getElementById('potin-'+id);
+    if(!el){ return; }
+    el.scrollIntoView({behavior:'smooth', block:'center'});
+    el.classList.add('potin-cible');
+    setTimeout(()=>el.classList.remove('potin-cible'), 2600);
+  }, 220);
+}
+/* Au demarrage : si l'URL contient #potin-<id>, on ouvre ce potin une fois les donnees chargees. */
+function gererHashPotin(){
+  const m = (location.hash||'').match(/^#potin-(\d+)$/);
+  if(m) ouvrirPotinCible(parseInt(m[1],10));
 }
 async function supprimerPotin(id){
   if(!admin){ toast('Réservé au commissaire'); return; }
@@ -3522,7 +3583,8 @@ async function verifierVersion(){
 
 $('num-version').textContent = 'v' + APP_VERSION;
 toutAfficher();
-chargerTout();
+chargerTout().then(()=>{ gererHashPotin(); });
+window.addEventListener('hashchange', gererHashPotin);
 verifierVersion();
 setInterval(hero, 60000);
 setInterval(alerteDuel, 10000);
