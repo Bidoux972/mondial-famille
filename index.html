@@ -236,6 +236,49 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .classement .total{font-family:'Space Grotesk',monospace;font-size:22px;font-weight:700;color:var(--or)}
 /* écuries */
 .ecurie{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:14px;margin-bottom:10px}
+.qg{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin-bottom:14px}
+.qg-tete{display:flex;align-items:center;gap:12px}
+.qg-f{font-size:38px;line-height:1}
+.qg-eq{font-size:20px;font-weight:800;font-family:'Space Grotesk',sans-serif}
+.qg-sup{font-size:12px;color:var(--gris);margin-top:2px}
+.qg-cri{font-size:13px;font-weight:700;color:var(--or);margin:10px 0 4px;font-style:italic}
+.qg-recit{font-size:14px;line-height:1.6;color:#e8eef4;margin-top:12px;padding:13px 15px;background:linear-gradient(135deg,rgba(245,180,60,.07),rgba(255,107,94,.04));border-left:3px solid var(--or);border-radius:0 10px 10px 0}
+.qg-buteurs{display:flex;flex-direction:column;gap:2px}
+.bm-ligne{display:flex;align-items:center;gap:10px;padding:6px 0}
+.bm-rang{flex:0 0 22px;text-align:center;font-weight:800;font-size:13px;color:var(--gris)}
+.bm-nom{flex:1;font-weight:600;font-size:14px}
+.bm-buts{font-family:'Space Grotesk',sans-serif;font-weight:800;color:var(--or);font-size:15px}
+.bm-buts span{font-size:11px;color:var(--gris);font-weight:600}
+.qg-baro{display:flex;flex-direction:column;gap:7px}
+.baro-l{display:flex;align-items:flex-start;gap:8px;font-size:13px}
+.baro-ico{font-size:15px;flex:0 0 auto}
+.baro-noms{color:#dce4ec;line-height:1.5}
+.qg-bloc{margin-top:14px;padding-top:12px;border-top:1px solid var(--ligne)}
+.qg-titre{font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--gris);margin-bottom:9px}
+.qg-vide{font-size:13px;color:var(--gris)}
+.pc-ligne{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:14px}
+.pc-badge{flex:0 0 24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff}
+.pc-v{background:#2ec4a9}.pc-n{background:#9aa7b4}.pc-d{background:#e0533a}
+.pc-next{background:transparent;border:1px dashed var(--or);color:var(--or)}
+.pc-adv{flex:1;font-weight:600}
+.pc-score{font-family:'Space Grotesk',monospace;font-weight:700;color:var(--blanc)}
+.pc-prochain{opacity:.92}
+.pc-prochain .pc-adv{color:var(--or)}
+.pc-prochain .pc-score{font-weight:600;color:var(--gris);font-size:12px}
+.qg-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.qg-stats .stat{background:var(--panneau2);border-radius:10px;padding:9px 6px;text-align:center}
+.qg-stats .stat-n{font-size:17px;font-weight:800;font-family:'Space Grotesk',sans-serif;color:var(--blanc)}
+.qg-stats .stat-n span{font-size:11px;color:var(--gris);font-weight:600;margin:0 1px}
+.qg-stats .stat-l{font-size:10px;color:var(--gris);margin-top:3px;text-transform:uppercase;letter-spacing:.3px}
+.qg-sousligne{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.qg-tag{display:inline-flex;align-items:center;gap:5px;background:var(--panneau2);border:1px solid var(--ligne);border-radius:16px;padding:4px 11px;font-size:12px;color:#cdd6e0}
+.serie-pt{display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;font-size:10px;font-weight:800;color:#fff;margin-left:2px}
+.serie-V{background:#2ec4a9}.serie-N{background:#9aa7b4}.serie-D{background:#e0533a}
+.qg-proj{font-size:13px;line-height:1.5;color:#dce4ec;background:var(--panneau2);border-radius:10px;padding:11px 13px}
+.qg-potin{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panneau2);border-radius:9px;padding:9px 12px;margin-bottom:6px;cursor:pointer;transition:background .15s}
+.qg-potin:hover{background:#24384f}
+.qg-potin-t{font-size:13px;font-weight:600;color:#e3eaf1}
+.qg-potin-fl{color:var(--or);font-weight:800}
 .ecurie .tete{display:flex;align-items:center;gap:10px}
 .ecurie .tete .f{font-size:30px}
 .ecurie .tete .qui{font-weight:700}
@@ -481,7 +524,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.98';
+const APP_VERSION = '9.991';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2375,23 +2418,263 @@ function banniereEcurie(){
 }
 
 function ecuries(){
-  let html = '';
+  /* Regrouper les participants par equipe (3 France + 1 Bresil -> 1 QG France, 1 QG Bresil) */
+  const parEquipe = {}; const sansEcurie = [];
   PARTICIPANTS.forEach(p=>{
     const eq = participants[p] && participants[p].equipe_ecurie;
-    if(!eq){ html += `<div class="ecurie"><div class="tete"><span class="f">❓</span><span><span class="qui">${p}</span> n'a pas encore choisi son écurie</span></div></div>`; return; }
-    const mEq = M.filter(m=>m.a===eq||m.b===eq);
-    let v=0,n=0,d=0;
-    mEq.forEach(m=>{ const r=resultats[m.id]; if(!r)return;
-      const moi = m.a===eq ? r.score_a : r.score_b, lui = m.a===eq ? r.score_b : r.score_a;
-      if(moi>lui)v++; else if(moi===lui)n++; else d++; });
-    const proch = mEq.find(m=>!joue(m));
-    html += `<div class="ecurie">
-      <div class="tete"><span class="f">${F[eq]||'🏳️'}</span>
-      <span><span class="qui">${p}</span> mise sur <span class="equipe">${eq}</span></span></div>
-      <div class="etat">Bilan : ${v}V ${n}N ${d}D${proch ? ` · Prochain : contre ${proch.a===eq?proch.b:proch.a} le ${fmtJour(proch.dt)} à ${fmtHeure(proch.dt)}` : ' · Phase de poules terminée pour cette écurie'}</div>
-    </div>`;
+    if(!eq){ sansEcurie.push(p); return; }
+    (parEquipe[eq]=parEquipe[eq]||[]).push(p);
   });
-  $('liste-ecuries').innerHTML = html;
+
+  let html = '';
+  /* Un QG par equipe distincte */
+  Object.keys(parEquipe).forEach(eq=>{
+    html += qgEcurie(eq, parEquipe[eq]);
+  });
+  /* Ceux qui n'ont pas encore choisi */
+  sansEcurie.forEach(p=>{
+    html += `<div class="ecurie"><div class="tete"><span class="f">❓</span><span><span class="qui">${p}</span> n'a pas encore choisi son écurie</span></div>
+      <div class="etat"><button class="btn or" style="font-size:12px;padding:6px 12px;margin-top:4px" onclick="goTab('equipes')">Choisir une équipe →</button></div></div>`;
+  });
+  $('liste-ecuries').innerHTML = html || '<div class="ecurie"><div class="etat">Aucune écurie pour le moment.</div></div>';
+}
+
+/* Tableau de bord complet d'une equipe : parcours, stats, projection bracket, actu */
+function qgEcurie(eq, supporters){
+  const id = ECURIES[eq] || {}; const coul = id.c || 'var(--or)';
+  const mEq = M.filter(m=>m.a===eq||m.b===eq).sort((x,y)=>x.dt-y.dt);
+  const grp = (mEq[0]||{}).g;
+
+  /* --- 1. PARCOURS : matchs joues + scores + prochain --- */
+  let bv=0,bn=0,bd=0, butsP=0, butsC=0; const serie=[];
+  let parcours='';
+  mEq.forEach(m=>{
+    const adv = m.a===eq ? m.b : m.a;
+    const r = resultats[m.id];
+    if(r){
+      const moi = m.a===eq ? r.score_a : r.score_b;
+      const lui = m.a===eq ? r.score_b : r.score_a;
+      butsP+=moi; butsC+=lui;
+      let issue,cls;
+      if(moi>lui){bv++;issue='V';cls='pc-v';} else if(moi===lui){bn++;issue='N';cls='pc-n';} else {bd++;issue='D';cls='pc-d';}
+      serie.push(issue);
+      parcours += `<div class="pc-ligne">
+        <span class="pc-badge ${cls}">${issue}</span>
+        <span class="pc-adv">${F[adv]||'🏳️'} ${adv}</span>
+        <span class="pc-score">${moi} – ${lui}</span></div>`;
+    }
+  });
+  const prochain = mEq.find(m=>!joue(m));
+  let prochainHtml='';
+  if(prochain){
+    const adv = prochain.a===eq ? prochain.b : prochain.a;
+    prochainHtml = `<div class="pc-ligne pc-prochain">
+      <span class="pc-badge pc-next">▶</span>
+      <span class="pc-adv">${F[adv]||'🏳️'} ${adv}</span>
+      <span class="pc-score">${fmtJourCourt(prochain.dt)} · ${fmtHeure(prochain.dt)}</span></div>`;
+  }
+
+  /* position dans le groupe */
+  let rangTxt='', pos=-1;
+  if(grp){
+    const cl = classementGroupe(grp);
+    pos = cl.findIndex(t=>t.e===eq);
+    if(pos>=0){ const ord=['1er','2e','3e','4e'][pos]||(pos+1+'e'); rangTxt = `${ord} du groupe ${grp}`; }
+  }
+
+  /* --- BUTEURS MAISON : classement des buteurs de l'equipe --- */
+  const buteurs = buteursDeLEquipe(eq);
+  let buteursHtml='';
+  if(buteurs.length){
+    buteursHtml = buteurs.slice(0,5).map((b,i)=>`<div class="bm-ligne">
+      <span class="bm-rang">${i===0?'⚽':(i+1)}</span>
+      <span class="bm-nom">${b.nom}</span>
+      <span class="bm-buts">${b.buts}<span>${b.buts>1?' buts':' but'}</span></span></div>`).join('');
+  }
+
+  /* --- BAROMETRE : joueurs en feu / en glace --- */
+  const baro = barometreEquipe(eq);
+  let baroHtml='';
+  if(baro.feu.length || baro.glace.length){
+    if(baro.feu.length) baroHtml += `<div class="baro-l"><span class="baro-ico">🔥</span><span class="baro-noms">${baro.feu.join(', ')}</span></div>`;
+    if(baro.glace.length) baroHtml += `<div class="baro-l"><span class="baro-ico">🧊</span><span class="baro-noms">${baro.glace.join(', ')}</span></div>`;
+  }
+
+  /* --- PROJECTION BRACKET --- */
+  const proj = projectionEcurie(eq);
+  /* --- ACTU : potins de l'equipe --- */
+  const actu = potinsDeLEquipe(eq);
+
+  /* --- NARRATIF : contexte puis recit --- */
+  const joues = bv+bn+bd;
+  const qualifie = pos>=0 && pos<=1 && mEq.every(m=>joue(m));
+  const elimine = pos===3 && mEq.every(m=>joue(m));
+  let prochAdv='';
+  if(qualifie){
+    const code=(pos===0?'1':'2')+grp;
+    for(const [mid,slots] of Object.entries(round32Fixed)){
+      if(slots.includes(code)){ const a=slots.find(s=>s!==code); const r=resoudreSlot(a,mid); prochAdv = r?`${F[r]||''} ${r}`:libelleSlotTexte(a,mid); break; }
+    }
+  }
+  const recit = narratifEcurie(eq, {bv,bn,bd,butsP,butsC,joues,pos,grp,qualifie,elimine,prochAdv});
+
+  const diff = (butsP-butsC>=0?'+':'')+(butsP-butsC);
+  const serieHtml = serie.slice(-5).map(s=>`<span class="serie-pt serie-${s}">${s}</span>`).join('');
+  const sup = supporters.map(s=>`<b>${s}</b>`).join(', ');
+
+  return `<div class="qg" style="border-top:3px solid ${coul}">
+    <div class="qg-tete">
+      <span class="qg-f">${F[eq]||'🏳️'}</span>
+      <div class="qg-id">
+        <div class="qg-eq" style="color:${coul}">${eq}</div>
+        <div class="qg-sup">Écurie de ${sup}</div>
+      </div>
+    </div>
+    ${id.cri?`<div class="qg-cri">${id.cri}</div>`:''}
+
+    <div class="qg-recit">${recit}</div>
+
+    <div class="qg-bloc">
+      <div class="qg-titre">📋 Parcours</div>
+      ${parcours||'<div class="qg-vide">Aucun match joué pour l\'instant.</div>'}
+      ${prochainHtml}
+    </div>
+
+    <div class="qg-bloc">
+      <div class="qg-titre">📊 Statistiques</div>
+      <div class="qg-stats">
+        <div class="stat"><div class="stat-n">${bv}<span>V</span> ${bn}<span>N</span> ${bd}<span>D</span></div><div class="stat-l">Bilan</div></div>
+        <div class="stat"><div class="stat-n">${butsP}</div><div class="stat-l">Buts pour</div></div>
+        <div class="stat"><div class="stat-n">${butsC}</div><div class="stat-l">Buts contre</div></div>
+        <div class="stat"><div class="stat-n">${diff}</div><div class="stat-l">Différence</div></div>
+      </div>
+      <div class="qg-sousligne">
+        ${rangTxt?`<span class="qg-tag">🏆 ${rangTxt}</span>`:''}
+        ${serieHtml?`<span class="qg-tag">Forme : ${serieHtml}</span>`:''}
+      </div>
+    </div>
+
+    ${buteursHtml?`<div class="qg-bloc"><div class="qg-titre">⚽ Buteurs maison</div><div class="qg-buteurs">${buteursHtml}</div></div>`:''}
+
+    ${baroHtml?`<div class="qg-bloc"><div class="qg-titre">🌡️ Baromètre</div><div class="qg-baro">${baroHtml}</div></div>`:''}
+
+    ${proj?`<div class="qg-bloc"><div class="qg-titre">🗺️ Projection</div><div class="qg-proj">${proj}</div></div>`:''}
+
+    ${actu?`<div class="qg-bloc"><div class="qg-titre">🍿 L'actu de l'équipe</div>${actu}</div>`:''}
+  </div>`;
+}
+
+/* Classement des buteurs de l'equipe : on croise SES joueurs avec leurs buts marques. */
+function buteursDeLEquipe(eq){
+  const liste = joueursDe(eq).map(j=>{
+    const nom = parseJoueur(j).nom;
+    return {nom, buts: butsDe(nom)};
+  }).filter(x=>x.buts>0).sort((a,b)=>b.buts-a.buts);
+  return liste;
+}
+
+/* Baromètre forme : les joueurs 🔥 et 🧊 de l'equipe (depuis formesCloud). */
+function barometreEquipe(eq){
+  return formeJoueursEquipe(eq);   /* {feu:[], glace:[], transition:[], blesse:[]} */
+}
+
+/* ===== NARRATIF : le récit vivant de l'écurie, avec la patte de l'appli ===== */
+function narratifEcurie(eq, ctx){
+  /* ctx = {bv,bn,bd, butsP,butsC, joues, total, pos, grp, qualifie, elimine, prochAdv, surnom} */
+  const id = ECURIES[eq]||{}; const surnom = (EQUIPES[eq]&&EQUIPES[eq].surnom) || id.surnom || '';
+  const nom = surnom ? `${eq} (${surnom})` : eq;
+  const formeEq = formesCloud[normNom(eq)];   /* 'feu' | 'glace' | undefined */
+
+  /* Pas encore joué */
+  if(ctx.joues===0){
+    return pick([
+      `Tout commence bientôt pour ${nom}. Sur le papier, de l'ambition à revendre ; sur le terrain, tout reste à écrire. Le premier coup d'éclat est pour bientôt.`,
+      `${nom} entre en scène. Les pronostics vont bon train, mais le ballon n'a pas encore roulé — et c'est là que tout se joue. Patience, ça va chauffer.`
+    ]);
+  }
+  /* Éliminé */
+  if(ctx.elimine){
+    return pick([
+      `L'aventure s'arrête là pour ${nom}. Sortie par la petite porte, l'écurie laisse des regrets et quelques fulgurances. La Coupe continuera sans elle — rendez-vous dans quatre ans.`,
+      `Rideau pour ${nom}. Le rêve s'éteint plus tôt que prévu, et il va falloir digérer. On retiendra l'intention ; on oubliera vite le résultat.`
+    ]);
+  }
+  /* Qualifié pour les KO */
+  if(ctx.qualifie){
+    const tete = ctx.pos===0 ? `en patron, première de son groupe,` : `avec du caractère,`;
+    const suite = ctx.prochAdv ? ` Prochain os à ronger en 16es : ${ctx.prochAdv}.` : ` Le tableau final lui tend les bras.`;
+    if(ctx.butsP>=6) return `${nom} déroule ${tete} et fait parler la poudre (${ctx.butsP} buts au compteur). Ça envoie du lourd, et les adversaires commencent à serrer les fesses.${suite}`;
+    if(formeEq==='feu') return `${nom} avance ${tete} portée par un vent brûlant. La machine est lancée, et personne n'a envie de la croiser maintenant.${suite}`;
+    return `Billet pour les 16es validé : ${nom} a fait le boulot ${tete} sans trembler. Maintenant, les choses sérieuses commencent.${suite}`;
+  }
+  /* En danger : beaucoup de défaites, poules pas finies */
+  if(ctx.bd>=2 && !ctx.qualifie){
+    return pick([
+      `Rien ne va plus pour ${nom}. ${ctx.bd} revers et un rêve qui prend l'eau de toutes parts. Il faudra un miracle — et accessoirement gagner — pour éviter la sortie de route.`,
+      `Alerte rouge sur l'écurie ${eq} : ${ctx.bd} défaites, le moral dans les chaussettes et la qualification qui s'éloigne. La survie se joue maintenant ou jamais.`
+    ]);
+  }
+  /* En forme : que des victoires */
+  if(ctx.bv>=2 && ctx.bd===0){
+    return `${nom} marche sur l'eau : ${ctx.bv} victoires, zéro accroc, et ce petit air tranquille qui agace tout le monde. Pendant que les autres tremblent, l'écurie plie son affaire avec classe.`;
+  }
+  /* Mitigé / en cours */
+  const diff = ctx.butsP - ctx.butsC;
+  if(diff>0) return `${nom} tient son rang : ${ctx.bv}V-${ctx.bn}N-${ctx.bd}D et un bilan de buts positif. Rien d'écrit encore, mais l'écurie a les arguments pour viser plus haut. À confirmer.`;
+  return `Parcours en dents de scie pour ${nom} (${ctx.bv}V-${ctx.bn}N-${ctx.bd}D). L'écurie souffle le chaud et le froid — capable du meilleur comme du pire. Il va falloir choisir son camp, et vite.`;
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* Projection bracket : ou en est l'equipe dans le tableau et contre qui ensuite */
+function projectionEcurie(eq){
+  try{
+    /* l'equipe est-elle 1er/2e de groupe (qualifiee directe) ou 3e ? */
+    const mEq = M.filter(m=>m.a===eq||m.b===eq);
+    const grp = (mEq[0]||{}).g; if(!grp) return '';
+    const tousJoues = mEq.every(m=>joue(m));
+    if(!tousJoues) return '';  /* poules pas finies pour cette equipe : pas de projection fiable */
+    const cl = classementGroupe(grp);
+    const pos = cl.findIndex(t=>t.e===eq);
+    if(pos<0) return '';
+    if(pos>1){
+      /* 3e : depend de l'Annexe C */
+      return `${eq} termine 3e du groupe ${grp}. Qualification en 16es selon le classement des meilleurs 3es — voir l'onglet Tableau 🗺️`;
+    }
+    /* 1er ou 2e : on cherche son slot dans le round32 et l'affiche du 16e */
+    const code = (pos===0?'1':'2')+grp;
+    for(const [mid,slots] of Object.entries(round32Fixed)){
+      if(slots.includes(code)){
+        const autre = slots.find(s=>s!==code);
+        const adv = resoudreSlot(autre, mid);
+        const advTxt = adv ? `${F[adv]||'🏳️'} ${adv}` : libelleSlotTexte(autre, mid);
+        return `${eq} (${pos===0?'1er':'2e'} du groupe ${grp}) est qualifié pour les 16es ! Prochain choc : contre ${advTxt}.`;
+      }
+    }
+    return '';
+  }catch(e){ return ''; }
+}
+/* version texte brute d'un slot (sans HTML) pour la projection */
+function libelleSlotTexte(code, matchId){
+  const eq = resoudreSlot(code, matchId);
+  if(eq) return eq;
+  if(code==='THIRD') return 'un des meilleurs 3es';
+  const m = code.match(/^([12])([A-L])$/);
+  if(m) return `${m[1]==='1'?'1er':'2e'} du groupe ${m[2]}`;
+  if(code[0]==='W') return 'le vainqueur d\'un autre 16e';
+  return code;
+}
+
+/* Potins qui mentionnent l'equipe (titre ou contenu) */
+function potinsDeLEquipe(eq){
+  const nom = eq.toLowerCase();
+  const liste = (potinsCloud||[]).filter(p=>{
+    const t=(p.titre||'').toLowerCase(), c=(p.contenu||'').toLowerCase();
+    return t.includes(nom) || c.includes(nom);
+  }).slice(0,3);
+  if(!liste.length) return '';
+  return liste.map(p=>`<div class="qg-potin" onclick="ouvrirPotinCible(${p.id})">
+    <span class="qg-potin-t">${titrePropre(p.titre)}</span>
+    <span class="qg-potin-fl">→</span></div>`).join('');
 }
 async function sauverEcurie(eq){
   if(!pseudo){ toast('Choisis d\'abord qui tu es'); return; }
