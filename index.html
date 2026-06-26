@@ -251,6 +251,25 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .qm-l .qm-v{color:var(--gris)}
 .qm-l .qm-on{font-size:10px}
 .qm-vide{border-left-color:var(--gris);opacity:.7}
+.faf{margin-top:16px}
+.faf-titre{font-family:'Space Grotesk',monospace;color:var(--gris);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:9px}
+.faf-box{background:var(--panneau2);border:1px solid var(--ligne);border-radius:12px;overflow:hidden}
+.faf-tetes{display:flex;align-items:stretch}
+.faf-tete{flex:1;text-align:center;padding:12px 6px}
+.faf-flag{font-size:26px;line-height:1}
+.faf-nom{font-size:13px;font-weight:800;font-family:'Space Grotesk',sans-serif;margin-top:2px}
+.faf-sup{font-size:10px;color:var(--gris);margin-top:1px}
+.faf-vs{display:flex;align-items:center;justify-content:center;padding:0 4px;font-family:'Space Grotesk',monospace;color:var(--gris);font-weight:700;font-size:13px}
+.faf-rows{border-top:1px solid var(--ligne)}
+.faf-row{display:flex;align-items:center;padding:7px 12px;font-size:13px}
+.faf-row:nth-child(even){background:rgba(255,255,255,.02)}
+.faf-va{flex:1;text-align:right;font-weight:700;color:var(--creme)}
+.faf-vb{flex:1;text-align:left;font-weight:700;color:var(--creme)}
+.faf-lab{flex:0 0 92px;text-align:center;color:var(--gris);font-size:11px}
+.faf-win{color:#5fe0c4}
+.faf-verdict{border-top:1px solid var(--ligne);padding:12px 14px}
+.faf-verdict-t{font-size:11px;color:var(--gris);font-weight:700;letter-spacing:.5px;margin-bottom:4px}
+.faf-verdict-x{font-size:14px;line-height:1.55;color:var(--creme)}
 .qg-tete{display:flex;align-items:center;gap:12px}
 .qg-f{font-size:38px;line-height:1}
 .qg-eq{font-size:20px;font-weight:800;font-family:'Space Grotesk',sans-serif}
@@ -551,7 +570,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.994';
+const APP_VERSION = '9.995';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2519,6 +2538,121 @@ function ecuries_MULTI_OBSOLETE(){
   $('liste-ecuries').innerHTML = html || '<div class="ecurie"><div class="etat">Aucune écurie pour le moment.</div></div>';
 }
 
+/* Stats réelles d'une écurie, lues depuis les résultats (rang de groupe, points, buts, diff, série). */
+function statsEcurie(eq){
+  const mEq = M.filter(m=>m.a===eq||m.b===eq).sort((x,y)=>x.dt-y.dt);
+  const grp = (mEq[0]||{}).g;
+  let bp=0,bc=0; const serie=[];
+  mEq.forEach(m=>{ const r=resultats[m.id]; if(!r) return;
+    const moi=m.a===eq?r.score_a:r.score_b, lui=m.a===eq?r.score_b:r.score_a;
+    bp+=moi; bc+=lui; serie.push(moi>lui?'V':moi===lui?'N':'D');
+  });
+  let rang=0, pts=0;
+  if(grp){ const cl=classementGroupe(grp); const i=cl.findIndex(t=>t.e===eq); if(i>=0){ rang=i+1; pts=cl[i].pts; } }
+  return {eq, grp, rang, pts, bp, diff:bp-bc, joues:serie.length, serie};
+}
+
+/* FACE-A-FACE FAMILIAL : compare l'écurie eq à l'AUTRE écurie distincte choisie par la famille.
+   Pas de QG de l'autre, juste un comparatif chiffré + un verdict qui chambre le perdant. */
+function faceAFace(eq){
+  /* écuries distinctes réellement choisies */
+  const autres = [...new Set(PARTICIPANTS.map(p=>participants[p]&&participants[p].equipe_ecurie).filter(Boolean))].filter(e=>e!==eq);
+  if(!autres.length) return '';
+  /* on prend la plus "peuplée" comme rivale principale (départage : 1re trouvée) */
+  const compte = e => PARTICIPANTS.filter(p=>participants[p]&&participants[p].equipe_ecurie===e).length;
+  const rival = autres.sort((a,b)=>compte(b)-compte(a))[0];
+  const supA = PARTICIPANTS.filter(p=>participants[p]&&participants[p].equipe_ecurie===eq);
+  const supB = PARTICIPANTS.filter(p=>participants[p]&&participants[p].equipe_ecurie===rival);
+
+  const a = statsEcurie(eq), b = statsEcurie(rival);
+  if(!a.joues && !b.joues) return '';   /* rien à comparer tant que personne n'a joué */
+
+  const cA = (ECURIES[eq]&&ECURIES[eq].c)||'var(--or)';
+  const cB = (ECURIES[rival]&&ECURIES[rival].c)||'var(--or)';
+
+  /* qui mène : rang d'abord (1 meilleur), puis points, puis diff */
+  let mene = 0; /* 1 = eq devant, -1 = rival devant, 0 = ex aequo */
+  if(a.rang && b.rang && a.rang!==b.rang) mene = a.rang<b.rang ? 1 : -1;
+  else if(a.pts!==b.pts) mene = a.pts>b.pts ? 1 : -1;
+  else if(a.diff!==b.diff) mene = a.diff>b.diff ? 1 : -1;
+
+  const surnomA = (EQUIPES[eq]&&EQUIPES[eq].surnom)||eq;
+  const surnomB = (EQUIPES[rival]&&EQUIPES[rival].surnom)||rival;
+  const ecartPts = Math.abs(a.pts-b.pts), ecartButs = Math.abs(a.bp-b.bp);
+  const verdict = verdictFaceAFace(eq, rival, mene, {ecartPts, ecartButs, a, b, surnomA, surnomB});
+
+  const ligne = (lab, va, vb, gagne) => {
+    const cls = x => x ? 'faf-win' : '';
+    return `<div class="faf-row">
+      <span class="faf-va ${cls(gagne===1)}">${va}</span>
+      <span class="faf-lab">${lab}</span>
+      <span class="faf-vb ${cls(gagne===-1)}">${vb}</span></div>`;
+  };
+  const cmp = (x,y,sens=1) => x===y?0:((x>y)===(sens>0)?1:-1);   /* sens=1 : plus grand gagne */
+  const rangCmp = (a.rang&&b.rang) ? (a.rang===b.rang?0:(a.rang<b.rang?1:-1)) : 0;
+  const fmtRang = s => s.rang ? `${['','1er','2e','3e','4e'][s.rang]||s.rang+'e'}${s.grp?' · gr. '+s.grp:''}` : '—';
+  const fmtSerie = s => s.serie.slice(-3).join(' ')||'—';
+  const fmtDiff = d => (d>=0?'+':'')+d;
+
+  return `<div class="faf">
+    <div class="faf-titre">⚔️ Le face-à-face familial</div>
+    <div class="faf-box">
+      <div class="faf-tetes">
+        <div class="faf-tete" style="background:linear-gradient(180deg,${cA}38,transparent)">
+          <div class="faf-flag">${F[eq]||'🏳️'}</div>
+          <div class="faf-nom" style="color:${cA}">${eq}</div>
+          <div class="faf-sup">${supA.join(', ')||'—'}</div>
+        </div>
+        <div class="faf-vs">VS</div>
+        <div class="faf-tete" style="background:linear-gradient(180deg,${cB}30,transparent)">
+          <div class="faf-flag">${F[rival]||'🏳️'}</div>
+          <div class="faf-nom" style="color:${cB}">${rival}</div>
+          <div class="faf-sup">${supB.join(', ')||'—'}</div>
+        </div>
+      </div>
+      <div class="faf-rows">
+        ${ligne('Classement', fmtRang(a), fmtRang(b), rangCmp)}
+        ${ligne('Points', a.pts, b.pts, cmp(a.pts,b.pts))}
+        ${ligne('Buts pour', a.bp, b.bp, cmp(a.bp,b.bp))}
+        ${ligne('Différence', fmtDiff(a.diff), fmtDiff(b.diff), cmp(a.diff,b.diff))}
+        ${ligne('Forme', fmtSerie(a), fmtSerie(b), 0)}
+      </div>
+      <div class="faf-verdict" style="background:linear-gradient(135deg,${(mene>=0?cA:cB)}24,transparent)">
+        <div class="faf-verdict-t">🎙️ Le verdict</div>
+        <div class="faf-verdict-x">${verdict}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* Vannes assumées envers le perdant (mordant, jamais vulgaire). mene : 1=eq devant, -1=rival devant, 0=ex aequo. */
+function verdictFaceAFace(eq, rival, mene, x){
+  const FEM = ['France','Suisse','Belgique','Allemagne','Angleterre','Croatie','Colombie','Norvège','Suède','Tunisie','Corée du Sud','Arabie Saoudite','Espagne','Argentine','Algérie','Tchéquie','Turquie','Bosnie','Jordanie','Côte d\'Ivoire','Nouvelle-Zélande','Australie','Autriche'];
+  const possessif = e => `${/^[AEÉÈIOUaeiouéè]/.test(e)?'ton':(FEM.includes(e)?'ta':'ton')} ${e}`;   /* ta France, ton Brésil, ton Espagne */
+  const article = e => /^(Pays-Bas|États-Unis)$/.test(e) ? `les ${e}`
+    : /^[AEÉÈIOUaeiouéè]/.test(e) ? `l'${e}`
+    : FEM.includes(e) ? `la ${e}` : `le ${e}`;
+  const tonEq = possessif(eq), leRival = article(rival);
+  if(mene>0){
+    return pick([
+      `Pendant que ${tonEq} déroule, ${leRival} avance en crabe — ${x.ecartPts>0?`${x.ecartPts} point${x.ecartPts>1?'s':''} de retard`:`même nombre de points mais ${x.ecartButs} but${x.ecartButs>1?'s':''} derrière`}. Va falloir réviser les gammes en face. 😴`,
+      `Sans pitié : ${tonEq} regarde ${leRival} dans le rétroviseur. ${x.ecartButs>0?`${x.ecartButs} but${x.ecartButs>1?'s':''} d'écart`:'L\'écart se creuse'}, et ce n'est pas en ta défaveur. Le chambrage est ouvert. 😏`,
+      `${tonEq} mène la danse, ${leRival} compte les points (et il en manque). On ne va pas se mentir : aujourd'hui, c'est toi qui tiens le crachoir. 🎤`
+    ]);
+  }
+  if(mene<0){
+    return pick([
+      `Coup de chaud : ${leRival} passe devant ${tonEq}. ${x.ecartPts>0?`${x.ecartPts} point${x.ecartPts>1?'s':''} derrière`:`à égalité de points mais ${x.ecartButs} but${x.ecartButs>1?'s':''} de moins`}, et là c'est TOI qu'on chambre. Faut hausser le ton. 😬`,
+      `Aïe. ${leRival} prend le large et ${tonEq} fait grise mine. Le verdict est dur mais juste : pour l'instant, le trône familial t'échappe. 👑`,
+      `${leRival} mène le bal pendant que ${tonEq} cherche encore le rythme. Profites-en pour préparer tes excuses au prochain repas de famille. 🍽️`
+    ]);
+  }
+  return pick([
+    `Match nul au sommet : ${tonEq} et ${leRival} se tiennent dans un mouchoir. Personne ne lâche, le chambrage reste en suspens — pour l'instant. 🤝`,
+    `Rien ne les sépare. ${tonEq} contre ${leRival}, c'est l'égalité parfaite : le genre de situation qui finit en débat sans fin à table. 😅`
+  ]);
+}
+
 /* Tableau de bord complet d'une equipe : parcours, stats, projection bracket, actu */
 function qgEcurie(eq, supporters){
   const id = ECURIES[eq] || {}; const coul = id.c || 'var(--or)';
@@ -2629,6 +2763,8 @@ function qgEcurie(eq, supporters){
     </div>
 
     <div class="qg-recit" style="background:linear-gradient(135deg,${coul}1f,${coul}0a);border-left-color:${coul}">${recit}</div>
+
+    ${faceAFace(eq)}
 
     <div class="qg-bloc">
       <div class="qg-titre">📋 Parcours</div>
