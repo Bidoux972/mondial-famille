@@ -259,6 +259,8 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .faf-flag{font-size:26px;line-height:1}
 .faf-nom{font-size:13px;font-weight:800;font-family:'Space Grotesk',sans-serif;margin-top:2px}
 .faf-sup{font-size:10px;color:var(--gris);margin-top:1px}
+.faf-matchs{font-size:10px;margin-top:2px}
+.faf-pondere{padding:9px 14px;font-size:11px;color:var(--gris);font-style:italic;border-top:1px solid var(--ligne)}
 .faf-vs{display:flex;align-items:center;justify-content:center;padding:0 4px;font-family:'Space Grotesk',monospace;color:var(--gris);font-weight:700;font-size:13px}
 .faf-rows{border-top:1px solid var(--ligne)}
 .faf-row{display:flex;align-items:center;padding:7px 12px;font-size:13px}
@@ -570,7 +572,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.995';
+const APP_VERSION = '9.996';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2570,16 +2572,31 @@ function faceAFace(eq){
   const cA = (ECURIES[eq]&&ECURIES[eq].c)||'var(--or)';
   const cB = (ECURIES[rival]&&ECURIES[rival].c)||'var(--or)';
 
-  /* qui mène : rang d'abord (1 meilleur), puis points, puis diff */
+  /* points par match (efficacité, neutre vis-à-vis du volume) */
+  const ppmA = a.joues ? a.pts/a.joues : 0;
+  const ppmB = b.joues ? b.pts/b.joues : 0;
+  const memeNbMatchs = a.joues === b.joues;
+
+  /* qui mène :
+     - si les deux n'ont pas joué le même nombre de matchs -> points par match d'abord (équitable)
+     - sinon -> rang de groupe, puis points, puis diff */
   let mene = 0; /* 1 = eq devant, -1 = rival devant, 0 = ex aequo */
-  if(a.rang && b.rang && a.rang!==b.rang) mene = a.rang<b.rang ? 1 : -1;
-  else if(a.pts!==b.pts) mene = a.pts>b.pts ? 1 : -1;
-  else if(a.diff!==b.diff) mene = a.diff>b.diff ? 1 : -1;
+  if(!memeNbMatchs){
+    if(Math.abs(ppmA-ppmB) > 0.001) mene = ppmA>ppmB ? 1 : -1;
+    else if(a.diff!==b.diff) mene = a.diff>b.diff ? 1 : -1;
+    else if(a.rang && b.rang && a.rang!==b.rang) mene = a.rang<b.rang ? 1 : -1;
+  } else {
+    if(a.rang && b.rang && a.rang!==b.rang) mene = a.rang<b.rang ? 1 : -1;
+    else if(a.pts!==b.pts) mene = a.pts>b.pts ? 1 : -1;
+    else if(a.diff!==b.diff) mene = a.diff>b.diff ? 1 : -1;
+  }
 
   const surnomA = (EQUIPES[eq]&&EQUIPES[eq].surnom)||eq;
   const surnomB = (EQUIPES[rival]&&EQUIPES[rival].surnom)||rival;
   const ecartPts = Math.abs(a.pts-b.pts), ecartButs = Math.abs(a.bp-b.bp);
-  const verdict = verdictFaceAFace(eq, rival, mene, {ecartPts, ecartButs, a, b, surnomA, surnomB});
+  /* retard = pour l'écurie eq : positif si eq a joué MOINS de matchs que le rival */
+  const retardEq = b.joues - a.joues;
+  const verdict = verdictFaceAFace(eq, rival, mene, {ecartPts, ecartButs, a, b, surnomA, surnomB, retardEq, memeNbMatchs});
 
   const ligne = (lab, va, vb, gagne) => {
     const cls = x => x ? 'faf-win' : '';
@@ -2593,6 +2610,12 @@ function faceAFace(eq){
   const fmtRang = s => s.rang ? `${['','1er','2e','3e','4e'][s.rang]||s.rang+'e'}${s.grp?' · gr. '+s.grp:''}` : '—';
   const fmtSerie = s => s.serie.slice(-3).join(' ')||'—';
   const fmtDiff = d => (d>=0?'+':'')+d;
+  const fmtPpm = p => (Math.round(p*100)/100).toString().replace('.',',');
+  const ppmCmp = Math.abs(ppmA-ppmB)<=0.001 ? 0 : (ppmA>ppmB?1:-1);
+  const fmtMatchs = n => `${n} match${n>1?'s':''}`;
+  /* couleur du nb de matchs : on met en avant (or) celui qui a un match en retard */
+  const styMatchA = a.joues<b.joues ? 'color:var(--or);font-weight:700' : 'color:var(--gris)';
+  const styMatchB = b.joues<a.joues ? 'color:var(--or);font-weight:700' : 'color:var(--gris)';
 
   return `<div class="faf">
     <div class="faf-titre">⚔️ Le face-à-face familial</div>
@@ -2602,21 +2625,25 @@ function faceAFace(eq){
           <div class="faf-flag">${F[eq]||'🏳️'}</div>
           <div class="faf-nom" style="color:${cA}">${eq}</div>
           <div class="faf-sup">${supA.join(', ')||'—'}</div>
+          <div class="faf-matchs" style="${styMatchA}">${fmtMatchs(a.joues)}</div>
         </div>
         <div class="faf-vs">VS</div>
         <div class="faf-tete" style="background:linear-gradient(180deg,${cB}30,transparent)">
           <div class="faf-flag">${F[rival]||'🏳️'}</div>
           <div class="faf-nom" style="color:${cB}">${rival}</div>
           <div class="faf-sup">${supB.join(', ')||'—'}</div>
+          <div class="faf-matchs" style="${styMatchB}">${fmtMatchs(b.joues)}</div>
         </div>
       </div>
       <div class="faf-rows">
         ${ligne('Classement', fmtRang(a), fmtRang(b), rangCmp)}
         ${ligne('Points', a.pts, b.pts, cmp(a.pts,b.pts))}
+        ${ligne('Pts / match', fmtPpm(ppmA), fmtPpm(ppmB), ppmCmp)}
         ${ligne('Buts pour', a.bp, b.bp, cmp(a.bp,b.bp))}
         ${ligne('Différence', fmtDiff(a.diff), fmtDiff(b.diff), cmp(a.diff,b.diff))}
         ${ligne('Forme', fmtSerie(a), fmtSerie(b), 0)}
       </div>
+      ${!memeNbMatchs?`<div class="faf-pondere">⚠️ ${retardEq>0?eq:rival} a ${Math.abs(retardEq)} match${Math.abs(retardEq)>1?'s':''} en retard : comparaison à pondérer.</div>`:''}
       <div class="faf-verdict" style="background:linear-gradient(135deg,${(mene>=0?cA:cB)}24,transparent)">
         <div class="faf-verdict-t">🎙️ Le verdict</div>
         <div class="faf-verdict-x">${verdict}</div>
@@ -2633,23 +2660,34 @@ function verdictFaceAFace(eq, rival, mene, x){
     : /^[AEÉÈIOUaeiouéè]/.test(e) ? `l'${e}`
     : FEM.includes(e) ? `la ${e}` : `le ${e}`;
   const tonEq = possessif(eq), leRival = article(rival);
+  const r = x.retardEq||0;   /* >0 : eq a joué MOINS de matchs que le rival */
+  /* incise selon le match en retard */
+  let incise = '';
+  if(r>0){   /* eq a un match de retard */
+    if(mene>0) incise = ` Et le pire pour en face : ${tonEq} a même un match de moins dans les jambes. Imagine quand les comptes seront à égalité. 😏`;
+    else if(mene<0) incise = ` Nuance qui sauve l'honneur : ${tonEq} a un match de retard. Rien n'est joué — la revanche est dans la musette. 💪`;
+    else incise = ` À noter : ${tonEq} a un match en moins, donc la marge de progression est de ton côté.`;
+  } else if(r<0){   /* le rival a un match de retard */
+    if(mene>0) incise = ` Attention quand même : ${leRival} a un match de retard, le chambrage est à confirmer.`;
+    else if(mene<0) incise = ` Et ${leRival} a en plus un match de moins : autant dire que l'écart pourrait encore se creuser. Aïe. 😬`;
+  }
   if(mene>0){
     return pick([
-      `Pendant que ${tonEq} déroule, ${leRival} avance en crabe — ${x.ecartPts>0?`${x.ecartPts} point${x.ecartPts>1?'s':''} de retard`:`même nombre de points mais ${x.ecartButs} but${x.ecartButs>1?'s':''} derrière`}. Va falloir réviser les gammes en face. 😴`,
-      `Sans pitié : ${tonEq} regarde ${leRival} dans le rétroviseur. ${x.ecartButs>0?`${x.ecartButs} but${x.ecartButs>1?'s':''} d'écart`:'L\'écart se creuse'}, et ce n'est pas en ta défaveur. Le chambrage est ouvert. 😏`,
-      `${tonEq} mène la danse, ${leRival} compte les points (et il en manque). On ne va pas se mentir : aujourd'hui, c'est toi qui tiens le crachoir. 🎤`
+      `Pendant que ${tonEq} déroule, ${leRival} avance en crabe — ${x.ecartPts>0?`${x.ecartPts} point${x.ecartPts>1?'s':''} de retard`:`même nombre de points mais ${x.ecartButs} but${x.ecartButs>1?'s':''} derrière`}. Va falloir réviser les gammes en face. 😴`+incise,
+      `Sans pitié : ${tonEq} regarde ${leRival} dans le rétroviseur. ${x.ecartButs>0?`${x.ecartButs} but${x.ecartButs>1?'s':''} d'écart`:'L\'écart se creuse'}, et ce n'est pas en ta défaveur. Le chambrage est ouvert. 😏`+incise,
+      `${tonEq} mène la danse, ${leRival} compte les points (et il en manque). On ne va pas se mentir : aujourd'hui, c'est toi qui tiens le crachoir. 🎤`+incise
     ]);
   }
   if(mene<0){
     return pick([
-      `Coup de chaud : ${leRival} passe devant ${tonEq}. ${x.ecartPts>0?`${x.ecartPts} point${x.ecartPts>1?'s':''} derrière`:`à égalité de points mais ${x.ecartButs} but${x.ecartButs>1?'s':''} de moins`}, et là c'est TOI qu'on chambre. Faut hausser le ton. 😬`,
-      `Aïe. ${leRival} prend le large et ${tonEq} fait grise mine. Le verdict est dur mais juste : pour l'instant, le trône familial t'échappe. 👑`,
-      `${leRival} mène le bal pendant que ${tonEq} cherche encore le rythme. Profites-en pour préparer tes excuses au prochain repas de famille. 🍽️`
+      `Coup de chaud : ${leRival} passe devant ${tonEq}. ${x.ecartPts>0?`${x.ecartPts} point${x.ecartPts>1?'s':''} derrière`:`à égalité de points mais ${x.ecartButs} but${x.ecartButs>1?'s':''} de moins`}, et là c'est TOI qu'on chambre. Faut hausser le ton. 😬`+incise,
+      `Aïe. ${leRival} prend le large et ${tonEq} fait grise mine. Le verdict est dur mais juste : pour l'instant, le trône familial t'échappe. 👑`+incise,
+      `${leRival} mène le bal pendant que ${tonEq} cherche encore le rythme. Profites-en pour préparer tes excuses au prochain repas de famille. 🍽️`+incise
     ]);
   }
   return pick([
-    `Match nul au sommet : ${tonEq} et ${leRival} se tiennent dans un mouchoir. Personne ne lâche, le chambrage reste en suspens — pour l'instant. 🤝`,
-    `Rien ne les sépare. ${tonEq} contre ${leRival}, c'est l'égalité parfaite : le genre de situation qui finit en débat sans fin à table. 😅`
+    `Match nul au sommet : ${tonEq} et ${leRival} se tiennent dans un mouchoir. Personne ne lâche, le chambrage reste en suspens — pour l'instant. 🤝`+incise,
+    `Rien ne les sépare. ${tonEq} contre ${leRival}, c'est l'égalité parfaite : le genre de situation qui finit en débat sans fin à table. 😅`+incise
   ]);
 }
 
