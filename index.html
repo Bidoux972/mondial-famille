@@ -279,6 +279,10 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .qg-potin:hover{background:#24384f}
 .qg-potin-t{font-size:13px;font-weight:600;color:#e3eaf1}
 .qg-potin-fl{color:var(--or);font-weight:800}
+.qg-voirplus{margin-top:8px;width:100%;background:var(--panneau2);border:1px solid var(--ligne);color:#cdd6e0;border-radius:9px;padding:8px;font-size:12px;font-weight:600;cursor:pointer}
+.qg-voirplus:hover{background:#24384f}
+#sec-ecuries{transition:background .4s}
+#sec-ecuries .qg-eq,#sec-ecuries .qg-recit{}
 .ecurie .tete{display:flex;align-items:center;gap:10px}
 .ecurie .tete .f{font-size:30px}
 .ecurie .tete .qui{font-weight:700}
@@ -524,7 +528,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.991';
+const APP_VERSION = '9.992';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2418,6 +2422,40 @@ function banniereEcurie(){
 }
 
 function ecuries(){
+  const z = $('liste-ecuries');
+  /* Mon écurie = celle du pseudo connecté. Chacun ne voit QUE la sienne. */
+  const monEq = pseudo && participants[pseudo] && participants[pseudo].equipe_ecurie;
+
+  if(!pseudo){
+    z.innerHTML = `<div class="ecurie"><div class="etat">Connecte-toi pour voir le QG de ton écurie.</div></div>`;
+    appliquerCouleurEcurie(null); return;
+  }
+  if(!monEq){
+    z.innerHTML = `<div class="ecurie"><div class="tete"><span class="f">❓</span><span><b>${pseudo}</b>, tu n'as pas encore choisi ton écurie</span></div>
+      <div class="etat"><button class="btn or" style="font-size:12px;padding:6px 12px;margin-top:6px" onclick="goTab('equipes')">Choisir mon équipe →</button></div></div>`;
+    appliquerCouleurEcurie(null); return;
+  }
+  /* tous les participants qui ont la meme equipe (pour afficher "Écurie de Bidou, Véro, Alex") */
+  const memesSupporters = PARTICIPANTS.filter(p=>participants[p] && participants[p].equipe_ecurie===monEq);
+  z.innerHTML = qgEcurie(monEq, memesSupporters);
+  appliquerCouleurEcurie(monEq);
+}
+
+/* Teinte massivement l'onglet Écuries aux couleurs de l'equipe */
+function appliquerCouleurEcurie(eq){
+  const sec = $('sec-ecuries');
+  if(!sec) return;
+  const c = (eq && ECURIES[eq]) ? ECURIES[eq].c : null;
+  if(c){
+    sec.style.background = `linear-gradient(180deg, ${c}22 0%, ${c}0A 38%, transparent 75%)`;
+    sec.style.setProperty('--ecurie-c', c);
+  } else {
+    sec.style.background = '';
+    sec.style.removeProperty('--ecurie-c');
+  }
+}
+
+function ecuries_MULTI_OBSOLETE(){
   /* Regrouper les participants par equipe (3 France + 1 Bresil -> 1 QG France, 1 QG Bresil) */
   const parEquipe = {}; const sansEcurie = [];
   PARTICIPANTS.forEach(p=>{
@@ -2564,13 +2602,52 @@ function qgEcurie(eq, supporters){
   </div>`;
 }
 
-/* Classement des buteurs de l'equipe : on croise SES joueurs avec leurs buts marques. */
+/* Classement des buteurs de l'equipe — FIABLE :
+   on ne scanne QUE les matchs de l'equipe, et on n'attribue un but qu'a un joueur
+   present dans le roster de cette equipe (JOUEURS_BASE). Fini les homonymes adverses. */
 function buteursDeLEquipe(eq){
-  const liste = joueursDe(eq).map(j=>{
+  /* noms de famille du roster de l'equipe, normalises (dernier mot) */
+  const roster = new Set();
+  joueursDe(eq).forEach(j=>{
     const nom = parseJoueur(j).nom;
-    return {nom, buts: butsDe(nom)};
-  }).filter(x=>x.buts>0).sort((a,b)=>b.buts-a.buts);
-  return liste;
+    const mots = normNom(nom).split(/\s+/).filter(Boolean);
+    if(mots.length) roster.add(mots[mots.length-1]);   /* nom de famille */
+  });
+  if(!roster.size) return [];
+
+  const matchsEq = new Set(M.filter(m=>m.a===eq||m.b===eq).map(m=>m.id));
+  const compte = {};   /* nom affiché -> buts */
+
+  Object.values(resultats||{}).forEach(re=>{
+    if(!re || !re.buteurs || !matchsEq.has(re.match_id)) return;   /* SEULEMENT les matchs de l'equipe */
+    /* meme decoupage SUR que statsButeurs (ne pas couper dans les parentheses) */
+    const segments=[]; let buf='',prof=0;
+    for(const ch of String(re.buteurs)){
+      if(ch==='(')prof++; if(ch===')')prof=Math.max(0,prof-1);
+      if(prof===0 && /[,;\n\/·]/.test(ch)){ if(buf.trim())segments.push(buf.trim()); buf=''; }
+      else buf+=ch;
+    }
+    if(buf.trim())segments.push(buf.trim());
+
+    segments.forEach(seg=>{
+      /* nombre de buts dans la parenthese */
+      let nbButs=1; const paren=seg.match(/\(([^)]*)\)/);
+      if(paren){ const mins=paren[1].split(/&|\bet\b|,|;/).map(s=>s.trim()).filter(s=>/\d/.test(s)); if(mins.length>1)nbButs=mins.length; }
+      /* nom propre : on retire parentheses, minutes, drapeaux, mentions sp/csc, codes pays MAJUSCULES */
+      const nomBrut = seg.replace(/\([^)]*\)/g,'').replace(/\(.*$/,'').replace(/\d+e?\+?\d*/g,'')
+        .replace(/\bsp\b|\bcsc\b|·/gi,'').replace(/[\u{1F1E6}-\u{1F1FF}]/gu,'').replace(/\b[A-ZÉÈ]{3,}\b/g,'').trim();
+      if(!nomBrut) return;
+      const mots = normNom(nomBrut).split(/\s+/).filter(Boolean);
+      if(!mots.length) return;
+      const famille = mots[mots.length-1];
+      /* on ne garde QUE si ce nom de famille est dans le roster de l'equipe */
+      if(roster.has(famille)){
+        compte[nomBrut] = (compte[nomBrut]||0) + nbButs;
+      }
+    });
+  });
+
+  return Object.entries(compte).map(([nom,buts])=>({nom,buts})).sort((a,b)=>b.buts-a.buts);
 }
 
 /* Baromètre forme : les joueurs 🔥 et 🧊 de l'equipe (depuis formesCloud). */
@@ -2670,11 +2747,19 @@ function potinsDeLEquipe(eq){
   const liste = (potinsCloud||[]).filter(p=>{
     const t=(p.titre||'').toLowerCase(), c=(p.contenu||'').toLowerCase();
     return t.includes(nom) || c.includes(nom);
-  }).slice(0,3);
+  });
   if(!liste.length) return '';
-  return liste.map(p=>`<div class="qg-potin" onclick="ouvrirPotinCible(${p.id})">
+  const ligne = p=>`<div class="qg-potin" onclick="ouvrirPotinCible(${p.id})">
     <span class="qg-potin-t">${titrePropre(p.titre)}</span>
-    <span class="qg-potin-fl">→</span></div>`).join('');
+    <span class="qg-potin-fl">→</span></div>`;
+  const visibles = liste.slice(0,3).map(ligne).join('');
+  if(liste.length<=3) return visibles;
+  /* les suivants, masques, depliables */
+  const reste = liste.slice(3).map(ligne).join('');
+  const uid = 'pe_'+normNom(eq).replace(/\s/g,'');
+  return `${visibles}
+    <div id="${uid}" class="qg-potins-plus" style="display:none">${reste}</div>
+    <button class="qg-voirplus" onclick="(function(b){const z=document.getElementById('${uid}');const o=z.style.display==='none';z.style.display=o?'block':'none';b.textContent=o?'Voir moins ▲':'Voir les ${liste.length-3} autres ▼';})(this)">Voir les ${liste.length-3} autres ▼</button>`;
 }
 async function sauverEcurie(eq){
   if(!pseudo){ toast('Choisis d\'abord qui tu es'); return; }
