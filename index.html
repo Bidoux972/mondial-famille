@@ -236,7 +236,21 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .classement .total{font-family:'Space Grotesk',monospace;font-size:22px;font-weight:700;color:var(--or)}
 /* écuries */
 .ecurie{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:14px;margin-bottom:10px}
-.qg{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin-bottom:14px}
+.qg{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:16px;margin-bottom:14px;overflow:hidden}
+.qg-maillot{position:relative;margin:-16px -16px 0;padding:18px 18px 15px;overflow:hidden}
+.qg-maillot-flag{position:absolute;top:6px;right:14px;font-size:56px;opacity:.16;line-height:1;pointer-events:none}
+.qg-maillot-nom{position:relative;font-family:'Archivo Black','Space Grotesk',sans-serif;font-size:26px;line-height:1;letter-spacing:.5px;text-transform:uppercase;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.qg-maillot-surnom{position:relative;font-size:13px;color:rgba(255,255,255,.88);font-style:italic;margin-top:4px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.qg-maillot-cri{position:relative;display:inline-block;font-size:13px;font-weight:700;color:#fff;margin-top:10px;background:rgba(255,255,255,.16);padding:4px 11px;border-radius:20px}
+.qg-maillot-sup{position:relative;font-size:11px;color:rgba(255,255,255,.82);margin-top:10px}
+.qm-titre{font-family:'Space Grotesk',monospace;color:var(--gris);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:2px 0 9px}
+.qm-liste{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.qm-l{display:flex;align-items:center;gap:10px;background:var(--panneau);border:1px solid var(--ligne);border-left:3px solid var(--or);border-radius:9px;padding:8px 12px}
+.qm-l .qm-f{font-size:19px;line-height:1}
+.qm-l .qm-t{flex:1;font-size:13px}
+.qm-l .qm-v{color:var(--gris)}
+.qm-l .qm-on{font-size:10px}
+.qm-vide{border-left-color:var(--gris);opacity:.7}
 .qg-tete{display:flex;align-items:center;gap:12px}
 .qg-f{font-size:38px;line-height:1}
 .qg-eq{font-size:20px;font-weight:800;font-family:'Space Grotesk',sans-serif}
@@ -537,7 +551,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.993';
+const APP_VERSION = '9.994';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2446,7 +2460,26 @@ function ecuries(){
   }
   /* tous les participants qui ont la meme equipe (pour afficher "Écurie de Bidou, Véro, Alex") */
   const memesSupporters = PARTICIPANTS.filter(p=>participants[p] && participants[p].equipe_ecurie===monEq);
-  z.innerHTML = qgEcurie(monEq, memesSupporters);
+
+  /* récap "qui mise sur quoi" : une ligne par personne, teintée à sa couleur d'écurie */
+  const motMise = e => {
+    if(/^(Pays-Bas|États-Unis)$/.test(e)) return 'mise sur les';
+    if(/^[AEÉÈIOUÉaeiouéè]/.test(e)) return 'mise sur l\'';   /* élision : l'Allemagne, l'Espagne, l'Argentine, l'Uruguay */
+    const fem = ['France','Suisse','Turquie','Tchéquie','Belgique','Croatie','Colombie','Norvège','Suède','Tunisie','Bosnie','Jordanie','Côte d\'Ivoire','Nouvelle-Zélande','Corée du Sud','Arabie Saoudite','Allemagne','Angleterre','Algérie'].includes(e);
+    return fem ? 'mise sur la' : 'mise sur le';
+  };
+  const lignesQui = PARTICIPANTS.map(p=>{
+    const eq = participants[p] && participants[p].equipe_ecurie;
+    if(!eq) return `<div class="qm-l qm-vide"><span class="qm-f">❓</span><span class="qm-t"><b>${p}</b> n'a pas encore choisi</span></div>`;
+    const c = (ECURIES[eq] && ECURIES[eq].c) || 'var(--or)';
+    const dot = enLigne(p) ? '<span class="qm-on">🟢</span>' : '';
+    const mm = motMise(eq);
+    const sep = mm.endsWith("'") ? '' : ' ';   /* pas d'espace après "l'" */
+    return `<div class="qm-l" style="border-left-color:${c}"><span class="qm-f">${F[eq]||'🏳️'}</span><span class="qm-t"><b>${p}</b> <span class="qm-v">${mm}</span>${sep}<b style="color:${c}">${eq}</b></span>${dot}</div>`;
+  }).join('');
+  const recap = `<div class="qm-titre">🐎 Qui mise sur quoi</div><div class="qm-liste">${lignesQui}</div>`;
+
+  z.innerHTML = recap + qgEcurie(monEq, memesSupporters);
   appliquerCouleurEcurie(monEq);
 }
 
@@ -2584,18 +2617,18 @@ function qgEcurie(eq, supporters){
   const diff = (butsP-butsC>=0?'+':'')+(butsP-butsC);
   const serieHtml = serie.slice(-5).map(s=>`<span class="serie-pt serie-${s}">${s}</span>`).join('');
   const sup = supporters.map(s=>`<b>${s}</b>`).join(', ');
+  const surnomEq = (EQUIPES[eq]&&EQUIPES[eq].surnom) || '';
 
-  return `<div class="qg" style="border-top:3px solid ${coul}">
-    <div class="qg-tete">
-      <span class="qg-f">${F[eq]||'🏳️'}</span>
-      <div class="qg-id">
-        <div class="qg-eq" style="color:${coul}">${eq}</div>
-        <div class="qg-sup">Écurie de ${sup}</div>
-      </div>
+  return `<div class="qg" style="--ec:${coul}">
+    <div class="qg-maillot" style="background:linear-gradient(135deg,${coul} 0%,${coul}66 55%,${coul}22 100%)">
+      <span class="qg-maillot-flag">${F[eq]||'🏳️'}</span>
+      <div class="qg-maillot-nom">${eq}</div>
+      ${surnomEq?`<div class="qg-maillot-surnom">${surnomEq}</div>`:''}
+      ${id.cri?`<div class="qg-maillot-cri">${id.cri}</div>`:''}
+      <div class="qg-maillot-sup">Écurie de ${sup}</div>
     </div>
-    ${id.cri?`<div class="qg-cri">${id.cri}</div>`:''}
 
-    <div class="qg-recit">${recit}</div>
+    <div class="qg-recit" style="background:linear-gradient(135deg,${coul}1f,${coul}0a);border-left-color:${coul}">${recit}</div>
 
     <div class="qg-bloc">
       <div class="qg-titre">📋 Parcours</div>
