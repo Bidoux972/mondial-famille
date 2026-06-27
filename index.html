@@ -612,7 +612,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '10.3';
+const APP_VERSION = '10.4';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4206,7 +4206,129 @@ function sacrePoules(){
   ])}</div></div>`);
 
   /* — Clôture — */
-  etapes.push(`<div class="etape"><div class="eti-r">🎬 Rideau sur les poules</div>${recapClassement}<div class="punch">🎙️ Voilà pour les poules. La phase finale, c'est une autre histoire — d'autres matchs, d'autres barèmes, d'autres comptes à régler. On remet les compteurs à zéro. Rendez-vous au prochain acte.</div></div>`);
+  etapes.push(`<div class="etape"><div class="eti-r">🎬 Rideau sur les poules</div>${recapClassement}<div class="punch">🎙️ Voilà pour les poules. La phase finale, c'est une autre histoire — d'autres matchs, d'autres barèmes, d'autres comptes à régler. On remet les compteurs à zéro. Rendez-vous au prochain acte.</div>${pseudo?`<button class="sacre-btn" style="margin-top:14px" onclick="event.stopPropagation();document.getElementById('reveal-overlay').style.display='none';bestOfPerso();">🎬 Voir MON parcours, ${pseudo}</button>`:''}</div>`);
+
+  /* affichage via l'overlay reveal existant */
+  let etape = 0;
+  let div = document.getElementById('reveal-overlay');
+  if(!div){ div = document.createElement('div'); div.id='reveal-overlay'; div.className='reveal'; document.body.appendChild(div); }
+  div.style.display = 'flex';
+  const rendre = () => {
+    div.innerHTML = etapes[etape] + `<div class="suite">${etape < etapes.length-1 ? 'Touche pour la suite ('+(etape+1)+'/'+etapes.length+')' : 'Touche pour fermer'}</div>`;
+    const sc = div.querySelector('[data-reveal-score]');
+    if(sc) animerScore(sc, div);
+  };
+  div.onclick = () => { etape++; if(etape>=etapes.length){ div.style.display='none'; } else rendre(); };
+  rendre();
+}
+
+/* ============ 🎬 MON BEST-OF (rétrospective perso de fin de poules) ============ */
+/* Tout est calculé sur les vrais pronos du pseudo connecté. Aucun classement révélé
+   pendant le money time : cette rétro ne se lance qu'APRÈS le sacre. */
+function bestOfPerso(){
+  if(!pseudo || !pronos[pseudo]) return;
+  const fl = p => (participants[p] && F[participants[p].equipe_ecurie]) || '🏳️';
+  const nomMatch = id => { const m = M.find(x=>x.id===id); return m ? `${m.a} ${m.score_a!==undefined?'':''}– ${m.b}` : ''; };
+  const libMatch = id => { const m = M.find(x=>x.id===id); return m ? `${F[m.a]||''} ${m.a} – ${m.b} ${F[m.b]||''}` : ''; };
+
+  /* tous les pronos jugés du joueur, avec points et match */
+  const mes = [];
+  Object.values(pronos[pseudo]).forEach(pr=>{
+    const re = resultats[pr.match_id]; if(!re) return;
+    const t = ptsTotal(pr, re); if(t===null) return;
+    const m = M.find(x=>x.id===pr.match_id); if(!m) return;
+    mes.push({pr, re, m, t});
+  });
+  if(!mes.length){ toast("Pas encore assez de pronos pour ton best-of."); return; }
+
+  /* gloire / naufrage */
+  const gloire = mes.reduce((a,b)=>b.t>a.t?b:a);
+  const naufrage = mes.reduce((a,b)=>b.t<a.t?b:a);
+
+  /* meilleure série de pronos positifs consécutifs (ordre chronologique) */
+  const chrono = mes.slice().sort((a,b)=>a.m.dt-b.m.dt);
+  let serieMax=0, cur=0;
+  chrono.forEach(x=>{ if(x.t>0){ cur++; serieMax=Math.max(serieMax,cur); } else cur=0; });
+
+  /* signature : profil dominant */
+  const tot = calculTotaux(null).find(l=>l.p===pseudo) || {exacts:0,buts:0,butsKo:0,ors:0,n:1};
+  let signature;
+  if(tot.exacts>=6) signature = `Sniper de scores exacts — ${tot.exacts} fois la mire en plein cœur. Le genre à deviner le résultat avant le coup d'envoi.`;
+  else if(tot.buts>tot.butsKo && tot.buts>=6) signature = `Flair du buteur — ${tot.buts} buteurs trouvés. Tu sens le pif des attaquants mieux que leurs sélectionneurs.`;
+  else if(tot.butsKo>tot.buts) signature = `Joueur de cœur — tu paries tes buteurs avec passion plus qu'avec raison (${tot.buts}⚽/${tot.butsKo}❌). Romantique, mais coûteux.`;
+  else if(tot.ors>=10) signature = `Joueur d'instinct — ${tot.ors} matchs en or tentés. Tu joues gros, parfois ça paie, parfois ça pique.`;
+  else signature = `Joueur équilibré — ni casse-cou ni timoré. Tu avances masqué, et c'est peut-être ta vraie force.`;
+
+  /* NÉMÉSIS : le rival le plus proche au classement final, et l'histoire du duel rejouée */
+  const clFinal = classementPurPronos();
+  const moiIdx = clFinal.findIndex(l=>l.p===pseudo);
+  let nemesisEtape = '';
+  if(moiIdx>=0 && clFinal.length>1){
+    const voisins = [clFinal[moiIdx-1], clFinal[moiIdx+1]].filter(Boolean);
+    const rival = voisins.reduce((a,b)=> Math.abs(b.total-clFinal[moiIdx].total) < Math.abs(a.total-clFinal[moiIdx].total) ? b : a);
+    const r = rival.p;
+    /* rejeu chronologique : à chaque match joué, qui est devant ? on compte les dépassements */
+    const matchsJoues = M.filter(m=>resultats[m.id]).sort((a,b)=>a.dt-b.dt);
+    let depassements=0, dernierDepassMatch=null, signePrec=0, finalDevant=null;
+    matchsJoues.forEach(m=>{
+      const seuil = m.dt.getTime();
+      const cl = calculTotaux(x => x.dt.getTime() <= seuil);
+      const tMoi = (cl.find(l=>l.p===pseudo)||{}).total||0;
+      const tR = (cl.find(l=>l.p===r)||{}).total||0;
+      const signe = Math.sign(tMoi - tR);
+      if(signe!==0 && signePrec!==0 && signe!==signePrec){ depassements++; dernierDepassMatch=m; }
+      if(signe!==0) signePrec=signe;
+      finalDevant = tMoi>=tR;
+    });
+    const ecartFinal = Math.abs(clFinal[moiIdx].total - rival.total);
+    const matchDecisif = dernierDepassMatch ? `${dernierDepassMatch.a}–${dernierDepassMatch.b}` : '—';
+    const verdict = finalDevant
+      ? pioche([
+          `Toute la saison, ${r} t'a collé aux basques. ${depassements>0?`Vous vous êtes échangé la place ${depassements} fois.`:'Le duel a été tendu de bout en bout.'} ${dernierDepassMatch?`Puis sur ${matchDecisif}, tu as planté ton drapeau devant — et tu n'as plus lâché.`:''} Ta Némésis a un visage, et ce soir, il fait la grimace. 😏`,
+          `${r}, ton ombre de toute la saison. ${depassements>0?`${depassements} fois la place a changé de mains.`:''} Au bout du compte, ${ecartFinal} point${ecartFinal>1?'s':''} vous séparent — en ta faveur. Cette guerre-là, tu l'as gagnée. 🏅`
+        ])
+      : pioche([
+          `${r} aura été ta bête noire jusqu'au bout. ${depassements>0?`Vous vous êtes doublés ${depassements} fois,`:'Le duel a fait rage,'} ${dernierDepassMatch?`mais sur ${matchDecisif}, ${r} est passé devant et ne t'a plus rendu la place.`:''} ${ecartFinal} point${ecartFinal>1?'s':''} d'écart : la revanche, ce sera en phase finale. 😤`,
+          `Ta Némésis, c'est ${r} — et cette manche est pour ${ilElle(r)}. ${ecartFinal} point${ecartFinal>1?'s':''} qui font mal. Note bien ce nom : tu as un compte à régler. 🔥`
+        ]);
+    nemesisEtape = `<div class="etape"><div class="eti-r">⚔️ Ta Némésis de la saison</div><div class="drapeaux">${fl(pseudo)} <span style="color:var(--corail)">⚔️</span> ${fl(r)}</div><h3 style="font-size:clamp(18px,5vw,24px)">${pseudo} <span style="color:var(--gris);font-size:.7em">vs</span> ${r}</h3><div class="punch">🎙️ ${verdict}</div></div>`;
+  }
+
+  /* bête noire : l'équipe qui apparaît le plus souvent dans ses matchs perdus */
+  const perdus = mes.filter(x=>x.t<=0);
+  const compteEq = {};
+  perdus.forEach(x=>{ [x.m.a,x.m.b].forEach(e=>compteEq[e]=(compteEq[e]||0)+1); });
+  const beteNoire = Object.entries(compteEq).sort((a,b)=>b[1]-a[1])[0];
+
+  /* ====== construction des étapes ====== */
+  const etapes = [];
+  etapes.push(`<div class="etape"><div class="eti-r">🎬 Ton best-of perso</div><div class="drapeaux">${fl(pseudo)}</div><h3>${pseudo},<br>voici TA saison.</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px">La tienne. Tes coups de génie, tes naufrages, ton pire ennemi. Tout est là.</div></div>`);
+
+  etapes.push(`<div class="etape" data-reveal-score data-a="${gloire.t}" data-b="${gloire.t}" data-fete="1"><div class="eti-r">⭐ Ton moment de gloire</div><div style="font-size:46px">🎯</div><div class="ligne-r" style="margin-top:6px">${libMatch(gloire.m.id)} → <b>${gloire.re.score_a}–${gloire.re.score_b}</b></div><div class="ligne-r" style="color:var(--gris)">Ton prono : ${gloire.pr.score_a}–${gloire.pr.score_b}${gloire.pr.buteur?` · ⚽ ${gloire.pr.buteur}`:''}${gloire.pr.en_or?' · 🌟':''}</div><div class="grand-score">+${gloire.t}</div><div class="punch">🎙️ ${pioche([
+    `Ton chef-d'œuvre. Ce jour-là, ${pseudo}, tu ne pariais pas : tu lisais l'avenir. Et tu l'as bien fait savoir.`,
+    `Le sommet de ta saison. ${gloire.t} points d'un coup, propre, net, magistral. Savoure, ça n'arrive pas tous les jours.`
+  ])}</div></div>`);
+
+  etapes.push(`<div class="etape"><div class="eti-r">💀 Ton moment de honte</div><div style="font-size:46px">🤡</div><div class="ligne-r" style="margin-top:6px">${libMatch(naufrage.m.id)} → <b>${naufrage.re.score_a}–${naufrage.re.score_b}</b></div><div class="ligne-r" style="color:var(--gris)">Ton prono : ${naufrage.pr.score_a}–${naufrage.pr.score_b}${naufrage.pr.buteur?` · ⚽ ${naufrage.pr.buteur}`:''}${naufrage.pr.en_or?' · 🌟 (aïe)':''}</div><div class="grand-score" style="color:var(--corail)">${naufrage.t>0?'+':''}${naufrage.t}</div><div class="punch">🎙️ ${pioche([
+    `Ton naufrage. On en reparlera au prochain repas de famille, promis. ${naufrage.pr.en_or?'Et tu avais mis le match en or dessus. Double peine.':''}`,
+    `Le match où tu as tout faux. Ça arrive aux meilleurs… mais là, quand même.`
+  ])}</div></div>`);
+
+  if(serieMax>=2) etapes.push(`<div class="etape"><div class="eti-r">🔥 Ta meilleure série</div><div style="font-size:46px">🔥</div><div class="grand-score">${serieMax}</div><div class="ligne-r" style="color:var(--gris)">pronos gagnants d'affilée</div><div class="punch">🎙️ ${pioche([
+    `${serieMax} paris gagnants de suite. Ton heure de gloire, celle où plus rien ne pouvait t'arrêter. Ça s'est calmé depuis, hein.`,
+    `Une série de ${serieMax}. Pendant ${serieMax} matchs, tu as marché sur l'eau. Profite du souvenir.`
+  ])}</div></div>`);
+
+  etapes.push(`<div class="etape"><div class="eti-r">📊 Ta signature</div><div style="font-size:46px">🎭</div><div class="punch" style="font-size:15px">🎙️ ${signature}</div></div>`);
+
+  if(nemesisEtape) etapes.push(nemesisEtape);
+
+  if(beteNoire) etapes.push(`<div class="etape"><div class="eti-r">😤 Ta bête noire</div><div class="drapeaux">${F[beteNoire[0]]||'🏳️'}</div><h3 style="font-size:clamp(18px,5vw,24px)">${beteNoire[0]}</h3><div class="punch">🎙️ ${pioche([
+    `${beteNoire[0]} t'a fait trébucher ${beteNoire[1]} fois. À chaque fois que cette équipe entre sur le terrain, ton flair part en vacances.`,
+    `Méfie-toi de ${beteNoire[0]} en phase finale : ${beteNoire[1]} de tes plantages portent sa marque. Un vrai cauchemar récurrent.`
+  ])}</div></div>`);
+
+  etapes.push(`<div class="etape"><div class="eti-r">🎬 Fin du voyage</div><h3 style="font-size:clamp(18px,5vw,24px)">À bientôt, ${pseudo}</h3><div class="ligne-r" style="color:var(--gris);margin-top:8px;max-width:420px">Voilà ta phase de poules, dans le bon et le moins bon. La phase finale arrive — nouvelle grille, nouveaux comptes. Tout reste à réécrire.</div></div>`);
 
   /* affichage via l'overlay reveal existant */
   let etape = 0;
