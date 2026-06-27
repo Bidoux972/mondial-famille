@@ -154,6 +154,22 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .classement .rang{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--ligne)}
 .mt-wrap{padding:14px 14px 4px;border-bottom:1px solid var(--ligne);background:linear-gradient(180deg,rgba(245,180,60,.05),transparent)}
 .mt-head{text-align:center;margin-bottom:13px}
+.der-bandeau{background:linear-gradient(90deg,rgba(255,107,94,.18),rgba(245,180,60,.12));border:1px solid var(--corail);border-radius:10px;padding:10px 13px;font-size:12.5px;line-height:1.45;color:var(--creme);text-align:center;margin-bottom:14px}
+.der-bandeau b{color:var(--or);font-family:'Space Grotesk',monospace;font-size:15px}
+.sacre-cta{text-align:center;padding:18px 14px;border-bottom:1px solid var(--ligne);background:linear-gradient(180deg,rgba(245,180,60,.08),transparent)}
+.sacre-cta-t{font-family:'Space Grotesk',monospace;font-size:14px;font-weight:800;color:var(--or)}
+.sacre-cta-s{font-size:12px;color:var(--gris);margin:4px 0 12px}
+.sacre-btn{background:linear-gradient(90deg,var(--or),var(--corail));color:#0E1B2C;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:15px;border:none;border-radius:24px;padding:13px 22px;cursor:pointer;letter-spacing:.3px}
+.sacre-btn:active{transform:scale(.97)}
+.sacre-cta-note{font-size:11px;color:var(--gris);margin-top:10px;font-style:italic}
+.scelle{text-align:center;padding:34px 20px}
+.scelle-cad{font-size:64px;line-height:1;margin-bottom:10px}
+.scelle-t{font-family:'Space Grotesk',monospace;font-size:18px;font-weight:800;letter-spacing:1.5px;color:var(--or)}
+.scelle-rebours{font-size:14px;color:var(--creme);margin-top:8px}
+.scelle-rebours b{color:var(--corail);font-family:'Space Grotesk',monospace;font-size:20px}
+.scelle-x{font-size:13.5px;line-height:1.55;color:var(--creme);max-width:440px;margin:16px auto 0}
+.scelle-x b{color:var(--or)}
+.scelle-note{font-size:12px;font-style:italic;color:var(--gris);margin-top:16px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.5}
 .mt-titre{font-family:'Space Grotesk',monospace;font-size:20px;font-weight:800;letter-spacing:1px;background:linear-gradient(90deg,var(--or),var(--corail));-webkit-background-clip:text;background-clip:text;color:transparent}
 .mt-sous{font-size:12px;color:var(--gris);margin-top:2px}
 .mt-duel{border:1px solid var(--ligne);border-radius:12px;padding:13px;margin-bottom:10px}
@@ -596,7 +612,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.999';
+const APP_VERSION = '10.3';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1551,6 +1567,10 @@ const COMMENTAIRES = [
 ];
 /* MONEY TIME : met en scène la dernière ligne droite — duel du titre (1-2) et du bronze (3-4).
    Dynamique : tiré de calculTotaux, ne s'affiche que s'il reste des matchs de poule à jouer. */
+/* MONEY TIME (duels chiffrés) — NON BRANCHÉ depuis V10.1 : remplacé par l'écran "classement
+   scellé" pour préserver le suspense total jusqu'au sacre. Conservé pour réemploi éventuel
+   en phase 2 (les vannes et le format des duels restent utiles). Ne pas rappeler tel quel
+   pendant les poules : il révélerait le top du classement. */
 function moneyTime(lignes){
   if(!lignes || lignes.length<2) return '';
   if(!lignes.some(l=>l.total!==0)) return '';        /* pas encore de scores : rien à scénariser */
@@ -1605,6 +1625,7 @@ function moneyTime(lignes){
   };
 
   let html = `<div class="mt-wrap">
+    <div class="der-bandeau">🔥 DERNIÈRE LIGNE DROITE DES POULES — plus que <b>${72 - Object.keys(resultats).length}</b> match${(72 - Object.keys(resultats).length)>1?'s':''} avant le verdict. Le champion sera couronné au dernier coup de sifflet. ⏳</div>
     <div class="mt-head">
       <div class="mt-titre">⏱️ MONEY TIME</div>
       <div class="mt-sous">Dernière ligne droite · tout se joue maintenant</div>
@@ -1621,7 +1642,67 @@ function classement(){
   const lignesHier = calculTotaux(m => jourCle(m) !== aujourdhui);
   const aDesPointsHier = lignesHier.some(l=>l.total!==0);
   const posHier = {}; lignesHier.forEach((l,i)=>posHier[l.p]=i);
-  $('tableau-classement').innerHTML = moneyTime(lignes) + lignes.map((l,i)=>{
+  const nbValides = Object.keys(resultats).length;
+  const aDesPoints = lignes.some(l=>l.total!==0);
+  const poulesFinies = nbValides >= 72 && aDesPoints;
+  const moneyTimeActif = aDesPoints && nbValides < 72;   /* dernière ligne droite : tout est scellé */
+
+  /* ÉTAT 1 — MONEY TIME : classement scellé, suspense total jusqu'au sacre */
+  if(moneyTimeActif){
+    const reste = 72 - nbValides;
+    /* accroche qui monte en tension par palier (zéro info sur le classement) */
+    let accroche;
+    if(reste >= 30)      accroche = `Le coffre est fermé, scellé, verrouillé. <b>Money Time</b> enclenché. Et croyez-moi, ça ne fait que commencer.`;
+    else if(reste >= 15) accroche = `Ça se resserre. Quelque part, dans l'ombre, quelqu'un grignote des points. Mais qui ? Le coffre, lui, ne dira rien.`;
+    else if(reste >= 6)  accroche = `Plus que quelques matchs et le classement bout sous le scellé. La pression monte, les certitudes s'effritent. On approche.`;
+    else if(reste >= 1)  accroche = `🚨 <b>DERNIERS MATCHS.</b> Le verdict est à portée de sifflet. Personne ne dort tranquille ce soir — surtout pas ceux qui se croient devant.`;
+    else                 accroche = `C'est fini. Les 72 matchs sont dans la boîte. Le sacre n'attend plus qu'un clic. Rassemblez la famille.`;
+    /* pique moqueuse piochée à chaque rendu */
+    const pique = pioche([
+      `Pendant que vous lisez ça, le classement rigole tout seul dans son coffre.`,
+      `Quelqu'un mène. Ce n'est peut-être pas vous. Méditez là-dessus.`,
+      `Le suspense est un plat qui se savoure à la fin. Et il mijote.`,
+      `Inutile de secouer l'app : le classement ne tombera pas avant le dernier match.`,
+      `Vos points, vous les avez. Votre place, c'est secret défense.`,
+      `Celui qui est premier ce soir ne le sait même pas. Délicieux, non ?`,
+      `Le commissaire a avalé la clé du coffre. Rendez-vous au verdict.`,
+      `Quatre prétendants, un seul trône. Et un coffre qui ne balance personne.`,
+      `Tu peux toujours recharger la page : le coffre, lui, ne craque pas.`,
+      `Quelque part, un favori transpire. On ne dira pas qui. On sait, c'est tout.`
+    ]);
+    $('tableau-classement').innerHTML = `
+      <div class="scelle">
+        <div class="scelle-cad">🔐</div>
+        <div class="scelle-t">CLASSEMENT SOUS SCELLÉS</div>
+        <div class="scelle-rebours">plus que <b>${reste}</b> match${reste>1?'s':''} avant le verdict</div>
+        <div class="scelle-x">${accroche}</div>
+        <div class="scelle-note">🎙️ ${pique}</div>
+      </div>`;
+    $('note-classement').textContent = `${nbValides} matchs validés sur 72 · classement scellé jusqu'au verdict`;
+    $('commentaire-jour').style.display='none';
+    boutonRecapJour();
+    murGloire();
+    return;
+  }
+
+  /* ÉTAT 2 — POULES TERMINÉES : le bouton du sacre, classement toujours masqué jusqu'au reveal */
+  if(poulesFinies){
+    $('tableau-classement').innerHTML = `
+      <div class="sacre-cta">
+        <div class="sacre-cta-t">🏁 La phase de poules est terminée</div>
+        <div class="sacre-cta-s">72 matchs joués. Le verdict est tombé, scellé. Réunissez la famille.</div>
+        <button class="sacre-btn" onclick="sacrePoules()">🏆 Révéler le champion des poules</button>
+        <div class="sacre-cta-note">Le classement complet s'affichera une fois la cérémonie lancée.</div>
+      </div>`;
+    $('note-classement').textContent = `72 matchs sur 72 · prêt pour le sacre`;
+    $('commentaire-jour').style.display='none';
+    boutonRecapJour();
+    murGloire();
+    return;
+  }
+
+  /* ÉTAT 3 — NORMAL : tableau complet (avant le money time, ou phase 2 reconfigurée) */
+  $('tableau-classement').innerHTML = lignes.map((l,i)=>{
     let fleche = '';
     if(aDesPointsHier){
       const d = posHier[l.p] - i;
@@ -3796,7 +3877,10 @@ function lancerRecapJour(jourClef){
         `Grand chelem dans le mauvais sens pour ${p}. Même en pariant au hasard, ${ilElle(p)} aurait fait mieux. C'est mathématique, et c'est gênant.`
       ]));
     });
-    /* 3) Le sort du leader provisoire : on aime taper sur celui d'en haut */
+    /* 3) Le sort du leader provisoire : on aime taper sur celui d'en haut.
+       MASQUÉ en Money Time (poules non finies) pour ne pas spoiler le classement. */
+    const enMoneyTime = Object.keys(resultats).length < 72;
+    if(!enMoneyTime){
     const clAvant = calculTotaux(x => x.dt.getTime() < matchs[0].dt.getTime());
     const clApres = calculTotaux(x => x.dt.getTime() <= matchs[matchs.length-1].dt.getTime());
     if(clAvant.length && clApres.length && clAvant[0].total>0){
@@ -3816,6 +3900,7 @@ function lancerRecapJour(jourClef){
         ]));
       }
     }
+    }
     if(contextLignes.length){
       /* on pioche au max 3 piques contextuelles pour ne pas noyer */
       const choisies = [];
@@ -3825,7 +3910,16 @@ function lancerRecapJour(jourClef){
     }
   }
 
-  /* ACTE FINAL — le classement du soir + grande punchline genrée */
+  /* ACTE FINAL — le classement du soir + grande punchline genrée.
+     EN MONEY TIME : on scelle le classement (suspense préservé jusqu'au sacre). */
+  const enMTjour = Object.keys(resultats).length < 72;
+  if(enMTjour){
+    etapes.push(`<div class="etape"><div class="eti-r">🔒 Classement sous scellés</div><div style="font-size:54px;line-height:1;margin:6px 0">🔐</div><h3 style="font-size:clamp(18px,5vw,26px)">Money Time</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:420px">On garde le détail de vos points, mais le classement reste secret jusqu'au dernier des 72 matchs.</div><div class="punch">🎙️ ${pioche([
+      "Le suspense est total. Personne ne saura qui mène avant le verdict final.",
+      "Vos points, oui. Votre place, non. Patience : le sacre approche.",
+      "Le commissaire a verrouillé le classement. Rendez-vous au 72e match."
+    ])}</div></div>`);
+  } else {
   const clJour = calculTotaux(x => x.dt.getTime() <= matchs[matchs.length-1].dt.getTime());
   const lignesFinal = clJour.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
   const leader = clJour[0], lanterne = clJour[clJour.length-1];
@@ -3851,6 +3945,7 @@ function lancerRecapJour(jourClef){
     ]);
   }
   etapes.push(`<div class="etape"><div class="eti-r">🏆 Le classement du soir</div>${lignesFinal}<div class="punch">🎙️ ${punchFinale}</div></div>`);
+  }
 
   /* affichage overlay */
   let etape = 0;
@@ -3970,12 +4065,63 @@ function etapesReveal(id){
     }
   }
   const vd = verdictMatch(m, re);
+  /* MONEY TIME : tant que les 72 matchs de poules ne sont pas tous joués, on SCELLE le
+     classement général dans le reveal pour préserver le suspense du sacre. Le détail des
+     points du match ("Les comptes sont bons") reste affiché. En phase 2, plus de scellé. */
+  const enMoneyTime = Object.keys(resultats).length < 72;
+  const etapeClassement = enMoneyTime
+    ? (()=>{ const reste = 72 - Object.keys(resultats).length;
+        const tease = reste>=15 ? `Encore <b>${reste}</b> matchs avant que le coffre s'ouvre. Le classement mijote.`
+          : reste>=6 ? `Plus que <b>${reste}</b> matchs. Ça chauffe sous le scellé.`
+          : reste>=1 ? `🚨 Plus que <b>${reste}</b> match${reste>1?'s':''} ! Le verdict approche à grands pas.`
+          : `Les 72 matchs sont joués. Le sacre n'attend plus qu'un clic.`;
+        /* pique de TENSION tirée du fait réel du match (jamais le rang) : on dramatise
+           ce qui vient de se passer pour stresser avant le prochain pari */
+        const n = scores.length;
+        const gagnants = scores.filter(s=>s.t>0).length;
+        const plantes = scores.filter(s=>s.t<=0).length;
+        const cartonneur = scores.some(s=>s.t>=4);
+        let piqueT;
+        if(n===0){
+          piqueT = `Personne n'avait parié sur ce match. Tout le monde a joué la montre… mauvais calcul, peut-être.`;
+        } else if(vd && vd.fete && plantes>=Math.ceil(n/2)){
+          piqueT = pioche([
+            `💥 Coup de tonnerre ! Ce résultat a pris la majorité à contre-pied. Les cartes sont rebattues — le prochain pari peut TOUT changer.`,
+            `Séisme. Ce match a fait des dégâts dans les pronos, et le classement vient de trembler. Rien n'est joué, accroche-toi.`,
+            `Personne ne l'avait vu venir, ou presque. L'écart a bougé dans l'ombre… dans quel sens ? À toi de réagir au prochain match.`
+          ]);
+        } else if(plantes===n){
+          piqueT = pioche([
+            `🌊 Naufrage général : tout le monde s'est vautré sur ce match. Le classement est sens dessus dessous — le prochain pari sera décisif.`,
+            `Zéro pointé pour tous. Personne n'a rien vu venir. Quand ça se reresserre comme ça, le moindre prono peut faire la bascule.`,
+            `Carnage. La famille au grand complet à côté de la plaque. Les positions se rapprochent dangereusement… ou pas. Mystère scellé.`
+          ]);
+        } else if(cartonneur){
+          piqueT = pioche([
+            `🎯 Quelqu'un a flairé le coup parfait sur ce match et empoché le gros lot. L'écart vient de se creuser… ou de se combler. Tu ne sauras pas. Stresse un peu.`,
+            `Un carton plein vient de tomber pour l'un d'entre vous. Le classement a basculé dans l'ombre. Le prochain match, c'est ta chance de répondre.`,
+            `Coup de maître anonyme sur ce match. Pendant que certains exultent en silence, d'autres serrent les dents. À toi de jouer.`
+          ]);
+        } else if(gagnants>0 && plantes>0){
+          piqueT = pioche([
+            `Ce match a fait des heureux ET des déçus. L'écart a bougé sans bruit. Le coffre ne dira pas dans quel sens — au prochain pari de trancher.`,
+            `Des points distribués, d'autres perdus : les positions se redessinent en coulisses. Plus c'est serré, plus chaque pari compte. Concentre-toi.`,
+            `Mi-figue mi-raisin sur ce match. Quelque part, ça se frotte les mains ; ailleurs, ça grince des dents. Le suspense reste entier.`
+          ]);
+        } else {
+          piqueT = pioche([
+            `Petit match tranquille côté pronos. Mais ne te repose pas : le prochain peut tout faire basculer.`,
+            `Rien de spectaculaire cette fois. Le classement attend son prochain coup de théâtre — qui viendra, c'est sûr.`
+          ]);
+        }
+        return `<div class="etape"><div class="eti-r">🔒 Classement sous scellés</div><div style="font-size:54px;line-height:1;margin:6px 0">🔐</div><h3 style="font-size:clamp(18px,5vw,26px)">Money Time</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:420px">${tease}</div><div class="punch">🎙️ ${piqueT}</div></div>`; })()
+    : `<div class="etape"><div class="eti-r">Le classement après ce match</div>${lignesClassement}<div class="punch">🎙️ ${punch}</div></div>`;
   return [
     `<div class="etape"><div class="eti-r">🎬 Le récap du match</div><div class="drapeaux">${F[m.a]} ${F[m.b]}</div><h3>${m.a}<br>${m.b}</h3><div class="ligne-r" style="color:var(--gris)">Groupe ${m.g} · terminé</div></div>`,
     `<div class="etape"><div class="eti-r">Les paris étaient posés…</div>${lignesParis}</div>`,
     `<div class="etape" data-reveal-score data-a="${re.score_a}" data-b="${re.score_b}" data-fete="${vd.fete?1:0}"><div class="eti-r">Le verdict du terrain</div><div class="grand-score"><span class="sc-a">0</span> – <span class="sc-b">0</span></div><div class="verdict-box"><div class="verdict-titre">${vd.titre}</div><div class="verdict-sous">${vd.sous}</div></div>${re.buteurs?`<div class="ligne-r" style="margin-top:14px">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`,
     `<div class="etape"><div class="eti-r">Les comptes sont bons</div>${lignesComptes}</div>`,
-    `<div class="etape"><div class="eti-r">Le classement après ce match</div>${lignesClassement}<div class="punch">🎙️ ${punch}</div></div>`
+    etapeClassement
   ];
 }
 function ouvrirReveal(id){
@@ -4002,6 +4148,77 @@ function ouvrirReveal(id){
       else { div.style.display = 'none'; }
     } else rendre();
   };
+  rendre();
+}
+
+/* ============ 🏆 SACRE DU CHAMPION DES POULES ============ */
+/* Classement PUR PRONOS (sans bonus écurie : le Mondial n'est pas fini, le bonus
+   finaliste/vainqueur viendra au sacre mondial, plus tard). Ton : sans pitié. */
+function classementPurPronos(){
+  return calculTotaux(null)
+    .map(l => Object.assign({}, l, {total: l.total - (l.bonusEc||0)}))
+    .sort((x,y)=> y.total-x.total || y.exacts-x.exacts);
+}
+function sacrePoules(){
+  const cl = classementPurPronos();
+  if(cl.length < 2) return;
+  const fl = p => (participants[p] && F[participants[p].equipe_ecurie]) || '🏳️';
+  const champ = cl[0], dauphin = cl[1];
+  const troisieme = cl[2] || null, quatrieme = cl[3] || null;
+
+  /* mini-classement récap (pur pronos) */
+  const recapClassement = cl.map((l,i)=>`<div class="ligne-r">${i===0?'👑':(i+1)+'.'} ${l.p} ${fl(l.p)} <b>${l.total}</b></div>`).join('');
+
+  const etapes = [];
+
+  /* — Ouverture — */
+  etapes.push(`<div class="etape"><div class="eti-r">🏁 Fin de la phase de poules</div><h3>72 matchs.<br>Le verdict.</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px">Des certitudes. Des humiliations. Et une vérité comptable, implacable.</div></div>`);
+
+  /* — Acte I : le fond du classement — */
+  if(quatrieme){
+    etapes.push(`<div class="etape"><div class="eti-r">🥄 La cuillère de bois</div><div class="drapeaux">${fl(quatrieme.p)}</div><h3>${quatrieme.p}</h3><div class="grand-score" style="color:var(--corail)">${quatrieme.total}</div><div class="punch">🎙️ ${pioche([
+      `Bon dernier. ${quatrieme.p} ferme la marche avec l'autorité de celui qui n'avait rien à défendre. La lanterne rouge est à toi, et elle ne bascule pas.`,
+      `Quatrième sur quatre. Mathématiquement, c'est la dernière place. Humainement, c'est pire : c'est la dernière place ET tout le monde l'a vu.`,
+      `${quatrieme.p} clôt le classement. On ne dira pas que c'était prévisible — on le pensera très fort, c'est tout.`
+    ])}</div></div>`);
+  }
+  if(troisieme){
+    etapes.push(`<div class="etape"><div class="eti-r">🥉 La dernière marche du podium</div><div class="drapeaux">${fl(troisieme.p)}</div><h3>${troisieme.p}</h3><div class="grand-score" style="color:#cd7f32">${troisieme.total}</div><div class="punch">🎙️ ${pioche([
+      `${troisieme.p} décroche le bronze — autrement dit, le premier des perdants du bas. Une médaille en chocolat, mais une médaille quand même.`,
+      `Troisième. ${troisieme.p} monte sur le podium par la petite porte, celle où on essuie ses pieds. C'est pris, c'est pas rien, c'est pas grand-chose.`,
+      `Le bronze pour ${troisieme.p}. La preuve qu'on peut figurer sur un podium et n'avoir convaincu personne.`
+    ])}</div></div>`);
+  }
+
+  /* — Acte II : LE SACRE (avant le dauphin, exprès) — */
+  etapes.push(`<div class="etape"><div class="eti-r">👑 Et le champion des poules est…</div><h3 style="color:var(--gris)">Roulement de tambour…</h3><div class="ligne-r" style="color:var(--gris);margin-top:14px">Monsieur Statistique vous l'avait dit. Vous n'avez pas écouté. Tant pis.</div></div>`);
+  etapes.push(`<div class="etape" data-reveal-score data-a="${champ.total}" data-b="${champ.total}" data-fete="1"><div class="eti-r">🏆 Champion de la phase de poules</div><div style="font-size:60px;line-height:1">👑</div><div class="drapeaux">${fl(champ.p)}</div><h3>${champ.p}</h3><div class="grand-score">${champ.total}</div><div class="verdict-box"><div class="verdict-titre">Meilleur pronostiqueur</div><div class="verdict-sous">${champ.exacts} scores exacts · ${champ.buts} buteurs trouvés · ${champ.ors} paris en or. La famille s'incline.</div></div><div class="punch">🎙️ ${pioche([
+    `${champ.p} règne sur les poules sans partage. Les autres ont joué pour la deuxième place — et même ça, ils s'en disputent les miettes.`,
+    `Le trône est à ${champ.p}. Que personne ne conteste : les chiffres sont là, froids, définitifs, humiliants pour les autres.`,
+    `${champ.p} champion. On pourrait faire durer le suspense, mais soyons honnêtes : il n'y en avait pas vraiment.`
+  ])}</div></div>`);
+
+  /* — Acte III : le dauphin, la chute — */
+  etapes.push(`<div class="etape"><div class="eti-r">🥈 Et à un souffle du trône…</div><div class="drapeaux">${fl(dauphin.p)}</div><h3>${dauphin.p}</h3><div class="grand-score" style="color:#c0c0c0">${dauphin.total}</div><div class="punch">🎙️ ${pioche([
+    `${dauphin.p}, vice-champion. Le roi du « presque », le maître du « j'y étais ». ${champ.total - dauphin.total} point${(champ.total-dauphin.total)>1?'s':''} d'écart : la distance exacte entre une légende et une note de bas de page.`,
+    `Médaille d'argent pour ${dauphin.p}. L'argent, ce métal noble qui ternit. La deuxième place, c'est la première des défaites — et tu la portes très bien.`,
+    `${dauphin.p} échoue au pied du trône. Si près, si loin. La consolation ? Il y en a aucune. La phase finale, peut-être. Ou pas.`
+  ])}</div></div>`);
+
+  /* — Clôture — */
+  etapes.push(`<div class="etape"><div class="eti-r">🎬 Rideau sur les poules</div>${recapClassement}<div class="punch">🎙️ Voilà pour les poules. La phase finale, c'est une autre histoire — d'autres matchs, d'autres barèmes, d'autres comptes à régler. On remet les compteurs à zéro. Rendez-vous au prochain acte.</div></div>`);
+
+  /* affichage via l'overlay reveal existant */
+  let etape = 0;
+  let div = document.getElementById('reveal-overlay');
+  if(!div){ div = document.createElement('div'); div.id='reveal-overlay'; div.className='reveal'; document.body.appendChild(div); }
+  div.style.display = 'flex';
+  const rendre = () => {
+    div.innerHTML = etapes[etape] + `<div class="suite">${etape < etapes.length-1 ? 'Touche pour la suite ('+(etape+1)+'/'+etapes.length+')' : 'Touche pour fermer'}</div>`;
+    const sc = div.querySelector('[data-reveal-score]');
+    if(sc) animerScore(sc, div);
+  };
+  div.onclick = () => { etape++; if(etape>=etapes.length){ div.style.display='none'; } else rendre(); };
   rendre();
 }
 
