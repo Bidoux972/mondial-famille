@@ -596,7 +596,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.998';
+const APP_VERSION = '9.999';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1574,22 +1574,22 @@ function moneyTime(lignes){
     /* verdict adaptatif */
     let verdict;
     if(type==='titre'){
-      const lance = (b.exacts>=8) ? `, reine du score exact (${b.exacts})` : (b.buts>b.butsKo ? `, redoutable sur les buteurs` : '');
-      const forceH = (h.buts>h.butsKo) ? `le sniper de buteurs (${ratio(h)})` : `${h.exacts} scores exacts au compteur`;
+      const lance = (b.exacts>=8) ? `, chirurgienne du score exact — ${b.exacts} plein dans le mille` : (b.buts>b.butsKo ? `, redoutable sur les buteurs (${ratio(b)})` : `, ${b.exacts} exacts en embuscade`);
+      const forceH = (h.buts>h.butsKo) ? `pose ses buteurs avec un sang-froid de sniper — ${h.buts} trouvés pour ${h.butsKo} manqués` : `aligne ${h.exacts} scores exacts, chirurgical`;
       if(ecart===0){
         verdict = `Égalité parfaite à ${h.total} : ${h.p} et ${b.p} se tiennent à la culotte avant la dernière salve. Un prono, un seul, peut tout faire basculer. 🎯`;
       } else if(ecart<=4){
-        verdict = `${ecart} point${ecart>1?'s':''}, une journée, deux écoles. <b>${h.p}</b> ${forceH} tient la corde ; <b>${b.p}</b>${lance} pousse derrière. Un coup d'éclat et la couronne change de tête. 🎯`;
+        verdict = `${ecart} point${ecart>1?'s':''}, une journée, deux écoles. <b>${h.p}</b> ${forceH} et tient la corde ; <b>${b.p}</b>${lance}, pousse derrière. Un coup d'éclat et la couronne change de tête. 🎯`;
       } else {
         verdict = `<b>${h.p}</b> mène de ${ecart} points et sent le titre. <b>${b.p}</b> devra sortir le match parfait pour y croire encore — pas impossible, mais il faudra du génie. 🔥`;
       }
     } else {
-      const tireH = (h.butsKo>h.buts) ? `${h.p} tire dans tous les sens (${ratio(h)})` : `${h.p} défend son rang`;
-      const faibleB = (b.ors<=6) ? `${b.p} joue petit bras (${b.ors} 🌟 seulement)` : `${b.p} reste à l'affût`;
+      const tireH = (h.butsKo>h.buts) ? `${h.p} tire dans tous les sens — ${h.buts} buteurs trouvés... pour ${h.butsKo} vautrés` : `${h.p} tient son rang sans flamboyer (${ratio(h)})`;
+      const faibleB = (b.ors<=6) ? `${b.p}, lui, joue les économes : ${b.ors} étoiles, deux fois moins que les autres` : `${b.p} reste à l'affût (${b.ors} 🌟)`;
       if(ecart===0){
         verdict = `${h.total} partout : ${h.p} et ${b.p} se disputent le bronze au coude-à-coude. L'honneur de la famille est en jeu. 🥊`;
       } else {
-        verdict = `${ecart} point${ecart>1?'s':''} pour l'honneur. ${tireH}, ${faibleB}. La dernière marche du podium se mérite — que le meilleur des deux la prenne. 🥊`;
+        verdict = `${ecart} point${ecart>1?'s':''} pour l'honneur. ${tireH}. ${faibleB}. La dernière marche du podium se mérite — que le meilleur des deux la prenne. 🥊`;
       }
     }
 
