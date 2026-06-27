@@ -152,6 +152,19 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 /* classement */
 .classement{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;overflow:hidden}
 .classement .rang{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--ligne)}
+.mt-wrap{padding:14px 14px 4px;border-bottom:1px solid var(--ligne);background:linear-gradient(180deg,rgba(245,180,60,.05),transparent)}
+.mt-head{text-align:center;margin-bottom:13px}
+.mt-titre{font-family:'Space Grotesk',monospace;font-size:20px;font-weight:800;letter-spacing:1px;background:linear-gradient(90deg,var(--or),var(--corail));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mt-sous{font-size:12px;color:var(--gris);margin-top:2px}
+.mt-duel{border:1px solid var(--ligne);border-radius:12px;padding:13px;margin-bottom:10px}
+.mt-duel-t{font-size:11px;font-weight:700;letter-spacing:.5px;margin-bottom:9px}
+.mt-faces{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.mt-face{flex:1;text-align:center;background:rgba(255,255,255,.04);border-radius:9px;padding:8px 4px}
+.mt-nom{font-size:14px;font-weight:800}
+.mt-pts{font-family:'Space Grotesk',monospace;font-size:22px;font-weight:800;color:var(--creme);line-height:1.1}
+.mt-meta{font-size:10px;color:var(--gris)}
+.mt-ecart{font-family:'Space Grotesk',monospace;color:var(--gris);font-weight:700;font-size:13px}
+.mt-verdict{font-size:13px;line-height:1.5;color:var(--creme)}
 .classement .rang:last-child{border-bottom:none}
 .classement .pos{font-family:'Archivo Black';font-size:20px;width:30px;text-align:center;color:var(--gris)}
 .classement .rang:first-child .pos{color:var(--or)}
@@ -583,7 +596,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '9.997';
+const APP_VERSION = '9.998';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1536,13 +1549,79 @@ const COMMENTAIRES = [
   l => `${l[0].p} en tête — coïncidence ? Les statisticiens de la famille mènent l'enquête. 🤨`,
   l => `Un Match en Or mal placé et tout s'effondre. Demandez aux traders. Ou à ${l[l.length-1].p}.`
 ];
+/* MONEY TIME : met en scène la dernière ligne droite — duel du titre (1-2) et du bronze (3-4).
+   Dynamique : tiré de calculTotaux, ne s'affiche que s'il reste des matchs de poule à jouer. */
+function moneyTime(lignes){
+  if(!lignes || lignes.length<2) return '';
+  if(!lignes.some(l=>l.total!==0)) return '';        /* pas encore de scores : rien à scénariser */
+  if(Object.keys(resultats).length >= 72) return '';  /* phase de poules terminée : plus de money time */
+
+  const ratio = l => `${l.buts}⚽/${l.butsKo}❌`;
+  const flag = p => (participants[p] && F[participants[p].equipe_ecurie]) || '';
+
+  /* construit une affiche de duel entre la ligne du dessus (h, devant) et celle du dessous (b) */
+  const affiche = (h, b, type) => {
+    const ecart = h.total - b.total;
+    const cBord = type==='titre' ? 'var(--or)' : 'var(--corail)';
+    const fondGrad = type==='titre' ? 'linear-gradient(135deg,rgba(245,180,60,.16),transparent)' : 'linear-gradient(135deg,rgba(255,107,94,.12),transparent)';
+    const entete = type==='titre'
+      ? `<span style="color:var(--or)">👑 LE SOMMET · POUR LA COURONNE</span>`
+      : `<span style="color:#ff9b8f">🥉 LA BAGARRE DU BRONZE</span>`;
+
+    /* le couronné en tête garde son 👑 si c'est le leader général */
+    const tagH = (type==='titre') ? '👑 ' : '';
+
+    /* verdict adaptatif */
+    let verdict;
+    if(type==='titre'){
+      const lance = (b.exacts>=8) ? `, reine du score exact (${b.exacts})` : (b.buts>b.butsKo ? `, redoutable sur les buteurs` : '');
+      const forceH = (h.buts>h.butsKo) ? `le sniper de buteurs (${ratio(h)})` : `${h.exacts} scores exacts au compteur`;
+      if(ecart===0){
+        verdict = `Égalité parfaite à ${h.total} : ${h.p} et ${b.p} se tiennent à la culotte avant la dernière salve. Un prono, un seul, peut tout faire basculer. 🎯`;
+      } else if(ecart<=4){
+        verdict = `${ecart} point${ecart>1?'s':''}, une journée, deux écoles. <b>${h.p}</b> ${forceH} tient la corde ; <b>${b.p}</b>${lance} pousse derrière. Un coup d'éclat et la couronne change de tête. 🎯`;
+      } else {
+        verdict = `<b>${h.p}</b> mène de ${ecart} points et sent le titre. <b>${b.p}</b> devra sortir le match parfait pour y croire encore — pas impossible, mais il faudra du génie. 🔥`;
+      }
+    } else {
+      const tireH = (h.butsKo>h.buts) ? `${h.p} tire dans tous les sens (${ratio(h)})` : `${h.p} défend son rang`;
+      const faibleB = (b.ors<=6) ? `${b.p} joue petit bras (${b.ors} 🌟 seulement)` : `${b.p} reste à l'affût`;
+      if(ecart===0){
+        verdict = `${h.total} partout : ${h.p} et ${b.p} se disputent le bronze au coude-à-coude. L'honneur de la famille est en jeu. 🥊`;
+      } else {
+        verdict = `${ecart} point${ecart>1?'s':''} pour l'honneur. ${tireH}, ${faibleB}. La dernière marche du podium se mérite — que le meilleur des deux la prenne. 🥊`;
+      }
+    }
+
+    return `<div class="mt-duel" style="background:${fondGrad};border-color:${cBord}">
+      <div class="mt-duel-t">${entete}</div>
+      <div class="mt-faces">
+        <div class="mt-face"><div class="mt-nom">${tagH}${h.p} ${flag(h.p)}</div><div class="mt-pts" style="color:var(--or)">${h.total}</div><div class="mt-meta">${h.exacts} exacts · ${h.buts}⚽</div></div>
+        <div class="mt-ecart">+${ecart}</div>
+        <div class="mt-face"><div class="mt-nom">${b.p} ${flag(b.p)}</div><div class="mt-pts">${b.total}</div><div class="mt-meta">${b.exacts} exacts · ${b.ors} 🌟</div></div>
+      </div>
+      <div class="mt-verdict">${verdict}</div>
+    </div>`;
+  };
+
+  let html = `<div class="mt-wrap">
+    <div class="mt-head">
+      <div class="mt-titre">⏱️ MONEY TIME</div>
+      <div class="mt-sous">Dernière ligne droite · tout se joue maintenant</div>
+    </div>`;
+  html += affiche(lignes[0], lignes[1], 'titre');
+  if(lignes.length>=4) html += affiche(lignes[2], lignes[3], 'bronze');
+  html += `</div>`;
+  return html;
+}
+
 function classement(){
   const lignes = calculTotaux(null);
   const aujourdhui = jourCle({dt: new Date()});
   const lignesHier = calculTotaux(m => jourCle(m) !== aujourdhui);
   const aDesPointsHier = lignesHier.some(l=>l.total!==0);
   const posHier = {}; lignesHier.forEach((l,i)=>posHier[l.p]=i);
-  $('tableau-classement').innerHTML = lignes.map((l,i)=>{
+  $('tableau-classement').innerHTML = moneyTime(lignes) + lignes.map((l,i)=>{
     let fleche = '';
     if(aDesPointsHier){
       const d = posHier[l.p] - i;
