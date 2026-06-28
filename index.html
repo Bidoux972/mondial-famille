@@ -654,7 +654,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.2';
+const APP_VERSION = '12.3';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -942,19 +942,19 @@ async function sb(path, opts = {}) {
 async function chargerTout() {
   try {
     const [p, r, pa, po, av, jo, fi, du] = await Promise.all([
-      sb('mondial_pronostics?select=*'),
-      sb('mondial_resultats?select=*'),
-      sb('mondial_participants?select=*'),
-      sb('mondial_potins?select=*&order=created_at.desc'),
+      sb('mondial_pronostics?select=*').catch(()=>null),
+      sb('mondial_resultats?select=*').catch(()=>null),
+      sb('mondial_participants?select=*').catch(()=>null),
+      sb('mondial_potins?select=*&order=created_at.desc').catch(()=>null),
       sb('mondial_avantmatch?select=*').catch(()=>[]),
       sb('mondial_joueurs?select=*').catch(()=>[]),
       sb('mondial_fiches?select=*').catch(()=>[]),
       sb('mondial_duels?select=*&order=created_at.desc').catch(()=>[])
     ]);
-    pronos = {}; (p||[]).forEach(x => { (pronos[x.pseudo] = pronos[x.pseudo] || {})[x.match_id] = x; });
-    resultats = {}; (r||[]).forEach(x => resultats[x.match_id] = x); _statsButeurs = null;
-    participants = {}; (pa||[]).forEach(x => participants[x.pseudo] = x);
-    potinsCloud = po || [];
+    if(p!==null){ pronos = {}; (p||[]).forEach(x => { (pronos[x.pseudo] = pronos[x.pseudo] || {})[x.match_id] = x; }); }
+    if(r!==null){ resultats = {}; (r||[]).forEach(x => resultats[x.match_id] = x); _statsButeurs = null; }
+    if(pa!==null){ participants = {}; (pa||[]).forEach(x => participants[x.pseudo] = x); }
+    if(po!==null){ potinsCloud = po || []; }
     avmCloud = {}; (av||[]).forEach(x => avmCloud[x.match_id] = x);
     joueursCloud = {}; (jo||[]).forEach(x => joueursCloud[x.equipe] = x.joueurs);
     fichesCloud = {}; (fi||[]).forEach(x => fichesCloud[x.equipe] = x);
@@ -968,7 +968,7 @@ async function chargerTout() {
     console.error(e);
     toast("Connexion à la base impossible — réessaie dans un instant");
   }
-  toutAfficher();
+  try{ toutAfficher(); }catch(e){ console.error('toutAfficher:', e); }
   signalerPresence();
   detecterReveals();
 }
