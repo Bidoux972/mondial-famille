@@ -653,7 +653,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.0';
+const APP_VERSION = '12.1';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4723,7 +4723,7 @@ function confettiReveal(overlay){
   }
   setTimeout(()=>{ if(c) c.innerHTML=''; }, 4200);
 }
-function toutAfficher(){ if(palmares && palmares.champion_poules){ injecterPhaseFinale(); } lisereEcurie(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); if(document.getElementById('sec-tableau') && document.getElementById('sec-tableau').classList.contains('actif')) renduBracket(); $('admin-maj').style.display = admin ? '' : 'none';
+function toutAfficher(){ if(palmares && palmares.champion_poules){ try{ injecterPhaseFinale(); }catch(e){ console.warn('injecterPhaseFinale:', e); } } lisereEcurie(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); if(document.getElementById('sec-tableau') && document.getElementById('sec-tableau').classList.contains('actif')) renduBracket(); $('admin-maj').style.display = admin ? '' : 'none';
   if(admin && palmares){ const pf=$('pal-finaliste'), pv=$('pal-vainqueur'); if(pf&&!pf.value)pf.value=palmares.finaliste||''; if(pv&&!pv.value)pv.value=palmares.vainqueur||''; } }
 
 function goTab(sec){ document.querySelector(`nav button[data-sec=${sec}]`).click(); }
@@ -4835,7 +4835,7 @@ async function appliquerMajJour(){
     }
     $('maj-jour').value='';
     toast(`Mise à jour appliquée : ${ok} élément${ok>1?'s':''}${ko?` · ${ko} échec(s)`:''} ✓`);
-    await chargerTout();
+    try{ await chargerTout(); }catch(e){ /* l'écriture a réussi ; seul le rafraîchissement a échoué */ try{ toutAfficher(); }catch(_){} }
   }catch(e){ toast('Échec de la mise à jour'); }
 }
 
