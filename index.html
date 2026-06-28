@@ -162,6 +162,23 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .sacre-btn{background:linear-gradient(90deg,var(--or),var(--corail));color:#0E1B2C;font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:15px;border:none;border-radius:24px;padding:13px 22px;cursor:pointer;letter-spacing:.3px}
 .sacre-btn:active{transform:scale(.97)}
 .sacre-cta-note{font-size:11px;color:var(--gris);margin-top:10px;font-style:italic}
+.revoir-sacre{text-align:center;padding:14px;border-bottom:1px solid var(--ligne)}
+.revoir-sub{font-size:11px;color:var(--gris);margin-top:6px;font-style:italic}
+.sacre-final{position:relative;overflow:hidden}
+.sacre-contenu{position:relative;z-index:3}
+.sacre-rayons{position:absolute;inset:0;z-index:0;background:repeating-conic-gradient(from 0deg at 50% 34%,rgba(245,180,60,.10) 0deg 12deg,transparent 12deg 24deg);animation:sacreSpin 20s linear infinite;pointer-events:none}
+.sacre-halo{position:absolute;top:30%;left:50%;width:260px;height:260px;transform:translate(-50%,-50%);z-index:1;background:radial-gradient(circle,rgba(245,180,60,.32) 0%,transparent 65%);border-radius:50%;animation:sacreHalo 2.4s ease-in-out infinite;pointer-events:none}
+.sacre-confettis{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.sacre-confettis .cf{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;animation-name:sacreConf;animation-timing-function:linear;animation-iteration-count:infinite}
+.sacre-couronne{font-size:72px;line-height:1;animation:sacreCrown 2.6s ease-in-out infinite;filter:drop-shadow(0 6px 14px rgba(245,180,60,.5))}
+.sacre-nom{font-family:'Archivo Black','Space Grotesk',sans-serif!important;font-size:clamp(30px,9vw,44px)!important;text-transform:uppercase;letter-spacing:1px;color:#fff;animation:sacrePop .8s ease-out both;text-shadow:0 2px 22px rgba(245,180,60,.55)}
+.sacre-score{font-size:clamp(60px,20vw,92px)!important;line-height:.9;background:linear-gradient(180deg,#FFE9A8,#F5B43C 55%,#C8821a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:sacrePop 1s ease-out .2s both;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+.sacre-plaque{display:inline-block;background:linear-gradient(90deg,#C8821a,#F5B43C,#FFE9A8,#F5B43C,#C8821a);color:#3a2400;font-family:'Archivo Black','Space Grotesk',sans-serif;font-size:14px;letter-spacing:2px;text-transform:uppercase;padding:7px 20px;border-radius:5px;margin-top:6px;box-shadow:0 3px 12px rgba(245,180,60,.4)}
+@keyframes sacreSpin{to{transform:rotate(360deg)}}
+@keyframes sacreHalo{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(1)}50%{opacity:.9;transform:translate(-50%,-50%) scale(1.12)}}
+@keyframes sacreCrown{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-12px) rotate(3deg)}}
+@keyframes sacrePop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes sacreConf{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(520px) rotate(540deg);opacity:0}}
 .scelle{text-align:center;padding:34px 20px}
 .scelle-cad{font-size:64px;line-height:1;margin-bottom:10px}
 .scelle-t{font-family:'Space Grotesk',monospace;font-size:18px;font-weight:800;letter-spacing:1.5px;color:var(--or)}
@@ -524,6 +541,9 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
       <input type="text" id="pal-finaliste" placeholder="Finaliste battu (nom exact de l'équipe)">
       <input type="text" id="pal-vainqueur" placeholder="Vainqueur de la Coupe (nom exact)">
       <button class="btn" style="margin-top:8px" onclick="sauverPalmares()">Enregistrer le palmarès</button>
+      <div class="eti" style="margin-top:14px">👑 Sacre du champion des poules</div>
+      <p class="note">À graver une fois les 72 matchs joués : fige le champion des poules (et le classement complet) pour toujours. Le sacre restera rejouable même en phase 2.</p>
+      <button class="btn corail" style="margin-top:8px" onclick="graverSacrePoules()">👑 Graver le sacre des poules</button>
     </div>
     <div class="filtres">
       <button data-f="venir" class="actif">À venir</button>
@@ -612,7 +632,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '10.5';
+const APP_VERSION = '10.6';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1650,6 +1670,11 @@ function classement(){
   const aDesPoints = lignes.some(l=>l.total!==0);
   const poulesFinies = nbValides >= 72 && aDesPoints;
   const moneyTimeActif = aDesPoints && nbValides < 72;   /* dernière ligne droite : tout est scellé */
+  /* bouton PERMANENT de relecture du sacre, dès qu'il est gravé en base (rejouable même en phase 2) */
+  const sacreGrave = !!(palmares && palmares.champion_poules);
+  const btnRevoir = sacreGrave
+    ? `<div class="revoir-sacre"><button class="sacre-btn" onclick="sacrePoules()">👑 Revoir le sacre des poules</button><div class="revoir-sub">Champion : ${palmares.champion_poules} · gravé pour toujours</div></div>`
+    : '';
 
   /* ÉTAT 1 — MONEY TIME : classement scellé, suspense total jusqu'au sacre */
   if(moneyTimeActif){
@@ -1674,7 +1699,7 @@ function classement(){
       `Tu peux toujours recharger la page : le coffre, lui, ne craque pas.`,
       `Quelque part, un favori transpire. On ne dira pas qui. On sait, c'est tout.`
     ]);
-    $('tableau-classement').innerHTML = `
+    $('tableau-classement').innerHTML = btnRevoir + `
       <div class="scelle">
         <div class="scelle-cad">🔐</div>
         <div class="scelle-t">CLASSEMENT SOUS SCELLÉS</div>
@@ -1691,7 +1716,7 @@ function classement(){
 
   /* ÉTAT 2 — POULES TERMINÉES : le bouton du sacre, classement toujours masqué jusqu'au reveal */
   if(poulesFinies){
-    $('tableau-classement').innerHTML = `
+    $('tableau-classement').innerHTML = btnRevoir + `
       <div class="sacre-cta">
         <div class="sacre-cta-t">🏁 La phase de poules est terminée</div>
         <div class="sacre-cta-s">72 matchs joués. Le verdict est tombé, scellé. Réunissez la famille.</div>
@@ -1706,7 +1731,7 @@ function classement(){
   }
 
   /* ÉTAT 3 — NORMAL : tableau complet (avant le money time, ou phase 2 reconfigurée) */
-  $('tableau-classement').innerHTML = lignes.map((l,i)=>{
+  $('tableau-classement').innerHTML = btnRevoir + lignes.map((l,i)=>{
     let fleche = '';
     if(aDesPointsHier){
       const d = posHier[l.p] - i;
@@ -4186,7 +4211,15 @@ function classementPurPronos(){
     .sort((x,y)=> y.total-x.total || y.exacts-x.exacts);
 }
 function sacrePoules(){
-  const cl = classementPurPronos();
+  /* PRIORITÉ au palmarès GRAVÉ en base (inaltérable, rejouable même en phase 2).
+     À défaut (avant gravure), on calcule à la volée le classement pur pronos. */
+  let cl, fige = false;
+  if(palmares && palmares.champion_poules && Array.isArray(palmares.classement_poules) && palmares.classement_poules.length){
+    cl = palmares.classement_poules.map(l=>({p:l.p, total:l.total, exacts:l.exacts||0, buts:l.buts||0, butsKo:l.butsKo||0, ors:l.ors||0}));
+    fige = true;
+  } else {
+    cl = classementPurPronos();
+  }
   if(cl.length < 2) return;
   const fl = p => (participants[p] && F[participants[p].equipe_ecurie]) || '🏳️';
   const champ = cl[0], dauphin = cl[1];
@@ -4218,11 +4251,23 @@ function sacrePoules(){
 
   /* — Acte II : LE SACRE (avant le dauphin, exprès) — */
   etapes.push(`<div class="etape"><div class="eti-r">👑 Et le champion des poules est…</div><h3 style="color:var(--gris)">Roulement de tambour…</h3><div class="ligne-r" style="color:var(--gris);margin-top:14px">Monsieur Statistique vous l'avait dit. Vous n'avez pas écouté. Tant pis.</div></div>`);
-  etapes.push(`<div class="etape" data-reveal-score data-a="${champ.total}" data-b="${champ.total}" data-fete="1"><div class="eti-r">🏆 Champion de la phase de poules</div><div style="font-size:60px;line-height:1">👑</div><div class="drapeaux">${fl(champ.p)}</div><h3>${champ.p}</h3><div class="grand-score">${champ.total}</div><div class="verdict-box"><div class="verdict-titre">Meilleur pronostiqueur</div><div class="verdict-sous">${champ.exacts} scores exacts · ${champ.buts} buteurs trouvés · ${champ.ors} paris en or. La famille s'incline.</div></div><div class="punch">🎙️ ${pioche([
-    `${champ.p} règne sur les poules sans partage. Les autres ont joué pour la deuxième place — et même ça, ils s'en disputent les miettes.`,
-    `Le trône est à ${champ.p}. Que personne ne conteste : les chiffres sont là, froids, définitifs, humiliants pour les autres.`,
-    `${champ.p} champion. On pourrait faire durer le suspense, mais soyons honnêtes : il n'y en avait pas vraiment.`
-  ])}</div></div>`);
+  etapes.push(`<div class="etape sacre-final" data-reveal-score data-a="${champ.total}" data-b="${champ.total}" data-fete="1">
+    <div class="sacre-rayons"></div><div class="sacre-halo"></div>
+    <div class="sacre-confettis">${Array.from({length:14}).map((_,i)=>`<span class="cf" style="left:${6+i*6.6}%;background:${['#F5B43C','#00A08C','#FF6B5E','#7aa2ff'][i%4]};animation-duration:${(2.8+(i%5)*0.3).toFixed(1)}s;animation-delay:${((i%6)*0.2).toFixed(1)}s"></span>`).join('')}</div>
+    <div class="sacre-contenu">
+      <div class="eti-r" style="color:var(--or)">★ Champion de la phase de poules ★</div>
+      <div class="sacre-couronne">👑</div>
+      <div class="drapeaux">${fl(champ.p)}</div>
+      <h3 class="sacre-nom">${champ.p}</h3>
+      <div class="grand-score sacre-score">${champ.total}</div>
+      <div class="sacre-plaque">⭐ Meilleur pronostiqueur ⭐</div>
+      <div class="ligne-r" style="color:var(--gris);margin-top:10px">${champ.exacts} scores exacts · ${champ.buts} buteurs trouvés · ${champ.ors} paris en or</div>
+      <div class="punch">🎙️ ${pioche([
+        `${champ.p} règne sur les poules sans partage. Les autres ont joué pour la deuxième place — et même ça, ils s'en disputent les miettes.`,
+        `Le trône est à ${champ.p}. Que personne ne conteste : les chiffres sont là, froids, définitifs, humiliants pour les autres.`,
+        `${champ.p} champion. On pourrait faire durer le suspense, mais soyons honnêtes : il n'y en avait pas vraiment.`
+      ])}</div>
+    </div></div>`);
 
   /* — Acte III : le dauphin, la chute — */
   etapes.push(`<div class="etape"><div class="eti-r">🥈 Et à un souffle du trône…</div><div class="drapeaux">${fl(dauphin.p)}</div><h3>${dauphin.p}</h3><div class="grand-score" style="color:#c0c0c0">${dauphin.total}</div><div class="punch">🎙️ ${pioche([
@@ -4418,9 +4463,30 @@ async function sauverPalmares(){
   try{
     await sb('mondial_palmares?on_conflict=id', {method:'POST', prefer:'resolution=merge-duplicates',
       body: JSON.stringify({id:1, finaliste:finaliste||null, vainqueur:vainqueur||null})});
-    palmares = {id:1, finaliste:finaliste||null, vainqueur:vainqueur||null};
+    palmares = Object.assign({}, palmares, {id:1, finaliste:finaliste||null, vainqueur:vainqueur||null});
     toast('🏆 Palmarès enregistré — bonus écurie appliqués'); toutAfficher();
   }catch(e){ toast('Échec — la table mondial_palmares existe-t-elle ?'); }
+}
+
+async function graverSacrePoules(){
+  const cl = classementPurPronos();
+  if(!cl.length || !cl.some(l=>l.total!==0)){ toast('Aucun score à graver pour l\'instant.'); return; }
+  const champ = cl[0];
+  const classementFige = cl.map(l=>({p:l.p, total:l.total, exacts:l.exacts, buts:l.buts, butsKo:l.butsKo, ors:l.ors}));
+  const payload = {
+    id: 1,
+    champion_poules: champ.p,
+    score_poules: champ.total,
+    classement_poules: classementFige,
+    date_sacre_poules: new Date().toISOString()
+  };
+  try{
+    await sb('mondial_palmares?on_conflict=id', {method:'POST', prefer:'resolution=merge-duplicates',
+      body: JSON.stringify(payload)});
+    palmares = Object.assign({}, palmares, payload);
+    toast('👑 Sacre gravé pour toujours — ' + champ.p + ' champion des poules !');
+    toutAfficher();
+  }catch(e){ toast('Échec — la table mondial_palmares a-t-elle les colonnes du sacre ?'); }
 }
 async function appliquerMajJour(){
   let data;
