@@ -652,7 +652,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '11.6';
+const APP_VERSION = '11.7';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -5008,6 +5008,8 @@ function injecterPhaseFinale(){
       M.push({ id, g:tour, a, b, dt, phase:'finale', slots, mid, lieu: cal?cal.v:'', tour });
     });
   });
+  /* RE-TRI chronologique : les matchs de finale ajoutés en vrac doivent revenir dans l'ordre */
+  M.sort((x,y)=> x.dt - y.dt);
 }
 /* convertit {d:'Dim 28 juin', h:'15h00'} en objet Date (heure Martinique) */
 function dateFinale(cal){
