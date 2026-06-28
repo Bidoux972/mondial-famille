@@ -187,6 +187,20 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .scelle-x{font-size:13.5px;line-height:1.55;color:var(--creme);max-width:440px;margin:16px auto 0}
 .scelle-x b{color:var(--or)}
 .scelle-note{font-size:12px;font-style:italic;color:var(--gris);margin-top:16px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.5}
+.transi{background:linear-gradient(135deg,rgba(245,180,60,.14),rgba(255,107,94,.10));border:1px solid var(--or);border-radius:12px;padding:16px;margin-bottom:14px}
+.transi-t{font-family:'Space Grotesk',monospace;font-size:15px;font-weight:800;color:var(--or);letter-spacing:.5px;text-align:center}
+.transi-x{font-size:13px;line-height:1.5;color:var(--creme);margin-top:8px;text-align:center}
+.transi-regles{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.transi-r{background:var(--panneau2);border:1px solid var(--ligne);border-radius:14px;padding:4px 10px;font-size:11px;color:var(--creme)}
+.transi-r b{color:var(--or)}
+.transi-note{font-size:11px;color:var(--gris);text-align:center;margin-top:10px;font-style:italic}
+.pouvoir-zone{background:linear-gradient(135deg,rgba(122,162,255,.12),rgba(245,180,60,.08));border:1px solid #7aa2ff;border-radius:10px;padding:11px;margin-top:10px}
+.pouvoir-tete{font-family:'Space Grotesk',monospace;font-size:13px;font-weight:800;color:#9db8ff}
+.pouvoir-uniq{font-size:9px;background:#7aa2ff;color:#0E1B2C;padding:2px 7px;border-radius:9px;margin-left:6px;vertical-align:middle;letter-spacing:.5px}
+.pouvoir-desc{font-size:12px;color:var(--creme);margin-top:5px;line-height:1.4}
+.pouvoir-check{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:13px;font-weight:600;color:#9db8ff;cursor:pointer}
+.pouvoir-check input{width:auto;margin:0}
+.pouvoir-ko{font-size:11px;color:var(--corail);margin-top:8px;font-style:italic}
 .mt-titre{font-family:'Space Grotesk',monospace;font-size:20px;font-weight:800;letter-spacing:1px;background:linear-gradient(90deg,var(--or),var(--corail));-webkit-background-clip:text;background-clip:text;color:transparent}
 .mt-sous{font-size:12px;color:var(--gris);margin-top:2px}
 .mt-duel{border:1px solid var(--ligne);border-radius:12px;padding:13px;margin-bottom:10px}
@@ -488,9 +502,14 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-bandeau-s{display:block;color:var(--gris);font-size:11px;margin-top:2px}
 .brk-tour-tete{color:var(--or);font-weight:600;font-size:13px;margin-bottom:8px;letter-spacing:.3px}
 .brk-tour{display:flex;flex-direction:column;gap:8px}
-.brk-match{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:8px 12px}
+.brk-match{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:8px 12px;position:relative}
 .brk-match.brk-hot{border-color:var(--or);border-width:1.5px;background:var(--panneau2)}
-.brk-id{color:var(--gris);font-size:11px;font-family:'Space Grotesk',monospace;margin-bottom:4px}
+.brk-match.brk-choc{border-color:var(--corail);border-width:1.5px;background:linear-gradient(135deg,rgba(255,107,94,.10),transparent)}
+.brk-choc-tag{position:absolute;top:-9px;right:10px;background:var(--corail);color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:10px;font-family:'Space Grotesk',sans-serif}
+.brk-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.brk-date{color:var(--or);font-size:10.5px;font-weight:700;font-family:'Space Grotesk',monospace;white-space:nowrap}
+.brk-lieu{color:var(--gris);font-size:10px;margin-top:5px}
+.brk-id{color:var(--gris);font-size:11px;font-family:'Space Grotesk',monospace}
 .brk-slots{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .brk-eq{color:#fff;font-weight:600;font-size:13px}
 .brk-prov{color:var(--gris);font-size:12px;font-style:italic}
@@ -525,6 +544,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   <div class="mini-cl" id="mini-classement" style="display:none" onclick="goTab('classement')"></div>
   <div id="alerte-duel"></div>
 
+  <div id="hero-transition" style="display:none"></div>
   <div id="hero-direct" style="display:none"></div>
   <div class="hero" id="hero" style="display:none"></div>
   <div id="avm"></div>
@@ -632,7 +652,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '10.6';
+const APP_VERSION = '11.6';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -647,7 +667,7 @@ const ADMIN_PSEUDO = 'Bidou';
 const F = {"Mexique":"🇲🇽","Afrique du Sud":"🇿🇦","Corée du Sud":"🇰🇷","Tchéquie":"🇨🇿","Canada":"🇨🇦","Bosnie":"🇧🇦","Qatar":"🇶🇦","Suisse":"🇨🇭","Brésil":"🇧🇷","Maroc":"🇲🇦","Haïti":"🇭🇹","Écosse":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","États-Unis":"🇺🇸","Paraguay":"🇵🇾","Australie":"🇦🇺","Turquie":"🇹🇷","Allemagne":"🇩🇪","Curaçao":"🇨🇼","Côte d'Ivoire":"🇨🇮","Équateur":"🇪🇨","Pays-Bas":"🇳🇱","Japon":"🇯🇵","Suède":"🇸🇪","Tunisie":"🇹🇳","Belgique":"🇧🇪","Égypte":"🇪🇬","Iran":"🇮🇷","Nouvelle-Zélande":"🇳🇿","Espagne":"🇪🇸","Cap-Vert":"🇨🇻","Arabie Saoudite":"🇸🇦","Uruguay":"🇺🇾","France":"🇫🇷","Sénégal":"🇸🇳","Irak":"🇮🇶","Norvège":"🇳🇴","Argentine":"🇦🇷","Algérie":"🇩🇿","Autriche":"🇦🇹","Jordanie":"🇯🇴","Portugal":"🇵🇹","RD Congo":"🇨🇩","Ouzbékistan":"🇺🇿","Colombie":"🇨🇴","Angleterre":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croatie":"🇭🇷","Ghana":"🇬🇭","Panama":"🇵🇦"};
 
 /* ============ LES 72 MATCHS — heure Martinique (UTC-4) ============ */
-const M = [
+let M = [
  [1,"A","Mexique","Afrique du Sud","2026-06-11T15:00:00-04:00"],
  [2,"A","Corée du Sud","Tchéquie","2026-06-11T22:00:00-04:00"],
  [7,"B","Canada","Bosnie","2026-06-12T15:00:00-04:00"],
@@ -966,6 +986,17 @@ function points(pr, re){
   return s(pr) === s(re) ? 1 : 0;
 }
 const normNom = t => String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,' ').trim();
+/* un buteur misé a-t-il marqué ? true / false (raté) / null (pas de buteur misé) */
+function buteurEstMarque(nom, re){
+  if(!nom) return null;
+  const normNom2 = t => String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,' ').trim();
+  const motsSignif = s => normNom2(s).split(' ').filter(w=>w.length>1);
+  const brut = String(re.buteurs||'').replace(/\([^)]*\)/g,' ');
+  const famCible = (motsSignif(nom).slice(-1)[0]) || '';
+  const buteursReels = brut.split(/[,;\n·]/).map(seg=>motsSignif(seg)).filter(m=>m.length);
+  return !!(famCible && famCible.length>1 && buteursReels.some(motsR => motsR.includes(famCible)));
+}
+
 function bonus(pr, re){
   if(!pr || !re) return {but:0, btts:0};
   let but = 0, btts = 0;
@@ -987,13 +1018,49 @@ function bonus(pr, re){
     const reel = re.score_a > 0 && re.score_b > 0;
     btts = (pr.btts === reel) ? 1 : -1;
   }
-  return {but, btts};
+  /* PHASE FINALE : qualifié (+2/−1) et scénario (+1/0) */
+  let qualif = 0, scen = 0;
+  if(pr.qualifie && re.qualifie){
+    qualif = (pr.qualifie === re.qualifie) ? 2 : -1;
+  }
+  if(pr.scenario && re.scenario){
+    scen = (pr.scenario === re.scenario) ? 1 : 0;
+  }
+  return {but, btts, qualif, scen};
 }
 function ptsTotal(pr, re){
   const base = points(pr, re);
   if(base === null) return null;
   const b = bonus(pr, re);
-  return (base + b.but + b.btts) * (pr.en_or ? 2 : 1);
+  let total = base + b.but + b.btts + (b.qualif||0) + (b.scen||0);
+  /* pas de pouvoir sur la finale (M104) : on le neutralise au calcul par sécurité */
+  const pouv = (pr.match_id===104) ? null : pr.pouvoir;
+  /* sécurité : Or et pouvoir ne se cumulent pas — si les deux sont là, le pouvoir prime */
+  const orActif = pr.en_or && !pouv;
+
+  /* ⚡ POUVOIRS de phase finale (posés sur ce prono via pr.pouvoir) */
+  if(pouv === 'musa' && pr.buteur2){
+    /* Joker Petar Musa : 2e buteur misé, même barème +2/−1 */
+    const trouve = buteurEstMarque(pr.buteur2, re);
+    total += (trouve === true) ? 2 : (trouve === false ? -1 : 0);
+  }
+  if(pouv === 'remontada'){
+    /* La Remontada : +2 garantis si bon qualifié */
+    if(pr.qualifie && re.qualifie && pr.qualifie === re.qualifie) total += 2;
+  }
+
+  total = total * (orActif ? 2 : 1);
+
+  if(pouv === 'dd'){
+    /* La Chatte à DD : ×2 si au moins la bonne tendance (sinon inchangé) */
+    if(base >= 1) total = total * 2;
+  }
+  if(pouv === 'tapie'){
+    /* L'Assurance Tapie : +2 si score exact, et plancher à 0 (pertes annulées) */
+    if(base === 3) total += 2;
+    if(total < 0) total = 0;
+  }
+  return total;
 }
 const jourCle = m => m.dt.toLocaleDateString('fr-FR',{timeZone:'America/Martinique'});
 /* Renvoie le jourCle du DERNIER jour où des matchs ont été joués (résultat saisi),
@@ -1076,6 +1143,24 @@ function activerAdmin(){
 
 /* ============ HERO ============ */
 function hero(){
+  /* bandeau de TRANSITION phase finale (visible une fois le sacre des poules gravé) */
+  const ht = $('hero-transition');
+  if(ht){
+    if(palmares && palmares.champion_poules){
+      ht.style.display='';
+      ht.innerHTML = `<div class="transi">
+        <div class="transi-t">🏆 PLACE À LA PHASE FINALE</div>
+        <div class="transi-x">Les poules, c'est fini — <b>${palmares.champion_poules}</b> est sacré champion. On repart à zéro pour l'élimination directe : un faux pas et c'est terminé.</div>
+        <div class="transi-regles">
+          <span class="transi-r">🎯 Score à 90 min <b>+3</b></span>
+          <span class="transi-r">🎫 Qui se qualifie <b>+2/−1</b></span>
+          <span class="transi-r">⏱️ Scénario (90/prolong/tab) <b>+1</b></span>
+          <span class="transi-r">⚽ Buteur <b>+2/−1</b></span>
+        </div>
+        <div class="transi-note">On ne parie que sur les matchs dont les 2 équipes sont connues. Le tableau se remplit tour après tour.</div>
+      </div>`;
+    } else ht.style.display='none';
+  }
   /* bannière des matchs EN DIRECT (commencés, pas encore validés) */
   const lives = M.filter(m => commence(m) && !resultats[m.id]);
   const hd = $('hero-direct');
@@ -1097,7 +1182,7 @@ function hero(){
     }).join('');
   } else hd.style.display='none';
 
-  const prochain = M.find(m => !joue(m) && !commence(m));
+  const prochain = M.find(m => !joue(m) && !commence(m) && matchPariable(m));
   const h = $('hero');
   if(!prochain){ h.style.display='none'; return; }
   h.style.display='';
@@ -1319,7 +1404,7 @@ function carteMatch(m, modePronos){
     }
     let pts = '', chambre = '', etiquettes = '';
     if(t!==null){
-      const enMoneyTime = Object.keys(resultats).length < 72;
+      const enMoneyTime = poulesScellees();
       const masquePts = enMoneyTime && p!==pseudo;   /* en money time : on cache les POINTS des autres */
       pts = masquePts
         ? `<span class="pts" style="color:var(--gris)" title="Scellé jusqu'au verdict">🔒</span>`
@@ -1382,6 +1467,39 @@ function carteMatch(m, modePronos){
         <option value="__autre__" ${buteurActuel&&!connu?'selected':''}>Autre joueur…</option>
       </select>
       <input type="text" id="but-${m.id}" placeholder="Nom du buteur" value="${buteurActuel&&!connu?buteurActuel.replace(/"/g,'&quot;'):''}" style="display:${buteurActuel&&!connu?'':'none'}">
+      ${m.phase==='finale' ? `
+      <label class="bonus-l">🎫 Qui se qualifie ? <span class="bonus-pts">+2 juste / −1 faux</span></label>
+      <select id="qual-${m.id}">
+        <option value="">— Je ne parie pas sur le qualifié —</option>
+        <option value="${m.a.replace(/"/g,'&quot;')}" ${monPr&&monPr.qualifie===m.a?'selected':''}>${F[m.a]||'⚽'} ${m.a} passe</option>
+        <option value="${m.b.replace(/"/g,'&quot;')}" ${monPr&&monPr.qualifie===m.b?'selected':''}>${F[m.b]||'⚽'} ${m.b} passe</option>
+      </select>
+      <label class="bonus-l">⏱️ Comment ça se finit ? <span class="bonus-pts">+1 si juste</span></label>
+      <select id="scen-${m.id}">
+        <option value="">— Je ne parie pas sur le scénario —</option>
+        <option value="90" ${monPr&&monPr.scenario==='90'?'selected':''}>Dans le temps réglementaire (90 min)</option>
+        <option value="prolongation" ${monPr&&monPr.scenario==='prolongation'?'selected':''}>Après prolongation</option>
+        <option value="tab" ${monPr&&monPr.scenario==='tab'?'selected':''}>Aux tirs au but</option>
+      </select>` : ''}
+      ${m.phase==='finale' && m.id!==104 ? (()=>{
+        const pv = pouvoirDe(pseudo);
+        if(!pv) return '';
+        const utilisePartout = pouvoirUtilise(pseudo);
+        const utiliseIci = monPr && monPr.pouvoir;
+        const dispo = !utilisePartout || utilisePartout===m.id;
+        let bloc = `<div class="pouvoir-zone">
+          <div class="pouvoir-tete">${pv.emoji} ${pv.nom} <span class="pouvoir-uniq">pouvoir unique</span></div>
+          <div class="pouvoir-desc">${pv.desc}</div>`;
+        if(!dispo){
+          bloc += `<div class="pouvoir-ko">⚠️ Déjà dégainé sur un autre match. Un seul usage sur toute la phase finale.</div>`;
+        } else {
+          bloc += `<label class="pouvoir-check"><input type="checkbox" id="pv-${m.id}" ${utiliseIci?'checked':''} onchange="document.getElementById('pv2-${m.id}')&&(document.getElementById('pv2-${m.id}').style.display=this.checked?'':'none')"> Dégainer mon pouvoir sur ce match</label>`;
+          if(pv.id==='musa'){
+            bloc += `<input type="text" id="pv2-${m.id}" placeholder="⚽ 2e buteur (Joker Musa)" value="${monPr&&monPr.buteur2?String(monPr.buteur2).replace(/"/g,'&quot;'):''}" style="display:${utiliseIci?'':'none'};margin-top:6px">`;
+          }
+        }
+        return bloc + `</div>`;
+      })() : ''}
       <label class="bonus-l">🥅 Les 2 équipes vont marquer ? <span class="bonus-pts">+1 juste / −1 faux</span></label>
       <select id="bt-${m.id}">
         <option value="">— Je ne parie pas là-dessus —</option>
@@ -1402,6 +1520,8 @@ function carteMatch(m, modePronos){
       const morceaux = [];
       morceaux.push(base===3?'score exact +3 🎯':base===1?'tendance +1':'score raté 0');
       if(monPr.buteur) morceaux.push(bo.but===2?`buteur ${monPr.buteur} +2 ⚽`:`buteur ${monPr.buteur} −1 ❌`);
+      if(monPr.qualifie) morceaux.push(bo.qualif===2?`${monPr.qualifie} qualifié +2 🎫`:`${monPr.qualifie} éliminé −1 ❌`);
+      if(monPr.scenario) morceaux.push(bo.scen===1?`scénario +1 ⏱️`:`scénario raté 0`);
       if(monPr.btts===true||monPr.btts===false) morceaux.push(bo.btts===1?'2 équipes marquent +1 🥅':'2 équipes −1 ❌');
       if(monPr.en_or) morceaux.push('🌟 EN OR ×2');
       detail = ` · <span class="pts p${tot>=3?3:tot>=1?1:0}">${tot>0?'+':''}${tot} pt${Math.abs(tot)>1?'s':''}</span> <span style="color:var(--gris)">(${morceaux.join(', ')})</span>`;
@@ -1423,7 +1543,18 @@ function carteMatch(m, modePronos){
       <button class="btn corail" onclick="validerScore(${m.id})">${re ? 'Corriger' : 'Valider le score'}</button>
     </div>
     <input type="text" id="rbu-${m.id}" placeholder="⚽ Buteurs réels, séparés par des virgules" value="${re&&re.buteurs?String(re.buteurs).replace(/"/g,'&quot;'):''}">
-    <input type="text" id="rca-${m.id}" placeholder="🟥 Cartons rouges (facultatif)" value="${re&&re.cartons?String(re.cartons).replace(/"/g,'&quot;'):''}">`;
+    <input type="text" id="rca-${m.id}" placeholder="🟥 Cartons rouges (facultatif)" value="${re&&re.cartons?String(re.cartons).replace(/"/g,'&quot;'):''}">${m.phase==='finale'?`
+    <select id="rqual-${m.id}" style="width:100%;margin-top:6px">
+      <option value="">🎫 Qui s'est qualifié ? (phase finale)</option>
+      <option value="${m.a.replace(/"/g,'&quot;')}" ${re&&re.qualifie===m.a?'selected':''}>${m.a} qualifié(e)</option>
+      <option value="${m.b.replace(/"/g,'&quot;')}" ${re&&re.qualifie===m.b?'selected':''}>${m.b} qualifié(e)</option>
+    </select>
+    <select id="rscen-${m.id}" style="width:100%;margin-top:6px">
+      <option value="">⏱️ Comment s'est décidé le match ?</option>
+      <option value="90" ${re&&re.scenario==='90'?'selected':''}>Temps réglementaire (90 min)</option>
+      <option value="prolongation" ${re&&re.scenario==='prolongation'?'selected':''}>Prolongation</option>
+      <option value="tab" ${re&&re.scenario==='tab'?'selected':''}>Tirs au but</option>
+    </select>`:''}`;
   }
   const boutonAvm = (!re && (avmDispo(m.id)||admin)) ? `<button class="btn" style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--or);color:var(--or)" onclick="ouvrirAvm(${m.id});window.scrollTo({top:0,behavior:'smooth'})">AVANT-MATCH · forces, faiblesses, sélections</button>` : '';
   const boutonRecap = re ? `<div class="monprono" style="margin-top:8px"><a href="javascript:void(0)" onclick="ouvrirReveal(${m.id})" style="color:var(--or);font-weight:700;text-decoration:none">🎬 Revoir le récap</a></div>` : '';
@@ -1459,9 +1590,15 @@ function listeMatchs(){
   });
   $('liste-matchs').innerHTML = html || '<p class="note">Rien à afficher ici pour le moment.</p>';
 }
+function matchPariable(m){
+  /* poules : toujours pariable. Finale : seulement si les 2 équipes sont résolues
+     (pas de slot provisoire type "3e ?", "Vainq. 77", "1er gr.I"). */
+  if(m.phase!=='finale') return true;
+  return !!(resoudreSlot(m.slots[0], m.mid) && resoudreSlot(m.slots[1], m.mid));
+}
 function listePronos(){
   if(!pseudo){ $('liste-pronos').innerHTML = '<p class="note">Choisis d\'abord qui tu es, en haut de la page 👆</p>'; return; }
-  const aVenir = M.filter(m=>!commence(m));
+  const aVenir = M.filter(m=>!commence(m) && matchPariable(m));
   let html = '', jourCourant = '';
   aVenir.forEach(m=>{
     const j = fmtJour(m.dt);
@@ -1479,7 +1616,25 @@ async function sauverProno(id){
   if(buteur === '__autre__') buteur = $(`but-${id}`).value.trim();
   const btv = $(`bt-${id}`).value;
   const btts = btv==='oui' ? true : btv==='non' ? false : null;
+  /* phase finale : champs qualifié + scénario (présents seulement si le match est en finale) */
+  const elQual = $(`qual-${id}`), elScen = $(`scen-${id}`);
+  const qualifie = elQual && elQual.value ? elQual.value : null;
+  const scenario = elScen && elScen.value ? elScen.value : null;
+  /* pouvoir posé sur ce match ? */
+  const elPv = $(`pv-${id}`);
+  const pv = pouvoirDe(pseudo);
+  const pouvoir = (elPv && elPv.checked && pv) ? pv.id : null;
+  const elPv2 = $(`pv2-${id}`);
+  const buteur2 = (pouvoir==='musa' && elPv2 && elPv2.value.trim()) ? elPv2.value.trim() : null;
+  /* garde-fou : un seul usage du pouvoir sur toute la phase finale */
+  if(pouvoir){
+    if(id===104){ toast('🚫 Pas de pouvoir sur la finale — il fallait le dégainer avant !'); return; }
+    const dejaPose = pouvoirUtilise(pseudo);
+    if(dejaPose && dejaPose!==id){ toast('⚠️ Ton pouvoir est déjà posé sur un autre match !'); return; }
+  }
   const enOr = $(`or-${id}`).value === 'or';
+  /* garde-fou : pas de cumul Match en Or + pouvoir sur le même match (trop fort) */
+  if(enOr && pouvoir){ toast('🚫 Pas de cumul : Match en Or OU pouvoir sur ce match, pas les deux.'); return; }
   if(enOr){
     const cle = jourCle(m);
     const autres = Object.values(pronos[pseudo]||{}).filter(pr=>pr.en_or && pr.match_id!==id);
@@ -1499,8 +1654,8 @@ async function sauverProno(id){
   try{
     await sb('mondial_pronostics?on_conflict=pseudo,match_id', {method:'POST',
       prefer:'resolution=merge-duplicates',
-      body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, en_or:enOr})});
-    (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, en_or:enOr};
+      body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, qualifie, scenario, pouvoir, buteur2, en_or:enOr})});
+    (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, qualifie, scenario, pouvoir, buteur2, en_or:enOr};
     toast(`Prono ${a}–${b}${buteur?' · ⚽ '+buteur:''}${enOr?' · 🌟 EN OR':''} enregistré ✓`); listePronos(); hero();
   }catch(e){ toast("Échec de l'enregistrement, réessaie"); }
 }
@@ -1509,11 +1664,14 @@ async function validerScore(id){
   if(isNaN(a)||isNaN(b)){ toast('Score incomplet'); return; }
   const buteurs = $(`rbu-${id}`) ? $(`rbu-${id}`).value.trim() : '';
   const cartons = $(`rca-${id}`) ? $(`rca-${id}`).value.trim() : '';
+  const elQ = $(`rqual-${id}`), elS = $(`rscen-${id}`);
+  const qualifie = elQ && elQ.value ? elQ.value : null;
+  const scenario = elS && elS.value ? elS.value : null;
   try{
     await sb('mondial_resultats?on_conflict=match_id', {method:'POST',
       prefer:'resolution=merge-duplicates',
-      body: JSON.stringify({match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null})});
-    resultats[id] = {match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null}; _statsButeurs = null;
+      body: JSON.stringify({match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null, qualifie, scenario})});
+    resultats[id] = {match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null, qualifie, scenario}; _statsButeurs = null;
     toast('Score validé — classement mis à jour 🏆'); toutAfficher();
   }catch(e){ toast('Échec de la validation'); }
 }
@@ -1547,6 +1705,14 @@ function badgesDe(p){
   /* on limite à 2 badges pour ne pas charger */
   return badges.slice(0,2);
 }
+/* en phase finale (sacre gravé), le classement COURANT ne compte que les matchs de
+   finale (id>=73) : nouveau jeu, zéro au départ. Les poules restent gravées (palmarès). */
+function enPhaseFinale(){ return !!(palmares && palmares.champion_poules); }
+function filtrePhase(m){
+  if(!enPhaseFinale()) return true;       /* poules : tout compte */
+  return m && m.id >= 73;                  /* finale : seulement les matchs de finale */
+}
+
 function calculTotaux(filtreMatch){
   const deltaDuels = p => duelsCloud.reduce((s,d)=>{
     if(d.statut!=='juge' || !d.verdict) return s;
@@ -1576,6 +1742,7 @@ function calculTotaux(filtreMatch){
     total += duels;
     const bonusEc = bonusEcurie(p);
     total += bonusEc;
+    total += malusMercato(p);
     return {p,total,exacts,bons,buts,butsKo,ors,duels,bonusEc,n};
   }).sort((x,y)=>y.total-x.total || y.exacts-x.exacts);
 }
@@ -1661,17 +1828,17 @@ function moneyTime(lignes){
 }
 
 function classement(){
-  const lignes = calculTotaux(null);
+  const lignes = calculTotaux(filtrePhase);
   const aujourdhui = jourCle({dt: new Date()});
-  const lignesHier = calculTotaux(m => jourCle(m) !== aujourdhui);
+  const lignesHier = calculTotaux(m => filtrePhase(m) && jourCle(m) !== aujourdhui);
   const aDesPointsHier = lignesHier.some(l=>l.total!==0);
   const posHier = {}; lignesHier.forEach((l,i)=>posHier[l.p]=i);
   const nbValides = Object.keys(resultats).length;
   const aDesPoints = lignes.some(l=>l.total!==0);
   const poulesFinies = nbValides >= 72 && aDesPoints;
-  const moneyTimeActif = aDesPoints && nbValides < 72;   /* dernière ligne droite : tout est scellé */
-  /* bouton PERMANENT de relecture du sacre, dès qu'il est gravé en base (rejouable même en phase 2) */
   const sacreGrave = !!(palmares && palmares.champion_poules);
+  const moneyTimeActif = aDesPoints && poulesScellees();   /* scellé tant que pas gravé */
+  /* bouton PERMANENT de relecture du sacre, dès qu'il est gravé en base (rejouable même en phase 2) */
   const btnRevoir = sacreGrave
     ? `<div class="revoir-sacre"><button class="sacre-btn" onclick="sacrePoules()">👑 Revoir le sacre des poules</button><div class="revoir-sub">Champion : ${palmares.champion_poules} · gravé pour toujours</div></div>`
     : '';
@@ -1715,7 +1882,7 @@ function classement(){
   }
 
   /* ÉTAT 2 — POULES TERMINÉES : le bouton du sacre, classement toujours masqué jusqu'au reveal */
-  if(poulesFinies){
+  if(poulesFinies && !sacreGrave){
     $('tableau-classement').innerHTML = btnRevoir + `
       <div class="sacre-cta">
         <div class="sacre-cta-t">🏁 La phase de poules est terminée</div>
@@ -3288,8 +3455,24 @@ function potinsDeLEquipe(eq){
 async function sauverEcurie(eq){
   if(!pseudo){ toast('Choisis d\'abord qui tu es'); return; }
   const actuelle = participants[pseudo] && participants[pseudo].equipe_ecurie;
+  const enPhaseFinale = !!(palmares && palmares.champion_poules);
   if(actuelle && actuelle !== eq){
-    toast(`🔒 Trop tard ! Ton écurie est ${actuelle} — on ne change pas de cheval en pleine course`);
+    if(!enPhaseFinale){
+      toast(`🔒 Trop tard ! Ton écurie est ${actuelle} — on ne change pas de cheval en pleine course`);
+      return;
+    }
+    /* MERCATO de phase finale : changement autorisé, mais ça coûte (−4 puis −2) */
+    const dejaFait = (participants[pseudo].mercato||0);
+    const cout = dejaFait===0 ? 4 : 2;
+    if(!confirm(`🔄 MERCATO : quitter ${actuelle} pour ${eq} ?\nCoût : −${cout} points (transfert ${dejaFait===0?'n°1':'n°'+(dejaFait+1)}).`)) return;
+    try{
+      const nb = dejaFait + 1;
+      await sb('mondial_participants?on_conflict=pseudo', {method:'POST',
+        prefer:'resolution=merge-duplicates',
+        body: JSON.stringify({pseudo, equipe_ecurie:eq, mercato:nb})});
+      participants[pseudo] = {...participants[pseudo], equipe_ecurie:eq, mercato:nb};
+      toast(`🔄 Transfert signé ! ${eq} ${F[eq]||''} · −${cout} pts`); toutAfficher();
+    }catch(e){ toast('Échec du transfert'); }
     return;
   }
   try{
@@ -3299,6 +3482,11 @@ async function sauverEcurie(eq){
     participants[pseudo] = {...(participants[pseudo]||{}), pseudo, equipe_ecurie:eq};
     toast(`${eq}, c'est noté ! ${F[eq]||''}`); toutAfficher();
   }catch(e){ toast('Échec, réessaie'); }
+}
+/* malus mercato cumulé d'un joueur : 0, puis -4, -6, -8... */
+function malusMercato(p){
+  const n = (participants[p] && participants[p].mercato) || 0;
+  return n===0 ? 0 : -(4 + (n-1)*2);
 }
 
 /* ============ POTINS ============ */
@@ -3520,14 +3708,7 @@ function miniClassement(){
     z.innerHTML = `<span class="eti">🔒 Classement</span><span class="item" style="color:var(--gris)">scellé jusqu'au verdict</span><span class="fleche">détail ›</span>`;
     return;
   }
-  const lignes = PARTICIPANTS.map(p=>{
-    let total=0;
-    Object.values(pronos[p]||{}).forEach(pr=>{
-      const t = ptsTotal(pr, resultats[pr.match_id]);
-      if(t!==null) total += t;
-    });
-    return {p, total};
-  }).sort((x,y)=>y.total-x.total);
+  const lignes = calculTotaux(filtrePhase).map(l=>({p:l.p, total:l.total}));
   z.style.display = '';
   z.innerHTML = `<span class="eti">🏆 Classement</span>` +
     lignes.map((l,i)=>`<span class="item">${i===0&&l.total>0?'👑':''} ${l.p} <b>${l.total}</b></span>`).join('') +
@@ -3778,7 +3959,7 @@ function lancerRecapJour(jourClef){
   matchs.forEach((m,idx)=>{
     const re = resultats[m.id];
     const joueurs = perfs.filter(x=>x.m.id===m.id);
-    const enMTrecap = Object.keys(resultats).length < 72;
+    const enMTrecap = poulesScellees();
     const lignes = PARTICIPANTS.map(p=>{
       const j = joueurs.find(x=>x.p===p);
       if(!j) return `<div class="ligne-r"><span style="color:var(--gris)">${p} : ${accord(p,'absent','absente')} ce coup-ci 🙈</span></div>`;
@@ -3926,7 +4107,7 @@ function lancerRecapJour(jourClef){
     });
     /* 3) Le sort du leader provisoire : on aime taper sur celui d'en haut.
        MASQUÉ en Money Time (poules non finies) pour ne pas spoiler le classement. */
-    const enMoneyTime = Object.keys(resultats).length < 72;
+    const enMoneyTime = poulesScellees();
     if(!enMoneyTime){
     const clAvant = calculTotaux(x => x.dt.getTime() < matchs[0].dt.getTime());
     const clApres = calculTotaux(x => x.dt.getTime() <= matchs[matchs.length-1].dt.getTime());
@@ -3959,7 +4140,7 @@ function lancerRecapJour(jourClef){
 
   /* ACTE FINAL — le classement du soir + grande punchline genrée.
      EN MONEY TIME : on scelle le classement (suspense préservé jusqu'au sacre). */
-  const enMTjour = Object.keys(resultats).length < 72;
+  const enMTjour = poulesScellees();
   if(enMTjour){
     etapes.push(`<div class="etape"><div class="eti-r">🔒 Classement sous scellés</div><div style="font-size:54px;line-height:1;margin:6px 0">🔐</div><h3 style="font-size:clamp(18px,5vw,26px)">Money Time</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:420px">On garde le détail de vos points, mais le classement reste secret jusqu'au dernier des 72 matchs.</div><div class="punch">🎙️ ${pioche([
       "Le suspense est total. Personne ne saura qui mène avant le verdict final.",
@@ -4051,7 +4232,7 @@ function etapesReveal(id){
     const extras = [pr.buteur?`⚽ ${pr.buteur}`:'', pr.btts===true?'🥅 oui':pr.btts===false?'🥅 non':'', pr.en_or?'🌟 EN OR':''].filter(Boolean).join(' · ');
     return `<div class="ligne-r">${p} : <b>${pr.score_a}–${pr.score_b}</b>${extras?' · '+extras:''}</div>`;
   }).join('');
-  const enMTcomptes = Object.keys(resultats).length < 72;
+  const enMTcomptes = poulesScellees();
   const lignesComptes = PARTICIPANTS.map(p=>{
     const pr = pronos[p] && pronos[p][id];
     if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">${enMTcomptes && p!==pseudo ? '🔒' : '0 pt (spectateur)'}</span></div>`;
@@ -4119,7 +4300,7 @@ function etapesReveal(id){
   /* MONEY TIME : tant que les 72 matchs de poules ne sont pas tous joués, on SCELLE le
      classement général dans le reveal pour préserver le suspense du sacre. Le détail des
      points du match ("Les comptes sont bons") reste affiché. En phase 2, plus de scellé. */
-  const enMoneyTime = Object.keys(resultats).length < 72;
+  const enMoneyTime = poulesScellees();
   const etapeClassement = enMoneyTime
     ? (()=>{ const reste = 72 - Object.keys(resultats).length;
         const tease = reste>=15 ? `Encore <b>${reste}</b> matchs avant que le coffre s'ouvre. Le classement mijote.`
@@ -4202,6 +4383,27 @@ function ouvrirReveal(id){
   rendre();
 }
 
+/* ============ ⚡ POUVOIRS DE PHASE FINALE ============ */
+/* Chaque joueur reçoit UN pouvoir selon son rang final des poules (gravé), utilisable
+   UNE seule fois sur toute la phase finale, posé au moment de parier sur un match. */
+const POUVOIRS = {
+  1: {id:'tapie',  nom:"L'Assurance Tapie",     emoji:'🛡️', desc:"Sur ce match, tes pertes sont annulées (plancher à 0) et +2 bonus si score exact."},
+  2: {id:'dd',     nom:"La Chatte à DD",         emoji:'🍀', desc:"Sur ce match, tes points sont doublés si tu trouves au moins la bonne tendance."},
+  3: {id:'musa',   nom:"Le Joker Petar Musa",    emoji:'⚽', desc:"Sur ce match, tu peux miser DEUX buteurs au lieu d'un (chacun +2/−1)."},
+  4: {id:'remontada',nom:"La Remontada",         emoji:'🔥', desc:"Sur ce match, +2 points garantis si tu trouves le bon qualifié."}
+};
+function rangPoules(p){
+  let cl = (palmares && Array.isArray(palmares.classement_poules) && palmares.classement_poules.length)
+    ? palmares.classement_poules : classementPurPronos();
+  const i = cl.findIndex(l=>l.p===p);
+  return i>=0 ? i+1 : null;
+}
+function pouvoirDe(p){ const r = rangPoules(p); return r && POUVOIRS[r] ? POUVOIRS[r] : null; }
+function pouvoirUtilise(p){
+  const pose = Object.values(pronos[p]||{}).find(pr=>pr.pouvoir);
+  return pose ? pose.match_id : null;
+}
+
 /* ============ 🏆 SACRE DU CHAMPION DES POULES ============ */
 /* Classement PUR PRONOS (sans bonus écurie : le Mondial n'est pas fini, le bonus
    finaliste/vainqueur viendra au sacre mondial, plus tard). Ton : sans pitié. */
@@ -4277,7 +4479,7 @@ function sacrePoules(){
   ])}</div></div>`);
 
   /* — Clôture — */
-  etapes.push(`<div class="etape"><div class="eti-r">🎬 Rideau sur les poules</div>${recapClassement}<div class="punch">🎙️ Voilà pour les poules. La phase finale, c'est une autre histoire — d'autres matchs, d'autres barèmes, d'autres comptes à régler. On remet les compteurs à zéro. Rendez-vous au prochain acte.</div>${pseudo?`<button class="sacre-btn" style="margin-top:14px" onclick="event.stopPropagation();document.getElementById('reveal-overlay').style.display='none';bestOfPerso();">🎬 Voir MON parcours, ${pseudo}</button>`:''}</div>`);
+  etapes.push(`<div class="etape"><div class="eti-r">🎬 Rideau sur les poules</div>${recapClassement}<div class="punch">🎙️ Voilà pour les poules. La phase finale, c'est une autre histoire — d'autres matchs, d'autres barèmes, d'autres comptes à régler. On remet les compteurs à zéro. Rendez-vous au prochain acte.</div>${pseudo?`<button class="sacre-btn" style="margin-top:14px" onclick="event.stopPropagation();document.getElementById('reveal-overlay').style.display='none';bestOfPerso();">🎬 Voir MON parcours, ${pseudo}</button>`:''}<button class="sacre-btn" style="margin-top:10px;background:linear-gradient(90deg,#7aa2ff,var(--or))" onclick="event.stopPropagation();document.getElementById('reveal-overlay').style.display='none';ceremoniePrix();">🏅 La Cérémonie des Prix</button></div>`);
 
   /* affichage via l'overlay reveal existant */
   let etape = 0;
@@ -4415,6 +4617,60 @@ function bestOfPerso(){
   rendre();
 }
 
+/* ============ 🏅 CÉRÉMONIE DES PRIX (après le sacre, avant la phase finale) ============ */
+function ceremoniePrix(){
+  const cl = (palmares && Array.isArray(palmares.classement_poules) && palmares.classement_poules.length)
+    ? palmares.classement_poules : classementPurPronos();
+  if(cl.length < 2) return;
+  const fl = p => (participants[p] && F[participants[p].equipe_ecurie]) || '🏳️';
+  const rang = {}; cl.forEach((l,i)=>rang[l.p]=i+1);
+
+  /* attribution MIXTE : Musa→Ginou et Bielsa→Alex (par personne), Mbappé→2e et GOAT→1er (par rang) */
+  const prix = {
+    musa: {emoji:'🅿️', nom:'Prix Petar Musa', pour:'Ginou',
+      texte:`<b>Ginou</b> a parié sur Petar Musa. Personne ne sait qui c'est. Ginou non plus — elle l'a appris en relisant son propre prono. Ce prix récompense l'audace de miser sur un joueur dont l'existence reste à prouver. 👻`},
+    bielsa: {emoji:'🎩', nom:'Prix Marcelo Bielsa', pour:'Alex',
+      texte:`<b>Alex</b> joue beau, joue juste, et perd quand même. Comme El Loco : adoré de tous, vainqueur de rien. Le romantisme fait homme, le trophée fait défaut. Un génie incompris — surtout par le tableau des scores. 🎭`},
+    mbappe: {emoji:'🥈', nom:'Prix Kylian Mbappé', rang:2,
+      texte:(p)=>`<b>${p}</b> : plus rapide, plus fort, plus tout — sauf premier. Le talent d'un n°1, le palmarès d'un n°2. ${ilElle(p)} ${accord(p,'parti','partie')} pour gagner enfin… et repart les mains vides. Le Ballon d'Or, ce sera l'an prochain. On dit ça chaque année. 😏`},
+    goat: {emoji:'🐐', nom:'Prix GOAT à jamais le premier', rang:1,
+      texte:(p)=>`<b>${p}</b>, à jamais le premier — comme l'OM 93. Gravé dans le marbre, intouchable, éternel. Pendant que les autres se disputent les miettes, ${ilElle(p)} trône au panthéon. Le seul à se prendre pour Messi dans une famille de Petar Musa. Et le pire… c'est que les chiffres lui donnent raison. 🏆`}
+  };
+  const parRang = {}; Object.values(prix).forEach(pr=>{ if(pr.rang) parRang[pr.rang]=pr; });
+  const nomDeRang = r => (cl[r-1]||{}).p;
+
+  const etapes = [];
+  etapes.push(`<div class="etape"><div class="eti-r">🏅 La Cérémonie des Prix</div><h3>Avant la bataille,<br>les récompenses.</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px">Le champion est sacré. Place aux lots de consolation — distribués du dernier au premier, sans pitié.</div></div>`);
+
+  /* du 4e au 1er */
+  for(let r=cl.length; r>=1; r--){
+    const p = nomDeRang(r);
+    let pr = null;
+    if(p==='Ginou') pr = prix.musa;
+    else if(p==='Alex') pr = prix.bielsa;
+    else if(parRang[r]) pr = parRang[r];
+    if(!pr){ /* fallback générique si config inattendue */
+      pr = {emoji:'🎖️', nom:'Prix de Participation', texte:(x)=>`<b>${x}</b> était là. C'est déjà ça.`};
+    }
+    const txt = typeof pr.texte === 'function' ? pr.texte(p) : pr.texte;
+    etapes.push(`<div class="etape" ${r===1?'data-reveal-score data-a="0" data-b="0" data-fete="1"':''}><div class="eti-r">${pr.emoji} ${r===1?'Et enfin…':r+'e place'}</div><div style="font-size:48px;line-height:1">${pr.emoji}</div><div class="drapeaux">${fl(p)}</div><h3 style="font-size:clamp(18px,5vw,26px)">${pr.nom}</h3><div class="punch">🎙️ ${txt}</div></div>`);
+  }
+
+  etapes.push(`<div class="etape"><div class="eti-r">🔥 Place au combat</div><h3 style="font-size:clamp(18px,5vw,24px)">Fin des politesses</h3><div class="ligne-r" style="color:var(--gris);margin-top:8px;max-width:420px">Les prix sont distribués, les ego recalibrés. La phase finale commence — élimination directe, pouvoirs en main, écuries à défendre. Que le meilleur gagne. Vraiment.</div></div>`);
+
+  let etape = 0;
+  let div = document.getElementById('reveal-overlay');
+  if(!div){ div = document.createElement('div'); div.id='reveal-overlay'; div.className='reveal'; document.body.appendChild(div); }
+  div.style.display = 'flex';
+  const rendre = () => {
+    div.innerHTML = etapes[etape] + `<div class="suite">${etape < etapes.length-1 ? 'Touche pour la suite ('+(etape+1)+'/'+etapes.length+')' : 'Touche pour fermer'}</div>`;
+    const sc = div.querySelector('[data-reveal-score]');
+    if(sc) animerScore(sc, div);
+  };
+  div.onclick = () => { etape++; if(etape>=etapes.length){ div.style.display='none'; } else rendre(); };
+  rendre();
+}
+
 function animerScore(etape, overlay){
   const a = parseInt(etape.getAttribute('data-a'),10), b = parseInt(etape.getAttribute('data-b'),10);
   const fete = etape.getAttribute('data-fete')==='1';
@@ -4447,7 +4703,7 @@ function confettiReveal(overlay){
   }
   setTimeout(()=>{ if(c) c.innerHTML=''; }, 4200);
 }
-function toutAfficher(){ lisereEcurie(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); if(document.getElementById('sec-tableau') && document.getElementById('sec-tableau').classList.contains('actif')) renduBracket(); $('admin-maj').style.display = admin ? '' : 'none';
+function toutAfficher(){ if(palmares && palmares.champion_poules){ injecterPhaseFinale(); } lisereEcurie(); blocIdentite(); banniereEcurie(); miniClassement(); alerteDuel(); hero(); renduAvm(); listeMatchs(); listePronos(); classement(); renduDuels(); zoneEquipes(); ecuries(); potins(); if(document.getElementById('sec-tableau') && document.getElementById('sec-tableau').classList.contains('actif')) renduBracket(); $('admin-maj').style.display = admin ? '' : 'none';
   if(admin && palmares){ const pf=$('pal-finaliste'), pv=$('pal-vainqueur'); if(pf&&!pf.value)pf.value=palmares.finaliste||''; if(pv&&!pv.value)pv.value=palmares.vainqueur||''; } }
 
 function goTab(sec){ document.querySelector(`nav button[data-sec=${sec}]`).click(); }
@@ -4597,6 +4853,49 @@ function resolutionThird(){
   return res;
 }
 
+/* ===== CALENDRIER PHASE FINALE — dates/heures en HEURE MARTINIQUE (AST = ET en été) =====
+   Source : calendrier officiel FIFA 2026 (croisé NBC/Yahoo/FIFA). Rattaché au NUMÉRO de
+   match (le lieu/heure FIFA est fixe par match, quels que soient les qualifiés). */
+const CAL_FINALE = {
+  // 16es (28 juin → 3 juillet)
+  M73:{d:'Dim 28 juin', h:'15h00', v:'SoFi Stadium, Los Angeles'},
+  M76:{d:'Lun 29 juin', h:'13h00', v:'NRG Stadium, Houston'},
+  M74:{d:'Lun 29 juin', h:'16h30', v:'Gillette Stadium, Boston'},
+  M75:{d:'Lun 29 juin', h:'21h00', v:'Estadio BBVA, Monterrey'},
+  M78:{d:'Mar 30 juin', h:'13h00', v:'AT&T Stadium, Dallas'},
+  M77:{d:'Mar 30 juin', h:'17h00', v:'MetLife Stadium, New Jersey'},
+  M79:{d:'Mar 30 juin', h:'21h00', v:'Estadio Azteca, Mexico'},
+  M85:{d:'Mer 1 juil', h:'12h00', v:'Mercedes-Benz Stadium, Atlanta'},
+  M86:{d:'Mer 1 juil', h:'16h00', v:'Lumen Field, Seattle'},
+  M81:{d:'Mer 1 juil', h:'20h00', v:"Levi's Stadium, San Francisco"},
+  M84:{d:'Jeu 2 juil', h:'15h00', v:'SoFi Stadium, Los Angeles'},
+  M83:{d:'Jeu 2 juil', h:'19h00', v:'BMO Field, Toronto'},
+  M87:{d:'Jeu 2 juil', h:'23h00', v:'BC Place, Vancouver'},
+  M88:{d:'Ven 3 juil', h:'14h00', v:'AT&T Stadium, Dallas'},
+  M82:{d:'Ven 3 juil', h:'18h00', v:'Hard Rock Stadium, Miami'},
+  M80:{d:'Ven 3 juil', h:'21h30', v:'Arrowhead Stadium, Kansas City'},
+  // 8es (4 → 7 juillet)
+  M90:{d:'Sam 4 juil', h:'13h00', v:'NRG Stadium, Houston'},
+  M89:{d:'Sam 4 juil', h:'17h00', v:'Lincoln Financial Field, Philadelphie'},
+  M91:{d:'Dim 5 juil', h:'16h00', v:'MetLife Stadium, New Jersey'},
+  M92:{d:'Dim 5 juil', h:'20h00', v:'Estadio Azteca, Mexico'},
+  M93:{d:'Lun 6 juil', h:'15h00', v:'AT&T Stadium, Dallas'},
+  M94:{d:'Lun 6 juil', h:'20h00', v:'Lumen Field, Seattle'},
+  M95:{d:'Mar 7 juil', h:'12h00', v:'Mercedes-Benz Stadium, Atlanta'},
+  M96:{d:'Mar 7 juil', h:'16h00', v:'Hard Rock Stadium, Miami'},
+  // Quarts (9 → 11 juillet)
+  M97:{d:'Jeu 9 juil', h:'17h00', v:'Gillette Stadium, Boston'},
+  M98:{d:'Jeu 9 juil', h:'21h00', v:'SoFi Stadium, Los Angeles'},
+  M99:{d:'Ven 10 juil', h:'17h00', v:'Lincoln Financial Field, Philadelphie'},
+  M100:{d:'Sam 11 juil', h:'17h00', v:'Arrowhead Stadium, Kansas City'},
+  // Demies (14 → 15 juillet)
+  M101:{d:'Mar 14 juil', h:'15h00', v:'AT&T Stadium, Dallas'},
+  M102:{d:'Mer 15 juil', h:'15h00', v:'Mercedes-Benz Stadium, Atlanta'},
+  // Petite finale + Finale
+  M103:{d:'Sam 18 juil', h:'15h00', v:'Hard Rock Stadium, Miami'},
+  M104:{d:'Dim 19 juil', h:'15h00', v:'MetLife Stadium, New Jersey'}
+};
+
 const round32Fixed = {
   M73:["2A","2B"], M74:["1E","THIRD"], M75:["1F","2C"], M76:["1C","2F"],
   M77:["1I","THIRD"], M78:["2E","2I"], M79:["1A","THIRD"], M80:["1L","THIRD"],
@@ -4676,6 +4975,53 @@ function libelleSlot(code, matchId){
   return `<span class="brk-prov">${code}</span>`;
 }
 
+/* ===== INJECTION DES MATCHS DE PHASE FINALE DANS M =====
+   Génère les 32 matchs (M73→M104) avec leurs équipes résolues dynamiquement via le
+   bracket + dates/heures de CAL_FINALE. Rejouable : on retire d'abord les anciens pour
+   éviter les doublons. Un match porte phase:'finale' (déclenche barème + formulaire dédiés).
+   Les équipes non encore connues prennent un libellé provisoire ("1er gr. I", "3e ?"…). */
+function libelleSlotTexteCourt(code, matchId){
+  const eq = resoudreSlot(code, matchId);
+  if(eq) return eq;
+  if(code==='THIRD') return '3e ?';
+  const m = code && code.match(/^([12])([A-L])$/);
+  if(m) return `${m[1]==='1'?'1er':'2e'} gr.${m[2]}`;
+  if(code && (code[0]==='W'||code[0]==='L')) return `${code[0]==='W'?'Vainq.':'Perd.'} ${code.slice(1)}`;
+  return code||'?';
+}
+function injecterPhaseFinale(){
+  /* retire les anciens matchs de finale (id numérique >= 73) */
+  M = M.filter(m => m.id < 73);
+  const tousTours = [
+    [round32Fixed,'16e'], [round16Fixed,'8e'], [quartsFixed,'Quart'],
+    [demiesFixed,'Demie'], [petiteFinale,'3e place'], [finaleFixed,'Finale']
+  ];
+  tousTours.forEach(([obj,tour])=>{
+    Object.entries(obj).forEach(([mid,slots])=>{
+      const id = parseInt(mid.slice(1),10);
+      const cal = CAL_FINALE[mid];
+      const a = libelleSlotTexteCourt(slots[0], mid);
+      const b = libelleSlotTexteCourt(slots[1], mid);
+      /* date : on parse "Dim 28 juin" + heure → Date approx pour le tri (année 2026).
+         Si pas de date connue, on met une date lointaine pour rester en fin de liste. */
+      const dt = cal ? dateFinale(cal) : new Date('2026-07-31T00:00:00-04:00');
+      M.push({ id, g:tour, a, b, dt, phase:'finale', slots, mid, lieu: cal?cal.v:'', tour });
+    });
+  });
+}
+/* convertit {d:'Dim 28 juin', h:'15h00'} en objet Date (heure Martinique) */
+function dateFinale(cal){
+  const mois = {janvier:0,'févr':1,'fevr':1,mars:2,avril:3,mai:4,juin:5,juil:6,'août':7,aout:7,sept:8,oct:9,nov:10,'déc':11,dec:11};
+  const mj = cal.d.match(/(\d{1,2})\s+([a-zûéô]+)/i);
+  const mh = cal.h.match(/(\d{1,2})h(\d{2})/);
+  if(!mj || !mh) return new Date('2026-07-31T00:00:00-04:00');
+  const jour = +mj[1];
+  const moisKey = Object.keys(mois).find(k=>mj[2].toLowerCase().startsWith(k));
+  const moisNum = moisKey!==undefined ? mois[moisKey] : 6;
+  const h = mh[1].padStart(2,'0'), min = mh[2];
+  return new Date(`2026-${String(moisNum+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}T${h}:${min}:00-04:00`);
+}
+
 /* Affiche d'un match du bracket : "Espagne vs Côte d'Ivoire" en resolvant ses deux slots.
    Renvoie les libelles courts (drapeau + pays si resolu, sinon abrege). null si introuvable. */
 function afficheMatch(id){
@@ -4735,11 +5081,24 @@ function renduBracket(){
   const cle = (pseudo && ecurieDe(pseudo)) || 'France';
   const couloir = couloirDe(cle);
 
+  /* grosses nations : sert à détecter les "chocs" (affiches qui claquent) */
+  const GROSSE = new Set(['France','Brésil','Argentine','Espagne','Angleterre','Allemagne','Portugal','Pays-Bas','Belgique','Italie','Uruguay']);
+
   const carteMatch = (id, slots, tour) => {
     const surveille = couloir.has(id);
-    return `<div class="brk-match${surveille?' brk-hot':''}">
-      <div class="brk-id">${id.slice(1)} · ${tour}</div>
+    const cal = CAL_FINALE[id];
+    const eqA = resoudreSlot(slots[0], id), eqB = resoudreSlot(slots[1], id);
+    /* choc = les deux côtés résolus ET au moins deux grosses nations */
+    const choc = eqA && eqB && GROSSE.has(eqA) && GROSSE.has(eqB);
+    const reA = resultats['M'+id.slice(1)]; // si le match a un résultat saisi
+    return `<div class="brk-match${surveille?' brk-hot':''}${choc?' brk-choc':''}">
+      ${choc?`<div class="brk-choc-tag">🔥 CHOC</div>`:''}
+      <div class="brk-top">
+        <span class="brk-id">${id.slice(1)} · ${tour}</span>
+        ${cal?`<span class="brk-date">${cal.d} · ${cal.h}</span>`:''}
+      </div>
       <div class="brk-slots">${libelleSlot(slots[0], id)}<span class="brk-vs">vs</span>${libelleSlot(slots[1], id)}</div>
+      ${cal?`<div class="brk-lieu">📍 ${cal.v}</div>`:''}
     </div>`;
   };
 
@@ -4753,18 +5112,18 @@ function renduBracket(){
   if(couloir.size){
     bandeau = `<div class="brk-bandeau">
       <span class="brk-bandeau-t">${F[cle]||''} Couloir de ${cle}</span>
-      <span class="brk-bandeau-s">Surligne en or : son chemin possible jusqu'a la finale, en l'etat des classements</span>
+      <span class="brk-bandeau-s">Surligné en or : son chemin possible jusqu'à la finale, en l'état des classements</span>
     </div>`;
   }
 
   wrap.innerHTML = bandeau +
     bloc('16es de finale', round32Fixed, '16e') +
     bloc('8es de finale', round16Fixed, '8e') +
-    bloc('Quarts de finale', quartsFixed, 'Q') +
-    bloc('Demi-finales', demiesFixed, 'D') +
+    bloc('Quarts de finale', quartsFixed, 'Quart') +
+    bloc('Demi-finales', demiesFixed, 'Demie') +
     bloc('Petite finale', petiteFinale, '3e place') +
-    bloc('Finale', finaleFixed, 'Finale') +
-    `<div class="brk-note">Les 3es exacts seront resolus en couche 2 (Annexe C FIFA). Pour l'instant, on affiche les groupes possibles.</div>`;
+    bloc('Finale', finaleFixed, 'FINALE') +
+    `<div class="brk-note">Les 3es de groupe seront résolus précisément via l'Annexe C FIFA. En attendant, on affiche les groupes possibles. Heures en Martinique (AST).</div>`;
 }
 
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
