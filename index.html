@@ -654,7 +654,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.4';
+const APP_VERSION = '12.5';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4765,7 +4765,20 @@ async function graverSacrePoules(){
     palmares = Object.assign({}, palmares, payload);
     toast('👑 Sacre gravé pour toujours — ' + champ.p + ' champion des poules !');
     toutAfficher();
-  }catch(e){ toast('Échec — la table mondial_palmares a-t-elle les colonnes du sacre ?'); }
+  }catch(e){
+    /* affiche le détail réel de l'erreur Supabase pour diagnostiquer */
+    let detail = '';
+    try{
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/mondial_palmares?on_conflict=id`, {
+        method:'POST',
+        headers:{ 'apikey':SUPABASE_KEY, 'Authorization':`Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', 'Prefer':'resolution=merge-duplicates' },
+        body: JSON.stringify(payload)
+      });
+      detail = await r.text();
+    }catch(ee){ detail = (ee&&ee.message)||String(ee); }
+    alert('ERREUR GRAVURE SACRE :\n\n' + detail);
+    toast('❌ Voir le détail de l\'erreur affiché');
+  }
 }
 async function appliquerMajJour(){
   const dire = (msg, couleur) => { const z=document.getElementById('maj-retour'); if(z){ z.textContent=msg; z.style.color=couleur||'var(--creme)'; } toast(msg); };
