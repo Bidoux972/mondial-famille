@@ -85,6 +85,7 @@ header .sous{color:var(--gris);font-size:13px;margin-top:4px}
 .tag-lose{background:rgba(255,107,94,.15);color:#ff9b8f;border:1px solid rgba(255,107,94,.35)}
 .tag-neutre{background:var(--panneau2);color:var(--gris);border:1px solid var(--ligne)}
 .tag-or{background:rgba(245,180,60,.18);color:var(--or);border:1px solid rgba(245,180,60,.45)}
+.tag-pouvoir{background:rgba(122,162,255,.18);color:#9db8ff;border:1px solid rgba(122,162,255,.45)}
 .fam-calc{font-size:11px;color:var(--gris);margin:1px 0 0 62px;font-family:'Space Grotesk',monospace}
 /* barre live au-dessus du hero */
 .live-bar{background:rgba(255,107,94,.12);border:1px solid var(--corail);border-radius:12px;padding:11px 14px;margin-bottom:10px}
@@ -652,7 +653,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '11.8';
+const APP_VERSION = '11.9';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1398,7 +1399,11 @@ function carteMatch(m, modePronos){
       const tags = [];
       tags.push(`<span class="ptag tag-neutre">Score ${pr.score_a}-${pr.score_b}</span>`);
       if(pr.buteur) tags.push(`<span class="ptag tag-neutre">⚽ ${pr.buteur}</span>`);
+      if(pr.qualifie) tags.push(`<span class="ptag tag-neutre">🎫 ${pr.qualifie} passe</span>`);
+      if(pr.scenario) tags.push(`<span class="ptag tag-neutre">⏱️ ${pr.scenario==='90'?'90 min':pr.scenario==='prolongation'?'prolong.':'tab'}</span>`);
+      if(pr.buteur2) tags.push(`<span class="ptag tag-neutre">⚽ ${pr.buteur2} (2e)</span>`);
       if(pr.btts===true||pr.btts===false) tags.push(`<span class="ptag tag-neutre">${pr.btts?'Les 2 marquent':'Pas les 2 (une à 0)'}</span>`);
+      if(pr.pouvoir && pr.match_id!==104){ const pv=POUVOIRS[Object.keys(POUVOIRS).find(k=>POUVOIRS[k].id===pr.pouvoir)]; if(pv) tags.push(`<span class="ptag tag-pouvoir">${pv.emoji} ${pv.nom}</span>`); }
       if(pr.en_or) tags.push(`<span class="ptag tag-or">🌟 Match en Or</span>`);
       return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-spacer"></span><span class="fam-attente">en attente</span></div><div class="fam-tags">${tags.join('')}</div>`;
     }
@@ -1426,6 +1431,21 @@ function carteMatch(m, modePronos){
       if(pr.buteur){
         tags.push(`<span class="ptag ${bo.but===2?'tag-win':'tag-lose'}">⚽ ${pr.buteur} ${bo.but===2?'✓':'✗'}</span>`);
       }
+      /* étiquettes phase finale : qualifié, scénario, 2e buteur (Musa), pouvoir */
+      if(pr.qualifie){
+        const ok = re.qualifie && pr.qualifie===re.qualifie;
+        tags.push(`<span class="ptag ${ok?'tag-win':'tag-lose'}">🎫 ${pr.qualifie} ${ok?'passe ✓':'✗'}</span>`);
+      }
+      if(pr.scenario){
+        const ok = re.scenario && pr.scenario===re.scenario;
+        const lib = pr.scenario==='90'?'90 min':pr.scenario==='prolongation'?'prolong.':'tab';
+        tags.push(`<span class="ptag ${ok?'tag-win':'tag-tendance'}">⏱️ ${lib} ${ok?'✓':'✗'}</span>`);
+      }
+      if(pr.buteur2 && pr.pouvoir==='musa' && pr.match_id!==104){
+        const ok2 = buteurEstMarque(pr.buteur2, re);
+        tags.push(`<span class="ptag ${ok2?'tag-win':'tag-lose'}">⚽ ${pr.buteur2} (2e) ${ok2?'✓':'✗'}</span>`);
+      }
+      if(pr.pouvoir && pr.match_id!==104){ const pv=POUVOIRS[Object.keys(POUVOIRS).find(k=>POUVOIRS[k].id===pr.pouvoir)]; if(pv) tags.push(`<span class="ptag tag-pouvoir">${pv.emoji} ${pv.nom}</span>`); }
       /* étiquette les 2 marquent */
       if(pr.btts===true||pr.btts===false){
         tags.push(`<span class="ptag ${bo.btts===1?'tag-win':'tag-lose'}">${pr.btts?'Les 2 marquent':'Pas les 2 (une à 0)'} ${bo.btts===1?'✓':'✗'}</span>`);
