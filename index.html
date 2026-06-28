@@ -652,7 +652,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '11.7';
+const APP_VERSION = '11.8';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1840,7 +1840,7 @@ function classement(){
   const moneyTimeActif = aDesPoints && poulesScellees();   /* scellé tant que pas gravé */
   /* bouton PERMANENT de relecture du sacre, dès qu'il est gravé en base (rejouable même en phase 2) */
   const btnRevoir = sacreGrave
-    ? `<div class="revoir-sacre"><button class="sacre-btn" onclick="sacrePoules()">👑 Revoir le sacre des poules</button><div class="revoir-sub">Champion : ${palmares.champion_poules} · gravé pour toujours</div></div>`
+    ? `<div class="revoir-sacre"><button class="sacre-btn" onclick="sacrePoules()">👑 Revoir le sacre des poules</button><button class="sacre-btn" style="margin-top:8px;background:linear-gradient(90deg,#7aa2ff,var(--or))" onclick="ceremoniePrix()">🏅 La Cérémonie des Prix</button><div class="revoir-sub">Champion : ${palmares.champion_poules} · gravé pour toujours</div></div>`
     : '';
 
   /* ÉTAT 1 — MONEY TIME : classement scellé, suspense total jusqu'au sacre */
