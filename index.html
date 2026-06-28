@@ -558,6 +558,10 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
       <textarea id="maj-jour" placeholder='{"resultats":[...], "joueurs":{...}, "avantmatchs":[...]}' style="min-height:90px;font-family:monospace;font-size:12px"></textarea>
       <button class="btn corail" style="margin-top:8px" onclick="appliquerMajJour()">Appliquer la mise à jour</button>
       <div id="maj-retour" style="margin-top:8px;font-size:13px;font-weight:700;min-height:18px"></div>
+      <div style="margin-top:12px;display:flex;gap:6px;align-items:center">
+        <input type="number" id="rejouer-id" placeholder="N° match" style="width:90px" inputmode="numeric">
+        <button class="btn" style="flex:1;background:var(--panneau2);border:1px solid var(--or);color:var(--or)" onclick="rejouerReveal()">🎬 Rejouer la cinématique de ce match</button>
+      </div>
       <div class="eti" style="margin-top:14px">🏆 Palmarès final (bonus écurie)</div>
       <p class="note">À renseigner en fin de tournoi : le finaliste donne +5 et le vainqueur +10 à qui l'a en écurie.</p>
       <input type="text" id="pal-finaliste" placeholder="Finaliste battu (nom exact de l'équipe)">
@@ -654,7 +658,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.5';
+const APP_VERSION = '12.6';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4210,6 +4214,15 @@ function lancerRecapJour(jourClef){
 let revealQueue = [], revealEtape = 0;
 function vusReveal(){ try{ return JSON.parse(localStorage.getItem('mf_reveals')||'[]'); }catch(e){ return []; } }
 function marquerVu(id){ try{ const v = vusReveal(); if(!v.includes(id)){ v.push(id); localStorage.setItem('mf_reveals', JSON.stringify(v)); } }catch(e){} }
+function rejouerReveal(){
+  const id = parseInt((document.getElementById('rejouer-id')||{}).value, 10);
+  if(isNaN(id)){ toast('Indique le numéro du match'); return; }
+  if(!resultats[id]){ toast('Ce match n\'a pas encore de résultat'); return; }
+  /* on retire le match des "déjà vus" pour pouvoir rejouer sa cinématique */
+  try{ const v = vusReveal().filter(x=>x!==id); localStorage.setItem('mf_reveals', JSON.stringify(v)); }catch(e){}
+  revealQueue = [];
+  ouvrirReveal(id);
+}
 function detecterReveals(){
   if(!pseudo) return;
   const vus = vusReveal();
@@ -4247,7 +4260,7 @@ function verdictMatch(m, re){
 function etapesReveal(id){
   _piocheVues = new Set();
   const m = M.find(x=>x.id===id), re = resultats[id];
-  if(!m || !re) return [];   /* match pas encore injecté ou sans résultat : pas de reveal, on évite le plantage */
+  if(!m || !re) return [];   /* sécurité minimale : pas de match ou pas de résultat */
   const lignesParis = PARTICIPANTS.map(p=>{
     const pr = pronos[p] && pronos[p][id];
     if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">n'a pas parié 🙈</span></div>`;
