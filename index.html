@@ -654,7 +654,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.3';
+const APP_VERSION = '12.4';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -969,8 +969,8 @@ async function chargerTout() {
     toast("Connexion à la base impossible — réessaie dans un instant");
   }
   try{ toutAfficher(); }catch(e){ console.error('toutAfficher:', e); }
-  signalerPresence();
-  detecterReveals();
+  try{ signalerPresence(); }catch(e){ console.error('signalerPresence:', e); }
+  try{ detecterReveals(); }catch(e){ console.error('detecterReveals:', e); }
 }
 
 /* ============ OUTILS ============ */
@@ -4247,6 +4247,7 @@ function verdictMatch(m, re){
 function etapesReveal(id){
   _piocheVues = new Set();
   const m = M.find(x=>x.id===id), re = resultats[id];
+  if(!m || !re) return [];   /* match pas encore injecté ou sans résultat : pas de reveal, on évite le plantage */
   const lignesParis = PARTICIPANTS.map(p=>{
     const pr = pronos[p] && pronos[p][id];
     if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">n'a pas parié 🙈</span></div>`;
@@ -4381,6 +4382,7 @@ function ouvrirReveal(id){
   if(!resultats[id]) return;
   revealEtape = 0;
   const etapes = etapesReveal(id);
+  if(!etapes || !etapes.length){ marquerVu(id); if(revealQueue.length){ ouvrirReveal(revealQueue.shift()); } return; }
   let div = document.getElementById('reveal-overlay');
   if(!div){
     div = document.createElement('div');
@@ -4838,7 +4840,7 @@ async function appliquerMajJour(){
     }
     $('maj-jour').value='';
     dire(`✅ Enregistré : ${ok} élément${ok>1?'s':''}${ko?` · ${ko} échec(s)`:''}`, ko?'var(--corail)':'var(--lagon)');
-    try{ await chargerTout(); }catch(e){ dire(`✅ ${ok} enregistré(s) · affichage à rafraîchir`, 'var(--or)'); try{ toutAfficher(); }catch(_){} }
+    try{ await chargerTout(); }catch(e){ dire('⚠️ Écrit OK, mais erreur recharge : ' + (e&&e.message?e.message:e), 'var(--corail)'); try{ toutAfficher(); }catch(ee){ dire('⚠️ Erreur affichage : ' + (ee&&ee.message?ee.message:ee), 'var(--corail)'); } }
   }catch(e){ dire('❌ Échec : ' + (e && e.message ? e.message : e), 'var(--corail)'); }
 }
 
