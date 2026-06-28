@@ -612,7 +612,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '10.4';
+const APP_VERSION = '10.5';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1299,8 +1299,12 @@ function carteMatch(m, modePronos){
     }
     let pts = '', chambre = '', etiquettes = '';
     if(t!==null){
-      pts = `<span class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t}</span>`;
-      chambre = chambrage(p, pr, re, t);
+      const enMoneyTime = Object.keys(resultats).length < 72;
+      const masquePts = enMoneyTime && p!==pseudo;   /* en money time : on cache les POINTS des autres */
+      pts = masquePts
+        ? `<span class="pts" style="color:var(--gris)" title="Scellé jusqu'au verdict">🔒</span>`
+        : `<span class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t}</span>`;
+      chambre = masquePts ? '' : chambrage(p, pr, re, t);
       const base = points(pr, re), bo = bonus(pr, re);
       const tags = [];
       /* étiquette score : vert si exact (+3), vert nuancé si bonne tendance (+1), rouge si raté */
@@ -1325,7 +1329,7 @@ function carteMatch(m, modePronos){
       if(pr.en_or){
         tags.push(`<span class="ptag ${t>=0?'tag-or':'tag-lose'}">🌟 Match en Or ×2</span>`);
       }
-      etiquettes = `<div class="fam-tags">${tags.join('')}</div>`;
+      etiquettes = masquePts ? '' : `<div class="fam-tags">${tags.join('')}</div>`;
     }
     return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-spacer"></span>${pts}</div>${etiquettes}${chambre?`<div class="fam-ch-l">${chambre}</div>`:''}`;
   }).join('');
@@ -3484,6 +3488,13 @@ async function ajouterPotin(){
 /* ============ ORCHESTRATION ============ */
 function miniClassement(){
   const z = $('mini-classement');
+  /* MONEY TIME : ce mini-classement est affiché en permanence en haut de l'app.
+     On le scelle pour ne pas révéler les positions pendant la dernière ligne droite. */
+  if(Object.keys(resultats).length < 72 && PARTICIPANTS.some(p=>Object.values(pronos[p]||{}).some(pr=>resultats[pr.match_id]))){
+    z.style.display = '';
+    z.innerHTML = `<span class="eti">🔒 Classement</span><span class="item" style="color:var(--gris)">scellé jusqu'au verdict</span><span class="fleche">détail ›</span>`;
+    return;
+  }
   const lignes = PARTICIPANTS.map(p=>{
     let total=0;
     Object.values(pronos[p]||{}).forEach(pr=>{
@@ -3742,17 +3753,28 @@ function lancerRecapJour(jourClef){
   matchs.forEach((m,idx)=>{
     const re = resultats[m.id];
     const joueurs = perfs.filter(x=>x.m.id===m.id);
+    const enMTrecap = Object.keys(resultats).length < 72;
     const lignes = PARTICIPANTS.map(p=>{
       const j = joueurs.find(x=>x.p===p);
       if(!j) return `<div class="ligne-r"><span style="color:var(--gris)">${p} : ${accord(p,'absent','absente')} ce coup-ci 🙈</span></div>`;
+      if(enMTrecap && p!==pseudo){
+        /* money time : on montre le prono (score parié) mais on SCELLE les points */
+        return `<div class="ligne-r">${p} : <b>${j.pr.score_a}-${j.pr.score_b}</b> · <span style="color:var(--gris);font-size:13px">🔒 points scellés</span></div>`;
+      }
       const emo = j.t>=4?'🔥':j.t===3?'🎯':j.t>0?'👍':j.t===0?'😬':'💀';
       return `<div class="ligne-r">${p} : <b>${j.pr.score_a}-${j.pr.score_b}</b> · <span style="color:var(--gris);font-size:13px">${detailLigne(j.pr, re)}</span> → <b class="pts p${j.t>=3?3:j.t>=1?1:0}">${j.t>0?'+':''}${j.t}</b> ${emo}</div>`;
     }).join('');
-    /* la phrase qui raconte ce match */
+    /* la phrase qui raconte ce match — neutralisée en money time (elle nomme le best/worst) */
     const best = joueurs.length ? joueurs.reduce((a,b)=>b.t>a.t?b:a) : null;
     const worst = joueurs.length ? joueurs.reduce((a,b)=>b.t<a.t?b:a) : null;
     let raconte = '';
-    if(best && worst && best.t>worst.t){
+    if(enMTrecap){
+      raconte = pioche([
+        "Les points de ce match restent scellés. Patience, le verdict approche.",
+        "Qui a cartonné ? Qui s'est troué ? Secret défense jusqu'au sacre.",
+        "Le détail est sous clé. On garde le suspense intact."
+      ]);
+    } else if(best && worst && best.t>worst.t){
       if(best.t>=4){
         raconte = pioche([
           `${best.p} a flairé le coup et rafle gros. ${worst.p}, ${accord(worst.p,'reparti','repartie')} les mains vides.`,
@@ -4004,10 +4026,14 @@ function etapesReveal(id){
     const extras = [pr.buteur?`⚽ ${pr.buteur}`:'', pr.btts===true?'🥅 oui':pr.btts===false?'🥅 non':'', pr.en_or?'🌟 EN OR':''].filter(Boolean).join(' · ');
     return `<div class="ligne-r">${p} : <b>${pr.score_a}–${pr.score_b}</b>${extras?' · '+extras:''}</div>`;
   }).join('');
+  const enMTcomptes = Object.keys(resultats).length < 72;
   const lignesComptes = PARTICIPANTS.map(p=>{
     const pr = pronos[p] && pronos[p][id];
-    if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">0 pt (spectateur)</span></div>`;
+    if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">${enMTcomptes && p!==pseudo ? '🔒' : '0 pt (spectateur)'}</span></div>`;
     const t = ptsTotal(pr, re);
+    if(enMTcomptes && p!==pseudo){
+      return `<div class="ligne-r">${p} : <span style="color:var(--gris)" title="Scellé jusqu'au verdict">🔒 points scellés</span></div>`;
+    }
     const emo = t>=4?'🔥':t===3?'🎯':t>0?'👍':t===0?'😬':'💀';
     return `<div class="ligne-r">${p} : <b class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t} pt${Math.abs(t)>1?'s':''}</b> ${emo}${pr.en_or?' (EN OR ×2 !)':''}</div>`;
   }).join('');
