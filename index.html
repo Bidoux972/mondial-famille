@@ -557,6 +557,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
       <p class="note">Colle ici le bloc quotidien préparé avec Claude (résultats + buteurs + cartons + joueurs + avant-matchs), puis Appliquer. Tout se met à jour d'un coup.</p>
       <textarea id="maj-jour" placeholder='{"resultats":[...], "joueurs":{...}, "avantmatchs":[...]}' style="min-height:90px;font-family:monospace;font-size:12px"></textarea>
       <button class="btn corail" style="margin-top:8px" onclick="appliquerMajJour()">Appliquer la mise à jour</button>
+      <div id="maj-retour" style="margin-top:8px;font-size:13px;font-weight:700;min-height:18px"></div>
       <div class="eti" style="margin-top:14px">🏆 Palmarès final (bonus écurie)</div>
       <p class="note">À renseigner en fin de tournoi : le finaliste donne +5 et le vainqueur +10 à qui l'a en écurie.</p>
       <input type="text" id="pal-finaliste" placeholder="Finaliste battu (nom exact de l'équipe)">
@@ -653,7 +654,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.1';
+const APP_VERSION = '12.2';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4765,9 +4766,11 @@ async function graverSacrePoules(){
   }catch(e){ toast('Échec — la table mondial_palmares a-t-elle les colonnes du sacre ?'); }
 }
 async function appliquerMajJour(){
+  const dire = (msg, couleur) => { const z=document.getElementById('maj-retour'); if(z){ z.textContent=msg; z.style.color=couleur||'var(--creme)'; } toast(msg); };
+  dire('⏳ Traitement en cours…', 'var(--or)');
   let data;
   try{ data = JSON.parse($('maj-jour').value); }
-  catch(e){ toast('JSON invalide — recopie le bloc complet'); return; }
+  catch(e){ dire('❌ JSON invalide — recopie le bloc complet', 'var(--corail)'); return; }
   let ok=0, ko=0;
   try{
     for(const r of (data.resultats||[])){
@@ -4834,9 +4837,9 @@ async function appliquerMajJour(){
       }catch(e){ ko++; }
     }
     $('maj-jour').value='';
-    toast(`Mise à jour appliquée : ${ok} élément${ok>1?'s':''}${ko?` · ${ko} échec(s)`:''} ✓`);
-    try{ await chargerTout(); }catch(e){ /* l'écriture a réussi ; seul le rafraîchissement a échoué */ try{ toutAfficher(); }catch(_){} }
-  }catch(e){ toast('Échec de la mise à jour'); }
+    dire(`✅ Enregistré : ${ok} élément${ok>1?'s':''}${ko?` · ${ko} échec(s)`:''}`, ko?'var(--corail)':'var(--lagon)');
+    try{ await chargerTout(); }catch(e){ dire(`✅ ${ok} enregistré(s) · affichage à rafraîchir`, 'var(--or)'); try{ toutAfficher(); }catch(_){} }
+  }catch(e){ dire('❌ Échec : ' + (e && e.message ? e.message : e), 'var(--corail)'); }
 }
 
 /* ===================== TABLEAU FINAL (bracket des 16es) — ETAPE 1 =====================
