@@ -658,7 +658,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.6';
+const APP_VERSION = '12.7';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -928,6 +928,9 @@ let joueursCloud = {};
 let fichesCloud = {};
 let duelsCloud = [];
 let palmares = null;
+/* Les poules sont SCELLÉES tant qu'il reste des matchs à jouer ET que le sacre n'a pas
+   été gravé. Dès la gravure, on déscelle tout (classement détaillé, récaps, points). */
+function poulesScellees(){ return Object.keys(resultats).length < 72 && !(palmares && palmares.champion_poules); }
 let pronos = {}, resultats = {}, participants = {}, potinsCloud = [];
 try { pseudo = localStorage.getItem('mf_pseudo') || null; admin = localStorage.getItem('mf_admin') === '1'; } catch(e){}
 
@@ -1609,9 +1612,11 @@ function listeMatchs(){
   if(filtreMatchs==='joues') liste = M.filter(m=>joue(m)).slice().sort((a,b)=>b.dt-a.dt);
   let html = '', jourCourant = '';
   liste.forEach(m=>{
-    const j = fmtJour(m.dt);
-    if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">${j}</div>`; }
-    html += carteMatch(m, false);
+    try{
+      const j = fmtJour(m.dt);
+      if(j!==jourCourant){ jourCourant=j; html += `<div class="jour">${j}</div>`; }
+      html += carteMatch(m, false);
+    }catch(e){ console.warn('carteMatch', m.id, e); }
   });
   $('liste-matchs').innerHTML = html || '<p class="note">Rien à afficher ici pour le moment.</p>';
 }
@@ -5207,7 +5212,6 @@ async function verifierVersion(){
 }
 
 $('num-version').textContent = 'v' + APP_VERSION;
-toutAfficher();
 chargerTout().then(()=>{ gererHashPotin(); });
 window.addEventListener('hashchange', gererHashPotin);
 verifierVersion();
