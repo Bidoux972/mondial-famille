@@ -679,7 +679,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.2';
+const APP_VERSION = '13.3';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1533,11 +1533,14 @@ function carteMatch(m, modePronos){
       ${m.phase==='finale' && m.id!==104 ? (()=>{
         const pv = pouvoirDe(pseudo);
         if(!pv) return '';
-        const utilisePartout = pouvoirUtilise(pseudo);
+        const quota = 1 + (POUVOIRS_BONUS[pseudo] || 0);
+        const nbPoses = nbPouvoirsPoses(pseudo);
         const utiliseIci = monPr && monPr.pouvoir;
-        const dispo = !utilisePartout || utilisePartout===m.id;
+        /* disponible si : le quota n'est pas encore atteint, OU on a déjà un pouvoir ici (pour le garder/modifier) */
+        const dispo = (nbPoses < quota) || utiliseIci;
+        const libUniq = quota>1 ? `${quota} pouvoirs` : 'pouvoir unique';
         let bloc = `<div class="pouvoir-zone">
-          <div class="pouvoir-tete">${pv.emoji} ${pv.nom} <span class="pouvoir-uniq">pouvoir unique</span></div>
+          <div class="pouvoir-tete">${pv.emoji} ${pv.nom} <span class="pouvoir-uniq">${libUniq}</span></div>
           <div class="pouvoir-desc">${pv.desc}</div>`;
         if(!dispo){
           bloc += `<div class="pouvoir-ko">⚠️ Déjà dégainé sur un autre match. Un seul usage sur toute la phase finale.</div>`;
@@ -4466,9 +4469,20 @@ function rangPoules(p){
   return i>=0 ? i+1 : null;
 }
 function pouvoirDe(p){ const r = rangPoules(p); return r && POUVOIRS[r] ? POUVOIRS[r] : null; }
+/* Compensation exceptionnelle : à cause d'un bug de classement, Ginou a joué la Remontada
+   par erreur alors que son vrai pouvoir (Joker Musa) n'avait jamais pu être posé.
+   On lui accorde donc UN pouvoir supplémentaire (2 au total au lieu de 1). Borné, traçable. */
+const POUVOIRS_BONUS = { 'Ginou': 1 };   /* nb de pouvoirs supplémentaires accordés */
+function nbPouvoirsPoses(p){
+  return Object.values(pronos[p]||{}).filter(pr=>pr.pouvoir).length;
+}
 function pouvoirUtilise(p){
-  const pose = Object.values(pronos[p]||{}).find(pr=>pr.pouvoir);
-  return pose ? pose.match_id : null;
+  /* renvoie un match_id "bloquant" seulement si le quota de pouvoirs est atteint.
+     quota = 1 + bonus éventuel. Tant que le quota n'est pas atteint, on peut encore poser. */
+  const quota = 1 + (POUVOIRS_BONUS[p] || 0);
+  const poses = Object.values(pronos[p]||{}).filter(pr=>pr.pouvoir);
+  if(poses.length < quota) return null;          /* quota pas atteint : pouvoir encore disponible */
+  return poses[0] ? poses[0].match_id : null;    /* quota atteint : on signale le 1er match posé */
 }
 
 /* ============ 🏆 SACRE DU CHAMPION DES POULES ============ */
