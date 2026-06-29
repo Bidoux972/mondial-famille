@@ -689,7 +689,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.6';
+const APP_VERSION = '13.7';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1478,7 +1478,7 @@ function carteMatch(m, modePronos){
       if(pr.scenario){
         const ok = re.scenario && pr.scenario===re.scenario;
         const lib = pr.scenario==='90'?'90 min':pr.scenario==='prolongation'?'prolong.':'tab';
-        tags.push(`<span class="ptag ${ok?'tag-win':'tag-tendance'}">⏱️ ${lib} ${ok?'✓':'✗'}</span>`);
+        tags.push(`<span class="ptag ${ok?'tag-win':'tag-lose'}">⏱️ ${lib} ${ok?'✓':'✗'}</span>`);
       }
       if(pr.buteur2 && pr.pouvoir==='musa' && pr.match_id!==104){
         const ok2 = buteurEstMarque(pr.buteur2, re);
