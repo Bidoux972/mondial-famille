@@ -502,21 +502,34 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-bandeau-t{display:block;color:var(--lagon);font-weight:600;font-size:13px}
 .brk-bandeau-s{display:block;color:var(--gris);font-size:11px;margin-top:2px}
 .brk-tour-tete{color:var(--or);font-weight:600;font-size:13px;margin-bottom:8px;letter-spacing:.3px}
-.brk-tour{display:flex;flex-direction:column;gap:8px}
-.brk-match{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:8px 12px;position:relative}
-.brk-match.brk-hot{border-color:var(--or);border-width:1.5px;background:var(--panneau2)}
-.brk-match.brk-choc{border-color:var(--corail);border-width:1.5px;background:linear-gradient(135deg,rgba(255,107,94,.10),transparent)}
-.brk-choc-tag{position:absolute;top:-9px;right:10px;background:var(--corail);color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:10px;font-family:'Space Grotesk',sans-serif}
-.brk-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
-.brk-date{color:var(--or);font-size:10.5px;font-weight:700;font-family:'Space Grotesk',monospace;white-space:nowrap}
-.brk-lieu{color:var(--gris);font-size:10px;margin-top:5px}
-.brk-resultat{margin-top:7px;padding:5px 9px;background:rgba(0,160,140,.14);border:1px solid rgba(0,160,140,.4);border-radius:6px;font-size:12px;color:var(--lagon)}
-.brk-match.brk-joue{border-color:rgba(0,160,140,.45)}
-.brk-id{color:var(--gris);font-size:11px;font-family:'Space Grotesk',monospace}
-.brk-slots{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.brk-eq{color:#fff;font-weight:600;font-size:13px}
+.brk-tour{display:flex;flex-direction:column;gap:10px}
+.brk-match{background:var(--panneau);border:1px solid var(--ligne);border-radius:12px;padding:12px;position:relative}
+.brk-match.brk-hot{border-color:var(--or);border-width:2px;background:var(--panneau2)}
+.brk-match.brk-choc{border-color:var(--corail);border-width:2px}
+.brk-match.brk-joue{border-color:rgba(0,160,140,.4)}
+.brk-tete{display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap}
+.brk-id{color:var(--gris);font-size:10.5px;font-family:'Space Grotesk',monospace}
+.brk-date{color:var(--or);font-size:10.5px;font-weight:700;font-family:'Space Grotesk',monospace;white-space:nowrap;margin-left:auto}
+.brk-tag-couloir{background:rgba(245,180,60,.18);color:var(--or);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap}
+.brk-tag-choc{background:var(--corail);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.3px;padding:2px 7px;border-radius:8px;white-space:nowrap}
+.brk-duel{display:flex;align-items:stretch;gap:6px}
+.brk-cote{flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;padding:4px 2px;transition:opacity .3s}
+.brk-drap{font-size:30px;line-height:1}
+.brk-nom{font-size:12.5px;font-weight:600;color:#fff;line-height:1.15}
+.brk-score{font-size:22px;font-weight:800;font-family:'Space Grotesk',sans-serif;color:#fff;margin-top:1px}
+.brk-cote-flou .brk-nom{color:var(--gris);font-weight:500;font-style:italic;font-size:11.5px}
+.brk-cote-flou .brk-drap{opacity:.4}
+.brk-cote-win .brk-nom{color:var(--lagon)}
+.brk-cote-win .brk-score{color:var(--lagon)}
+.brk-cote-out{opacity:.42}
+.brk-cote-out .brk-nom{text-decoration:line-through;color:var(--gris)}
+.brk-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 4px;min-width:34px}
+.brk-mid-vs{color:var(--gris);font-size:13px;font-weight:700;font-family:'Space Grotesk',sans-serif}
+.brk-mid-fin{color:var(--gris);font-size:10px;font-weight:700;letter-spacing:.5px}
+.brk-mid-sub{color:var(--or);font-size:9px;font-weight:700;margin-top:2px;text-transform:uppercase}
+.brk-bas{margin-top:9px;text-align:center;font-size:11px;color:var(--gris)}
+.brk-bas-win{color:var(--lagon);font-weight:600;background:rgba(0,160,140,.12);padding:5px;border-radius:8px}
 .brk-prov{color:var(--gris);font-size:12px;font-style:italic}
-.brk-vs{color:var(--or);font-size:12px;font-weight:600}
 .brk-affiche{color:#cdd6e0;font-style:normal;font-weight:500;white-space:nowrap}
 .brk-affiche-vs{color:var(--gris);font-size:10px;font-weight:400;font-style:italic;margin:0 1px}
 .brk-note{color:var(--gris);font-size:11px;font-style:italic;border-top:1px solid var(--ligne);padding-top:10px}
@@ -660,7 +673,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.0';
+const APP_VERSION = '13.1';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -5178,22 +5191,59 @@ function renduBracket(){
     /* choc = les deux côtés résolus ET au moins deux grosses nations */
     const choc = eqA && eqB && GROSSE.has(eqA) && GROSSE.has(eqB);
     const num = parseInt(id.slice(1),10);
-    const re = resultats[num]; // résultat saisi (clé numérique)
+    const re = resultats[num];
     const joue = !!re;
-    let ligneResultat = '';
-    if(joue){
-      const scen = re.scenario==='tab' ? ' · tab' : re.scenario==='prolongation' ? ' · a.p.' : '';
-      ligneResultat = `<div class="brk-resultat">⚽ <b>${re.score_a}–${re.score_b}</b>${scen}${re.qualifie?` · ✅ <b>${re.qualifie}</b> passe`:''}</div>`;
+    const mm = M.find(x=>x.id===num);
+    /* une équipe est "connue" seulement si c'est une vraie nation (présente dans F).
+       "2e gr.A", "Vainq. 75"... ne sont pas des nations → restent flous. */
+    const estNation = e => !!(e && F[e]);
+    let teamA = estNation(eqA) ? eqA : null;
+    let teamB = estNation(eqB) ? eqB : null;
+    /* si le match est joué, les vraies équipes sont celles du match (a/b) si ce sont des nations */
+    if(joue && mm){
+      if(estNation(mm.a)) teamA = mm.a;
+      if(estNation(mm.b)) teamB = mm.b;
+      /* dernier recours : le qualifié est forcément une des deux équipes */
+      if(re.qualifie && estNation(re.qualifie)){
+        if(!teamA && teamB!==re.qualifie) teamA = re.qualifie;
+        else if(!teamB && teamA!==re.qualifie) teamB = re.qualifie;
+      }
     }
+    /* un côté : si l'équipe est une nation connue → grand drapeau + nom ; sinon libellé court discret */
+    const cote = (eq, code, score, estVainqueur, estElimine) => {
+      const connu = estNation(eq);
+      const drap = connu ? F[eq] : '❔';
+      const nom  = connu ? eq : libelleSlotTexteCourt(code, id);
+      const cls  = 'brk-cote' + (estVainqueur?' brk-cote-win':'') + (estElimine?' brk-cote-out':'') + (connu?'':' brk-cote-flou');
+      return `<div class="${cls}">
+        <div class="brk-drap">${drap}</div>
+        <div class="brk-nom">${nom}</div>
+        ${joue && connu ? `<div class="brk-score">${score}</div>` : ''}
+      </div>`;
+    };
+    let vainqueur = null;
+    if(joue && re.qualifie) vainqueur = re.qualifie;
+    const aGagne = eq => vainqueur && eq===vainqueur;
+    const aPerdu = eq => vainqueur && eq && eq!==vainqueur;
+    const centre = joue
+      ? `<div class="brk-mid"><div class="brk-mid-fin">FIN</div>${re.scenario==='tab'?'<div class="brk-mid-sub">tab</div>':re.scenario==='prolongation'?'<div class="brk-mid-sub">a.p.</div>':''}</div>`
+      : `<div class="brk-mid"><div class="brk-mid-vs">VS</div></div>`;
+    const bandeauBas = joue
+      ? (vainqueur ? `<div class="brk-bas brk-bas-win">✅ <b>${vainqueur}</b> file ${tour==='16e'?'en 8es':tour==='8e'?'en quarts':tour==='Quart'?'en demies':tour==='Demie'?'en finale':'plus loin'}</div>` : '')
+      : (cal ? `<div class="brk-bas">📍 ${cal.v}</div>` : '');
     return `<div class="brk-match${surveille?' brk-hot':''}${choc?' brk-choc':''}${joue?' brk-joue':''}">
-      ${choc?`<div class="brk-choc-tag">🔥 CHOC</div>`:''}
-      <div class="brk-top">
+      <div class="brk-tete">
         <span class="brk-id">${id.slice(1)} · ${tour}</span>
+        ${surveille?`<span class="brk-tag-couloir">${F[cle]||''} ton écurie</span>`:''}
+        ${choc?`<span class="brk-tag-choc">🔥 choc</span>`:''}
         ${cal?`<span class="brk-date">${cal.d} · ${cal.h}</span>`:''}
       </div>
-      <div class="brk-slots">${libelleSlot(slots[0], id)}<span class="brk-vs">vs</span>${libelleSlot(slots[1], id)}</div>
-      ${ligneResultat}
-      ${cal&&!joue?`<div class="brk-lieu">📍 ${cal.v}</div>`:''}
+      <div class="brk-duel">
+        ${cote(teamA, slots[0], joue?re.score_a:'', aGagne(teamA), aPerdu(teamA))}
+        ${centre}
+        ${cote(teamB, slots[1], joue?re.score_b:'', aGagne(teamB), aPerdu(teamB))}
+      </div>
+      ${bandeauBas}
     </div>`;
   };
 
