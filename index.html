@@ -660,7 +660,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.9';
+const APP_VERSION = '13.0';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -5003,7 +5003,29 @@ function resoudreSlot(code, matchId){
     if(cl.length >= rang && cl[rang-1] && cl[rang-1].j>0) return cl[rang-1].e;
     return null;
   }
-  return null; /* Wxx / Lxx : vainqueur/perdant pas encore connu */
+  /* Wxx : vainqueur du match xx → on prend le qualifié (prolong/tab inclus) saisi en résultat */
+  if(code[0]==='W'){
+    const num = parseInt(code.slice(1),10);
+    const re = resultats[num];
+    if(re && re.qualifie) return re.qualifie;          /* qualifié explicite (recommandé) */
+    if(re && re.score_a!=null && re.score_b!=null && re.score_a!==re.score_b){
+      /* à défaut, le vainqueur au score à 90 min */
+      const mm = M.find(x=>x.id===num);
+      if(mm) return re.score_a>re.score_b ? mm.a : mm.b;
+    }
+    return null;
+  }
+  /* Lxx : perdant du match xx → l'équipe qui n'est pas le qualifié */
+  if(code[0]==='L'){
+    const num = parseInt(code.slice(1),10);
+    const re = resultats[num];
+    const mm = M.find(x=>x.id===num);
+    if(re && re.qualifie && mm){
+      return re.qualifie===mm.a ? mm.b : mm.a;
+    }
+    return null;
+  }
+  return null;
 }
 
 /* libelle d'un slot pour l'affichage */
