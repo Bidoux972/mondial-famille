@@ -510,6 +510,8 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
 .brk-date{color:var(--or);font-size:10.5px;font-weight:700;font-family:'Space Grotesk',monospace;white-space:nowrap}
 .brk-lieu{color:var(--gris);font-size:10px;margin-top:5px}
+.brk-resultat{margin-top:7px;padding:5px 9px;background:rgba(0,160,140,.14);border:1px solid rgba(0,160,140,.4);border-radius:6px;font-size:12px;color:var(--lagon)}
+.brk-match.brk-joue{border-color:rgba(0,160,140,.45)}
 .brk-id{color:var(--gris);font-size:11px;font-family:'Space Grotesk',monospace}
 .brk-slots{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .brk-eq{color:#fff;font-weight:600;font-size:13px}
@@ -658,7 +660,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.8';
+const APP_VERSION = '12.9';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1712,7 +1714,7 @@ async function validerScore(id){
 function badgesDe(p){
   const juges = Object.values(pronos[p]||{})
     .map(pr=>({pr, m:M.find(x=>x.id===pr.match_id), re:resultats[pr.match_id]}))
-    .filter(o=>o.m && o.re && points(o.pr,o.re)!==null)
+    .filter(o=>o.m && o.re && filtrePhase(o.m) && points(o.pr,o.re)!==null)
     .sort((a,b)=>a.m.dt-b.m.dt);
   if(!juges.length) return [];
   const badges = [];
@@ -5153,15 +5155,23 @@ function renduBracket(){
     const eqA = resoudreSlot(slots[0], id), eqB = resoudreSlot(slots[1], id);
     /* choc = les deux côtés résolus ET au moins deux grosses nations */
     const choc = eqA && eqB && GROSSE.has(eqA) && GROSSE.has(eqB);
-    const reA = resultats['M'+id.slice(1)]; // si le match a un résultat saisi
-    return `<div class="brk-match${surveille?' brk-hot':''}${choc?' brk-choc':''}">
+    const num = parseInt(id.slice(1),10);
+    const re = resultats[num]; // résultat saisi (clé numérique)
+    const joue = !!re;
+    let ligneResultat = '';
+    if(joue){
+      const scen = re.scenario==='tab' ? ' · tab' : re.scenario==='prolongation' ? ' · a.p.' : '';
+      ligneResultat = `<div class="brk-resultat">⚽ <b>${re.score_a}–${re.score_b}</b>${scen}${re.qualifie?` · ✅ <b>${re.qualifie}</b> passe`:''}</div>`;
+    }
+    return `<div class="brk-match${surveille?' brk-hot':''}${choc?' brk-choc':''}${joue?' brk-joue':''}">
       ${choc?`<div class="brk-choc-tag">🔥 CHOC</div>`:''}
       <div class="brk-top">
         <span class="brk-id">${id.slice(1)} · ${tour}</span>
         ${cal?`<span class="brk-date">${cal.d} · ${cal.h}</span>`:''}
       </div>
       <div class="brk-slots">${libelleSlot(slots[0], id)}<span class="brk-vs">vs</span>${libelleSlot(slots[1], id)}</div>
-      ${cal?`<div class="brk-lieu">📍 ${cal.v}</div>`:''}
+      ${ligneResultat}
+      ${cal&&!joue?`<div class="brk-lieu">📍 ${cal.v}</div>`:''}
     </div>`;
   };
 
