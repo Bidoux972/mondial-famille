@@ -658,7 +658,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '12.7';
+const APP_VERSION = '12.8';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -3950,10 +3950,15 @@ function lancerRecapJour(jourClef){
   const detailLigne = (pr, re) => {
     const base = points(pr, re), bo = bonus(pr, re), parts = [];
     parts.push(base===3?'score exact +3':base===1?'tendance +1':'score 0');
+    if(pr.qualifie) parts.push(bo.qualif===2?'qualifié ✓ +2':'qualifié ✗ −1');
+    if(pr.scenario) parts.push(bo.scen===1?'scénario ✓ +1':'scénario ✗');
     if(pr.buteur) parts.push(bo.but===2?'buteur ✓ +2':'buteur ✗ −1');
+    if(pr.buteur2 && pr.pouvoir==='musa' && pr.match_id!==104) parts.push(buteurEstMarque(pr.buteur2,re)?'2e buteur ✓ +2':'2e buteur ✗ −1');
     if(pr.btts===true||pr.btts===false) parts.push(bo.btts===1?'2 marquent ✓ +1':'2 marquent ✗ −1');
     let txt = parts.join(' · ');
-    if(pr.en_or){ txt = `(${txt}) ×2 🌟`; }
+    const orActif = pr.en_or && !(pr.pouvoir && pr.match_id!==104);
+    if(orActif){ txt = `(${txt}) ×2 🌟`; }
+    if(pr.pouvoir && pr.match_id!==104){ const pv=POUVOIRS[Object.keys(POUVOIRS).find(k=>POUVOIRS[k].id===pr.pouvoir)]; if(pv) txt = `${txt} · ${pv.emoji}${pv.nom}`; }
     return txt;
   };
 
@@ -4178,7 +4183,7 @@ function lancerRecapJour(jourClef){
       "Le commissaire a verrouillé le classement. Rendez-vous au 72e match."
     ])}</div></div>`);
   } else {
-  const clJour = calculTotaux(x => x.dt.getTime() <= matchs[matchs.length-1].dt.getTime());
+  const clJour = calculTotaux(x => filtrePhase(x) && x.dt.getTime() <= matchs[matchs.length-1].dt.getTime());
   const lignesFinal = clJour.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
   const leader = clJour[0], lanterne = clJour[clJour.length-1];
   let punchFinale = 'Une journée de plus dans les livres. Demain, tout peut basculer.';
@@ -4283,7 +4288,7 @@ function etapesReveal(id){
     const emo = t>=4?'🔥':t===3?'🎯':t>0?'👍':t===0?'😬':'💀';
     return `<div class="ligne-r">${p} : <b class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t} pt${Math.abs(t)>1?'s':''}</b> ${emo}${pr.en_or?' (EN OR ×2 !)':''}</div>`;
   }).join('');
-  const cl = calculTotaux(x => x.dt.getTime() <= m.dt.getTime());
+  const cl = calculTotaux(x => filtrePhase(x) && x.dt.getTime() <= m.dt.getTime());
   const lignesClassement = cl.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
   const scores = PARTICIPANTS.map(p=>({p, t: pronos[p]&&pronos[p][id] ? ptsTotal(pronos[p][id], re) : null})).filter(x=>x.t!==null);
   let punch = "Le commissaire rappelle que les réclamations se font par écrit. Et qu'elles finissent à la poubelle.";
