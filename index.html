@@ -510,8 +510,8 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-tour::before{content:'';position:absolute;left:3px;top:24px;bottom:-8px;width:2px;background:linear-gradient(180deg,var(--ligne),rgba(245,180,60,.15));border-radius:2px}
 .brk-tour:last-child::before{display:none}
 .brk-match{background:var(--panneau);border:1px solid var(--ligne);border-radius:10px;position:relative}
-.brk-match-duel{padding:11px 13px}
-.brk-match-mini{padding:9px 13px}
+.brk-match-duel{padding:9px 10px}
+.brk-match-mini{padding:8px 10px}
 .brk-match.brk-hot{border-color:var(--or);border-width:1.5px;background:var(--panneau2)}
 .brk-match.brk-choc{border-color:var(--corail);border-width:1.5px}
 .brk-match.brk-joue{border-color:rgba(0,160,140,.45);background:linear-gradient(160deg,rgba(0,160,140,.07),rgba(0,160,140,.01) 55%)}
@@ -529,26 +529,23 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-mini-prov{font-size:12.5px;color:var(--gris);font-style:italic;flex:1}
 .brk-mini-duel .brk-mini-prov:last-child,.brk-mini-duel .brk-mini-eq:last-child{text-align:right}
 .brk-mini-vs{color:var(--gris);font-size:10.5px;font-weight:600;flex-shrink:0}
-.brk-duel{display:flex;align-items:stretch;gap:6px}
-.brk-cote{flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px;transition:opacity .3s}
-.brk-drap{font-size:28px;line-height:1}
-.brk-nom{font-size:12.5px;font-weight:600;color:#fff;line-height:1.15}
-.brk-score{font-size:21px;font-weight:800;font-family:'Space Grotesk',sans-serif;color:#fff}
-.brk-cote-flou .brk-nom{color:var(--gris);font-weight:500;font-style:italic;font-size:11.5px}
-.brk-cote-flou .brk-drap{opacity:.3;font-size:18px}
-.brk-cote-win .brk-nom,.brk-cote-win .brk-score{color:var(--lagon)}
-.brk-cote-out{opacity:.4}
-.brk-cote-out .brk-nom{text-decoration:line-through;color:var(--gris)}
-.brk-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 4px;min-width:32px}
-.brk-mid-vs{color:var(--gris);font-size:12px;font-weight:700;font-family:'Space Grotesk',sans-serif}
-.brk-mid-fin{color:var(--gris);font-size:9.5px;font-weight:700;letter-spacing:.5px}
-.brk-mid-sub{color:var(--or);font-size:9px;font-weight:700;margin-top:2px;text-transform:uppercase}
-.brk-bas{margin-top:8px;text-align:center;font-size:10.5px;color:var(--gris)}
-.brk-bas-win{color:var(--lagon);font-weight:600;background:rgba(0,160,140,.1);padding:4px;border-radius:7px}
-.brk-prov{color:var(--gris);font-size:12px;font-style:italic}
-.brk-affiche{color:#cdd6e0;font-style:normal;font-weight:500;white-space:nowrap}
-.brk-affiche-vs{color:var(--gris);font-size:10px;font-weight:400;font-style:italic;margin:0 1px}
-.brk-note{color:var(--gris);font-size:11px;font-style:italic;border-top:1px solid var(--ligne);padding-top:10px}
+.brk-lignes{display:flex;flex-direction:column;gap:4px}
+.brk-ligne{display:flex;align-items:center;gap:9px;padding:5px 9px;background:var(--nuit);border-radius:7px;transition:opacity .3s}
+.brk-l-drap{font-size:18px;line-height:1;width:22px;text-align:center;flex-shrink:0}
+.brk-l-nom{flex:1;font-size:13.5px;font-weight:600;color:var(--creme)}
+.brk-l-score{font-size:17px;font-weight:800;font-family:'Space Grotesk',sans-serif;color:var(--creme);min-width:18px;text-align:right}
+.brk-l-fleche{color:var(--lagon);font-size:13px}
+.brk-ligne-win{background:rgba(46,196,169,.12);box-shadow:inset 2px 0 0 var(--lagon)}
+.brk-ligne-win .brk-l-nom,.brk-ligne-win .brk-l-score{color:var(--lagon)}
+.brk-ligne-out{opacity:.45}
+.brk-ligne-out .brk-l-nom{text-decoration:line-through}
+.brk-ligne-flou .brk-l-nom{color:var(--gris);font-weight:500;font-style:italic;font-size:12.5px}
+.brk-ligne-flou .brk-l-drap{opacity:.3}
+.brk-pied{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+.brk-statut{font-size:10px;color:var(--gris);font-family:'Space Grotesk',monospace}
+.brk-pied-win{font-size:10.5px;color:var(--lagon);font-weight:700;margin-left:auto}
+.brk-buteurs{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.brk-but{font-size:10px;color:var(--gris);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -689,7 +686,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.4';
+const APP_VERSION = '13.5';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -5260,39 +5257,33 @@ function renduBracket(){
         <span class="brk-date">${cal?`${cal.d} · ${cal.h}`:''}</span>
       </div>`;
 
-    /* CAS 1 — les deux équipes sont connues (ou match joué) : carte DUEL avec drapeaux */
+    /* CAS 1 — les deux équipes sont connues (ou match joué) : carte DUEL compacte (2 lignes) */
     if((teamA && teamB) || joue){
-      const cote = (eq, code, score, win, out) => {
+      const ligne = (eq, code, score, win, out) => {
         const connu = estNation(eq);
-        const cls = 'brk-cote' + (win?' brk-cote-win':'') + (out?' brk-cote-out':'') + (connu?'':' brk-cote-flou');
+        const cls = 'brk-ligne' + (win?' brk-ligne-win':'') + (out?' brk-ligne-out':'') + (connu?'':' brk-ligne-flou');
         return `<div class="${cls}">
-          ${win?'<div class="brk-couronne">▲</div>':''}
-          <div class="brk-drap">${connu?F[eq]:'·'}</div>
-          <div class="brk-nom">${connu?eq:libelleSlotTexteCourt(code,id)}</div>
-          ${joue && connu ? `<div class="brk-score">${score}</div>` : ''}
+          <span class="brk-l-drap">${connu?F[eq]:'·'}</span>
+          <span class="brk-l-nom">${connu?eq:libelleSlotTexteCourt(code,id)}</span>
+          ${joue && connu ? `<span class="brk-l-score">${score}</span>` : (win?'<span class="brk-l-fleche">▸</span>':'')}
         </div>`;
       };
-      const centre = joue
-        ? `<div class="brk-mid"><div class="brk-mid-fin">${re.scenario==='tab'?'TAB':re.scenario==='prolongation'?'A.P.':'FIN'}</div></div>`
-        : `<div class="brk-mid"><div class="brk-mid-vs">VS</div></div>`;
-      /* buteurs : on les affiche joliment sous le score si le match est joué */
       let lignebuteurs = '';
       if(joue && re.buteurs){
         const list = String(re.buteurs).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
         if(list.length) lignebuteurs = `<div class="brk-buteurs">${list.map(b=>`<span class="brk-but">⚽ ${b}</span>`).join('')}</div>`;
       }
-      const bandeauBas = joue && vainqueur
-        ? `<div class="brk-bas brk-bas-win">✅ <b>${vainqueur}</b> file ${tour==='16e'?'en 8es':tour==='8e'?'en quarts':tour==='Quart'?'en demies':tour==='Demie'?'en finale':'au sommet'}</div>`
-        : (!joue && cal ? `<div class="brk-bas">📍 ${cal.v}</div>` : '');
+      const statut = joue
+        ? `<span class="brk-statut">${re.scenario==='tab'?'tab':re.scenario==='prolongation'?'a.p.':'terminé'}</span>`
+        : (cal?`<span class="brk-statut">📍 ${cal.v}</span>`:'');
       return `<div class="brk-match brk-match-duel${surveille?' brk-hot':''}${choc?' brk-choc':''}${joue?' brk-joue':''}">
         ${tete}
-        <div class="brk-duel">
-          ${cote(teamA, slots[0], joue?re.score_a:'', aGagne(teamA), aPerdu(teamA))}
-          ${centre}
-          ${cote(teamB, slots[1], joue?re.score_b:'', aGagne(teamB), aPerdu(teamB))}
+        <div class="brk-lignes">
+          ${ligne(teamA, slots[0], joue?re.score_a:'', aGagne(teamA), aPerdu(teamA))}
+          ${ligne(teamB, slots[1], joue?re.score_b:'', aGagne(teamB), aPerdu(teamB))}
         </div>
+        <div class="brk-pied">${statut}${joue&&vainqueur?`<span class="brk-pied-win">✅ ${vainqueur} qualifié</span>`:''}</div>
         ${lignebuteurs}
-        ${bandeauBas}
       </div>`;
     }
 
