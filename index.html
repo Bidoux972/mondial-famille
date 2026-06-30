@@ -195,13 +195,14 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .transi-r{background:var(--panneau2);border:1px solid var(--ligne);border-radius:14px;padding:4px 10px;font-size:11px;color:var(--creme)}
 .transi-r b{color:var(--or)}
 .transi-note{font-size:11px;color:var(--gris);text-align:center;margin-top:10px;font-style:italic}
-.pouvoir-zone{background:linear-gradient(135deg,rgba(122,162,255,.12),rgba(245,180,60,.08));border:1px solid #7aa2ff;border-radius:10px;padding:11px;margin-top:10px}
-.pouvoir-tete{font-family:'Space Grotesk',monospace;font-size:13px;font-weight:800;color:#9db8ff}
-.pouvoir-uniq{font-size:9px;background:#7aa2ff;color:#0E1B2C;padding:2px 7px;border-radius:9px;margin-left:6px;vertical-align:middle;letter-spacing:.5px}
-.pouvoir-desc{font-size:12px;color:var(--creme);margin-top:5px;line-height:1.4}
-.pouvoir-check{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:13px;font-weight:600;color:#9db8ff;cursor:pointer}
-.pouvoir-check input{width:auto;margin:0}
-.pouvoir-ko{font-size:11px;color:var(--corail);margin-top:8px;font-style:italic}
+.pouvoir-zone{background:linear-gradient(135deg,rgba(122,162,255,.16),rgba(245,180,60,.06));border:1.5px solid #7aa2ff;border-radius:12px;padding:13px;margin-top:11px;box-shadow:0 2px 12px rgba(122,162,255,.12)}
+.pouvoir-tete{font-family:'Space Grotesk',monospace;font-size:14px;font-weight:800;color:#9db8ff;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.pouvoir-uniq{font-size:9px;background:#7aa2ff;color:#0E1B2C;padding:2px 8px;border-radius:9px;vertical-align:middle;letter-spacing:.5px;font-weight:800}
+.pouvoir-desc{font-size:12px;color:var(--creme);margin-top:6px;line-height:1.45;opacity:.92}
+.pouvoir-check{display:flex;align-items:center;gap:9px;margin-top:11px;font-size:13px;font-weight:700;color:#cdd9ff;cursor:pointer;background:rgba(122,162,255,.1);padding:9px 11px;border-radius:9px;border:1px solid rgba(122,162,255,.3);transition:background .15s}
+.pouvoir-check:hover{background:rgba(122,162,255,.18)}
+.pouvoir-check input{width:17px;height:17px;accent-color:#7aa2ff;cursor:pointer;flex-shrink:0}
+.pouvoir-ko{font-size:11.5px;color:var(--corail);margin-top:8px;font-style:italic;background:rgba(255,107,94,.08);border:1px solid rgba(255,107,94,.25);border-radius:7px;padding:8px 10px}
 .mt-titre{font-family:'Space Grotesk',monospace;font-size:20px;font-weight:800;letter-spacing:1px;background:linear-gradient(90deg,var(--or),var(--corail));-webkit-background-clip:text;background-clip:text;color:transparent}
 .mt-sous{font-size:12px;color:var(--gris);margin-top:2px}
 .mt-duel{border:1px solid var(--ligne);border-radius:12px;padding:13px;margin-bottom:10px}
@@ -452,6 +453,8 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .cart-aide{font-size:10px;color:var(--gris);margin-top:7px;line-height:1.4}
 .cart-ko{font-size:11.5px;color:var(--corail);font-style:italic;background:rgba(255,107,94,.08);border:1px solid rgba(255,107,94,.25);border-radius:7px;padding:8px 10px;margin-top:4px}
 .bonus-l .bonus-pts{font-weight:400;color:var(--gris);font-size:11.5px}
+.bonus-sous{font-size:11.5px;color:var(--gris);margin:2px 0 4px;font-weight:600}
+.pouvoir-zone .bonus-sous{color:#9db8ff;margin-top:4px}
 .bonus-zone select,.bonus-zone input{width:100%;margin:0}
 .nav-badge{position:absolute;top:2px;right:50%;transform:translateX(14px);background:var(--corail);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
 .potin .titre{font-weight:700;margin-bottom:4px}
@@ -701,7 +704,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.8';
+const APP_VERSION = '13.9';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1594,9 +1597,24 @@ function carteMatch(m, modePronos){
         if(!dispo){
           bloc += `<div class="pouvoir-ko">⚠️ Déjà dégainé sur un autre match. Un seul usage sur toute la phase finale.</div>`;
         } else {
-          bloc += `<label class="pouvoir-check"><input type="checkbox" id="pv-${m.id}" ${utiliseIci?'checked':''} onchange="document.getElementById('pv2-${m.id}')&&(document.getElementById('pv2-${m.id}').style.display=this.checked?'':'none')"> Dégainer mon pouvoir sur ce match</label>`;
+          bloc += `<label class="pouvoir-check"><input type="checkbox" id="pv-${m.id}" ${utiliseIci?'checked':''} onchange="var w=document.getElementById('pv2wrap-${m.id}'); if(w) w.style.display=this.checked?'':'none'"> Dégainer mon pouvoir sur ce match</label>`;
           if(pv.id==='musa'){
-            bloc += `<input type="text" id="pv2-${m.id}" placeholder="⚽ 2e buteur (Joker Musa)" value="${monPr&&monPr.buteur2?String(monPr.buteur2).replace(/"/g,'&quot;'):''}" style="display:${utiliseIci?'':'none'};margin-top:6px">`;
+            const but2 = monPr && monPr.buteur2 ? monPr.buteur2 : '';
+            const connu2 = [...jA, ...jB].some(x=>x.nom===but2);
+            /* mêmes listes que le 1er buteur, mais on retire le buteur déjà choisi en premier (pas de doublon) */
+            const buteur1Choisi = monPr && monPr.buteur ? monPr.buteur : '';
+            const optsA2 = jA.filter(j=>j.nom!==buteur1Choisi).map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===but2?'selected':''}>${labelAvecStats(j)}</option>`).join('');
+            const optsB2 = jB.filter(j=>j.nom!==buteur1Choisi).map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===but2?'selected':''}>${labelAvecStats(j)}</option>`).join('');
+            bloc += `<div id="pv2wrap-${m.id}" style="display:${utiliseIci?'':'none'};margin-top:6px">
+              <div class="bonus-sous">⚽ 2e buteur — différent du premier</div>
+              <select id="bu2-${m.id}" onchange="document.getElementById('pv2-${m.id}').style.display=this.value==='__autre__'?'':'none'">
+                <option value="">— Choisis un 2e buteur —</option>
+                ${optsA2?`<optgroup label="${F[m.a]} ${m.a}">${optsA2}</optgroup>`:''}
+                ${optsB2?`<optgroup label="${F[m.b]} ${m.b}">${optsB2}</optgroup>`:''}
+                <option value="__autre__" ${but2&&!connu2?'selected':''}>Autre joueur…</option>
+              </select>
+              <input type="text" id="pv2-${m.id}" placeholder="Nom du 2e buteur" value="${but2&&!connu2?String(but2).replace(/"/g,'&quot;'):''}" style="display:${but2&&!connu2?'':'none'};margin-top:6px">
+            </div>`;
           }
         }
         return bloc + `</div>`;
@@ -1735,8 +1753,13 @@ async function sauverProno(id){
   const elPv = $(`pv-${id}`);
   const pv = pouvoirDe(pseudo);
   const pouvoir = (elPv && elPv.checked && pv) ? pv.id : null;
+  const elPv2sel = $(`bu2-${id}`);
   const elPv2 = $(`pv2-${id}`);
-  const buteur2 = (pouvoir==='musa' && elPv2 && elPv2.value.trim()) ? elPv2.value.trim() : null;
+  let buteur2 = null;
+  if(pouvoir==='musa'){
+    if(elPv2sel && elPv2sel.value && elPv2sel.value!=='__autre__') buteur2 = elPv2sel.value;
+    else if(elPv2sel && elPv2sel.value==='__autre__' && elPv2 && elPv2.value.trim()) buteur2 = elPv2.value.trim();
+  }
   /* garde-fou : un seul usage du pouvoir sur toute la phase finale */
   if(pouvoir){
     if(id===104){ toast('🚫 Pas de pouvoir sur la finale — il fallait le dégainer avant !'); return; }
