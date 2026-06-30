@@ -512,6 +512,16 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .reveal .suite{position:absolute;bottom:26px;left:0;right:0;color:var(--gris);font-size:12px;letter-spacing:1px}
 .reveal .etape{animation:apparait .45s ease}
 @keyframes apparait{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.reveal .etape-pouvoir{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.etape-pouvoir .pv-halo{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,var(--pvc2),transparent 70%);top:50%;left:50%;transform:translate(-50%,-58%);animation:pvHalo 2s ease-in-out infinite;pointer-events:none}
+@keyframes pvHalo{0%,100%{opacity:.6;transform:translate(-50%,-58%) scale(1)}50%{opacity:1;transform:translate(-50%,-58%) scale(1.12)}}
+.etape-pouvoir .pv-joueur{position:relative;font-size:13px;font-weight:700;color:var(--pvc);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.etape-pouvoir .pv-emoji{position:relative;font-size:clamp(64px,20vw,96px);line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 24px var(--pvc2));animation:pvPop .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pvPop{0%{transform:scale(.3) rotate(-12deg);opacity:0}60%{transform:scale(1.18) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.etape-pouvoir .pv-nom{position:relative;font-family:'Archivo Black';font-size:clamp(26px,8vw,40px);font-weight:900;color:var(--creme);text-transform:uppercase;line-height:1;letter-spacing:-.5px}
+.etape-pouvoir .pv-accroche{position:relative;font-size:clamp(14px,4vw,16px);color:var(--pvc);font-style:italic;margin-top:16px;max-width:340px;line-height:1.45}
+.etape-pouvoir .pv-activated{position:relative;font-size:12px;color:var(--gris);letter-spacing:2px;margin-top:22px;animation:pvBlink 1.4s ease-in-out infinite}
+@keyframes pvBlink{0%,100%{opacity:.4}50%{opacity:1}}
 #bracket-wrap{display:flex;flex-direction:column;gap:18px}
 .brk-bandeau{background:var(--panneau2);border:1px solid var(--lagon);border-radius:10px;padding:10px 14px}
 .brk-bandeau-t{display:block;color:var(--lagon);font-weight:600;font-size:13px}
@@ -704,7 +714,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.12';
+const APP_VERSION = '13.13';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4395,6 +4405,28 @@ function etapesReveal(id){
   }).join('');
   const cl = calculTotaux(x => filtrePhase(x) && x.dt.getTime() <= m.dt.getTime());
   const lignesClassement = cl.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
+  /* ===== Mise en scène des POUVOIRS dégainés sur ce match ===== */
+  const AMBIANCE_POUVOIR = {
+    tapie:    {coul:'#F5B43C', coul2:'rgba(245,180,60,.35)', accroche:p=>`${p} ouvre la valise 💼 — sur ce match, c'est arrangé : pertes annulées, et +2 si le score est exact.`},
+    dd:       {coul:'#2EC4A9', coul2:'rgba(46,196,169,.35)', accroche:p=>`${p} convoque la baraka de Deschamps — bonne tendance = tout est doublé. La chance des champions.`},
+    musa:     {coul:'#7aa2ff', coul2:'rgba(122,162,255,.35)', accroche:p=>`${p} dégaine le Joker Musa ⚽ — et cette fois Ginou, il joue vraiment ! Deux buteurs misés.`},
+    remontada:{coul:'#FF6B5E', coul2:'rgba(255,107,94,.35)', accroche:p=>`${p} invoque la Remontada 🔥 — comme le Barça face au PSG, +2 garantis si le qualifié tombe.`}
+  };
+  const etapesPouvoirs = PARTICIPANTS.map(p=>{
+    const pr = pronos[p] && pronos[p][id];
+    if(!pr || !pr.pouvoir || id===104) return null;
+    const pvDef = POUVOIRS[Object.keys(POUVOIRS).find(k=>POUVOIRS[k].id===pr.pouvoir)];
+    const amb = AMBIANCE_POUVOIR[pr.pouvoir];
+    if(!pvDef || !amb) return null;
+    return `<div class="etape etape-pouvoir" style="--pvc:${amb.coul};--pvc2:${amb.coul2}">
+      <div class="pv-halo"></div>
+      <div class="pv-joueur">${p} dégaine</div>
+      <div class="pv-emoji">${pvDef.emoji}</div>
+      <div class="pv-nom">${pvDef.nom}</div>
+      <div class="pv-accroche">${amb.accroche(p)}</div>
+      <div class="pv-activated">✨ POUVOIR ACTIVÉ ✨</div>
+    </div>`;
+  }).filter(Boolean);
   const scores = PARTICIPANTS.map(p=>({p, t: pronos[p]&&pronos[p][id] ? ptsTotal(pronos[p][id], re) : null})).filter(x=>x.t!==null);
   let punch = "Le commissaire rappelle que les réclamations se font par écrit. Et qu'elles finissent à la poubelle.";
   if(scores.length){
@@ -4502,6 +4534,7 @@ function etapesReveal(id){
     `<div class="etape"><div class="eti-r">🎬 Le récap du match</div><div class="drapeaux">${F[m.a]} ${F[m.b]}</div><h3>${m.a}<br>${m.b}</h3><div class="ligne-r" style="color:var(--gris)">Groupe ${m.g} · terminé</div></div>`,
     `<div class="etape"><div class="eti-r">Les paris étaient posés…</div>${lignesParis}</div>`,
     `<div class="etape" data-reveal-score data-a="${re.score_a}" data-b="${re.score_b}" data-fete="${vd.fete?1:0}"><div class="eti-r">Le verdict du terrain</div><div class="grand-score"><span class="sc-a">0</span> – <span class="sc-b">0</span></div><div class="verdict-box"><div class="verdict-titre">${vd.titre}</div><div class="verdict-sous">${vd.sous}</div></div>${re.buteurs?`<div class="ligne-r" style="margin-top:14px">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`,
+    ...etapesPouvoirs,
     `<div class="etape"><div class="eti-r">Les comptes sont bons</div>${lignesComptes}</div>`,
     etapeClassement
   ];
