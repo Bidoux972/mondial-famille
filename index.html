@@ -441,6 +441,16 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .bonus-zone{margin-top:10px;padding:11px 12px;background:var(--panneau2);border:1px dashed var(--or);border-radius:10px}
 .bonus-titre{font-size:12px;font-weight:800;color:var(--or);margin-bottom:8px}
 .bonus-l{display:block;font-size:12.5px;color:var(--creme);font-weight:600;margin:8px 0 3px}
+.cart-zone{background:var(--nuit);border:1px solid var(--ligne);border-radius:8px;padding:9px 10px;margin:5px 0 7px}
+.cart-tete{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.cart-titre{font-size:11.5px;color:var(--creme);font-weight:600}
+.cart-chiffre{font-size:13px;font-weight:800;color:var(--or);font-family:'Space Grotesk',monospace}
+.cart-barre{display:flex;gap:3px}
+.cart-seg{flex:1;height:7px;border-radius:2px}
+.cart-on{background:var(--or)}
+.cart-off{background:var(--ligne)}
+.cart-aide{font-size:10px;color:var(--gris);margin-top:7px;line-height:1.4}
+.cart-ko{font-size:11.5px;color:var(--corail);font-style:italic;background:rgba(255,107,94,.08);border:1px solid rgba(255,107,94,.25);border-radius:7px;padding:8px 10px;margin-top:4px}
 .bonus-l .bonus-pts{font-weight:400;color:var(--gris);font-size:11.5px}
 .bonus-zone select,.bonus-zone input{width:100%;margin:0}
 .nav-badge{position:absolute;top:2px;right:50%;transform:translateX(14px);background:var(--corail);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
@@ -461,6 +471,8 @@ select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--ligne);b
 .potin-react.on-pouce .react-ico{filter:none}
 .potin-react.on-rire{background:rgba(255,196,61,.16);border-color:rgba(255,196,61,.5);color:#ffd479}
 .potin-react.on-rire .react-ico{filter:none}
+.potin-react.on-fache{background:rgba(255,107,94,.16);border-color:rgba(255,107,94,.5);color:#ff9b8f}
+.potin-react.on-fache .react-ico{filter:none}
 .potin-react.potin-share{margin-left:auto;color:#9fb3c8}
 .potin-react.potin-share .react-ico{filter:none}
 .potin-react.potin-share:hover{background:rgba(0,160,140,.14);border-color:rgba(0,160,140,.5);color:#5fd0bf}
@@ -689,7 +701,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.7';
+const APP_VERSION = '13.8';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1533,13 +1545,40 @@ function carteMatch(m, modePronos){
         <option value="${m.a.replace(/"/g,'&quot;')}" ${monPr&&monPr.qualifie===m.a?'selected':''}>${F[m.a]||'⚽'} ${m.a} passe</option>
         <option value="${m.b.replace(/"/g,'&quot;')}" ${monPr&&monPr.qualifie===m.b?'selected':''}>${F[m.b]||'⚽'} ${m.b} passe</option>
       </select>
-      <label class="bonus-l">⏱️ Comment ça se finit ? <span class="bonus-pts">+1 si juste</span></label>
+      ${(()=>{
+        const reste = cartouchesRestantes(pseudo);
+        const compteParCartouche = m.id >= CARTOUCHE_SEUIL_MATCH;
+        const dejaIci = monPr && monPr.scenario;   /* si on a déjà misé ici, on peut toujours le modifier/garder */
+        const epuise = compteParCartouche && reste<=0 && !dejaIci;
+        /* jauge segmentée */
+        let segs = '';
+        for(let i=0;i<CARTOUCHES_SCENARIO;i++){
+          segs += `<span class="cart-seg ${i<reste?'cart-on':'cart-off'}"></span>`;
+        }
+        const tete = `<div class="cart-zone">
+          <div class="cart-tete">
+            <span class="cart-titre">🎟️ Tes cartouches scénario</span>
+            <span class="cart-chiffre">${reste} / ${CARTOUCHES_SCENARIO}</span>
+          </div>
+          <div class="cart-barre">${segs}</div>
+          <div class="cart-aide">${compteParCartouche
+            ? `Tu en as ${CARTOUCHES_SCENARIO} pour toute la phase finale. En miser un ici = il t'en restera ${dejaIci?reste:Math.max(0,reste-1)}. Personne ne voit ton compteur.`
+            : `Ce match ne consomme pas de cartouche.`}</div>
+        </div>`;
+        if(epuise){
+          return `<label class="bonus-l">⏱️ Comment le match se décide ?</label>
+          ${tete}
+          <div class="cart-ko">Plus de cartouches — tu les as toutes dépensées. Garde-les pour les gros matchs la prochaine fois !</div>`;
+        }
+        return `<label class="bonus-l">⏱️ Comment le match se décide ? <span class="bonus-pts">+1 si juste · 0 si faux</span></label>
+      ${tete}
       <select id="scen-${m.id}">
-        <option value="">— Je ne parie pas sur le scénario —</option>
-        <option value="90" ${monPr&&monPr.scenario==='90'?'selected':''}>Dans le temps réglementaire (90 min)</option>
+        <option value="">— Je garde ma cartouche —</option>
+        <option value="90" ${monPr&&monPr.scenario==='90'?'selected':''}>90 min (temps réglementaire)</option>
         <option value="prolongation" ${monPr&&monPr.scenario==='prolongation'?'selected':''}>Après prolongation</option>
         <option value="tab" ${monPr&&monPr.scenario==='tab'?'selected':''}>Aux tirs au but</option>
-      </select>` : ''}
+      </select>`;
+      })()}` : ''}
       ${m.phase==='finale' && m.id!==104 ? (()=>{
         const pv = pouvoirDe(pseudo);
         if(!pv) return '';
@@ -1684,6 +1723,14 @@ async function sauverProno(id){
   const elQual = $(`qual-${id}`), elScen = $(`scen-${id}`);
   const qualifie = elQual && elQual.value ? elQual.value : null;
   const scenario = elScen && elScen.value ? elScen.value : null;
+  /* garde-fou cartouches : miser un scénario sur un match à seuil consomme 1 cartouche.
+     Si c'est une NOUVELLE mise (pas déjà un scénario ici) et que le stock est à 0 -> blocage. */
+  if(scenario && id >= CARTOUCHE_SEUIL_MATCH){
+    const avait = pronos[pseudo] && pronos[pseudo][id] && pronos[pseudo][id].scenario;
+    if(!avait && cartouchesRestantes(pseudo) <= 0){
+      toast('🎟️ Plus de cartouches scénario — tu les as toutes dépensées.'); return;
+    }
+  }
   /* pouvoir posé sur ce match ? */
   const elPv = $(`pv-${id}`);
   const pv = pouvoirDe(pseudo);
@@ -3616,7 +3663,8 @@ function marquerReagi(id, type, actif){
 const REACTS = {
   coeur: {ico:'❤️', champ:'coeurs', rpc:'like_coeur', rpcOff:'unlike_coeur', cls:'on-coeur', titre:"J'adore"},
   rire:  {ico:'😂', champ:'rires',  rpc:'like_rire',  rpcOff:'unlike_rire',  cls:'on-rire',  titre:"Ça m'a fait rire"},
-  pouce: {ico:'👍', champ:'pouces', rpc:'like_pouce', rpcOff:'unlike_pouce', cls:'on-pouce', titre:"Bien vu"}
+  pouce: {ico:'👍', champ:'pouces', rpc:'like_pouce', rpcOff:'unlike_pouce', cls:'on-pouce', titre:"Bien vu"},
+  fache: {ico:'😠', champ:'faches', rpc:'like_fache', rpcOff:'unlike_fache', cls:'on-fache', titre:"Ça m'énerve"}
 };
 
 async function reagirPotin(id, type){
@@ -3690,7 +3738,7 @@ function reactsHtml(p){
     return `<button class="potin-react${on}" data-id="${p.id}" data-type="${type}" onclick="reagirPotin(${p.id},'${type}')" title="${cfg.titre}">
       <span class="react-ico">${cfg.ico}</span><span class="react-n">${n}</span></button>`;
   };
-  return `<div class="potin-reacts">${btn('coeur')}${btn('rire')}${btn('pouce')}${partage}</div>`;
+  return `<div class="potin-reacts">${btn('coeur')}${btn('rire')}${btn('pouce')}${btn('fache')}${partage}</div>`;
 }
 
 
@@ -4483,6 +4531,22 @@ function pouvoirDe(p){ const r = rangPoules(p); return r && POUVOIRS[r] ? POUVOI
    par erreur alors que son vrai pouvoir (Joker Musa) n'avait jamais pu être posé.
    On lui accorde donc UN pouvoir supplémentaire (2 au total au lieu de 1). Borné, traçable. */
 const POUVOIRS_BONUS = { 'Ginou': 1 };   /* nb de pouvoirs supplémentaires accordés */
+
+/* ===== CARTOUCHES SCÉNARIO =====
+   Chaque joueur a un stock fixe de "cartouches" pour miser le scénario (90/prolong/tab).
+   Le décompte ne porte que sur les matchs à partir du seuil (les 16es déjà joués M73-M76
+   ne consomment rien). Miser un scénario = 1 cartouche. Compteur privé. */
+const CARTOUCHES_SCENARIO = 15;       /* stock par personne sur toute la phase finale */
+const CARTOUCHE_SEUIL_MATCH = 77;     /* on ne décompte qu'à partir de ce match_id inclus */
+function cartouchesUtilisees(p){
+  return Object.values(pronos[p]||{})
+    .filter(pr => pr.scenario && pr.match_id >= CARTOUCHE_SEUIL_MATCH)
+    .length;
+}
+function cartouchesRestantes(p){
+  return Math.max(0, CARTOUCHES_SCENARIO - cartouchesUtilisees(p));
+}
+
 function nbPouvoirsPoses(p){
   return Object.values(pronos[p]||{}).filter(pr=>pr.pouvoir).length;
 }
