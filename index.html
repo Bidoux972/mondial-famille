@@ -715,7 +715,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.16';
+const APP_VERSION = '13.17';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4364,6 +4364,13 @@ function detecterReveals(){
 }
 function verdictMatch(m, re){
   const a = re.score_a, b = re.score_b, tot = a+b, ecart = Math.abs(a-b);
+  /* Phase finale décidée après 90 min : le match n'est PAS nul, il y a un qualifié.
+     On l'annonce selon le scénario (prolongation / tirs au but), avec le score final si dispo. */
+  if(re.qualifie && (re.scenario==='prolongation' || re.scenario==='tab')){
+    const sf = re.score_final ? ` (${re.score_final})` : '';
+    if(re.scenario==='tab') return {titre:'AU BOUT DU SUSPENSE', sous:`${re.qualifie} passe aux tirs au but${sf} !`, fete:true};
+    return {titre:'ARRACHÉ EN PROLONGATION', sous:`${re.qualifie} se qualifie après prolongation${sf} !`, fete:true};
+  }
   const niveauA = (EQUIPES[m.a]||{}).niv || 3, niveauB = (EQUIPES[m.b]||{}).niv || 3;
   const favori = niveauA > niveauB ? m.a : (niveauB > niveauA ? m.b : null);
   const ecartNiv = Math.abs(niveauA - niveauB);
