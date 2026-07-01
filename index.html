@@ -570,7 +570,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-centre-score{font-size:26px;font-weight:800;font-family:'Space Grotesk',sans-serif;color:var(--creme);line-height:1;white-space:nowrap}
 .brk-centre-tiret{color:var(--gris);margin:0 5px;font-weight:400}
 .brk-centre-scen{font-size:9px;font-weight:800;color:var(--or);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
-.brk-centre-final{font-size:13px;font-weight:800;color:var(--or);font-family:'Space Grotesk',sans-serif;margin-top:5px;white-space:nowrap}
+.brk-centre-90{font-size:10px;color:var(--gris);margin-top:3px;white-space:nowrap;font-family:'Space Grotesk',monospace}
 .brk-centre-vs{font-size:17px;font-weight:800;font-family:'Archivo Black',sans-serif;color:var(--gris);letter-spacing:1px}
 .brk-indet{text-align:center;font-size:10px;color:var(--gris);padding:0 8px 8px}
 .brk-pied-win{text-align:center;padding:7px;background:rgba(46,196,169,.1);font-size:11px;color:var(--lagon);font-weight:700;border-top:1px solid var(--ligne)}
@@ -715,7 +715,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.17';
+const APP_VERSION = '13.18';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4543,7 +4543,18 @@ function etapesReveal(id){
   return [
     `<div class="etape"><div class="eti-r">🎬 Le récap du match</div><div class="drapeaux">${F[m.a]} ${F[m.b]}</div><h3>${m.a}<br>${m.b}</h3><div class="ligne-r" style="color:var(--gris)">Groupe ${m.g} · terminé</div></div>`,
     `<div class="etape"><div class="eti-r">Les paris étaient posés…</div>${lignesParis}</div>`,
-    `<div class="etape" data-reveal-score data-a="${re.score_a}" data-b="${re.score_b}" data-fete="${vd.fete?1:0}"><div class="eti-r">Le verdict du terrain</div><div class="grand-score"><span class="sc-a">0</span> – <span class="sc-b">0</span></div><div class="verdict-box"><div class="verdict-titre">${vd.titre}</div><div class="verdict-sous">${vd.sous}</div></div>${re.buteurs?`<div class="ligne-r" style="margin-top:14px">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`,
+    (()=>{
+      /* si score final (prolongation/tab), le GRAND score affiché est le score final ;
+         le score à 90 min devient une petite mention au-dessus */
+      const sfMatch = re.score_final && (re.scenario==='prolongation'||re.scenario==='tab')
+        ? String(re.score_final).match(/(\d+)\s*[-–·:]\s*(\d+)/) : null;
+      const gA = sfMatch ? sfMatch[1] : re.score_a;
+      const gB = sfMatch ? sfMatch[2] : re.score_b;
+      const mention90 = sfMatch
+        ? `<div class="ligne-r" style="color:var(--gris);font-size:13px;margin-bottom:6px">${re.score_a}–${re.score_b} après 90 min · ${re.scenario==='tab'?'puis tirs au but':'puis prolongation'}</div>`
+        : '';
+      return `<div class="etape" data-reveal-score data-a="${gA}" data-b="${gB}" data-fete="${vd.fete?1:0}"><div class="eti-r">Le verdict du terrain</div>${mention90}<div class="grand-score"><span class="sc-a">0</span> – <span class="sc-b">0</span></div><div class="verdict-box"><div class="verdict-titre">${vd.titre}</div><div class="verdict-sous">${vd.sous}</div></div>${re.buteurs?`<div class="ligne-r" style="margin-top:14px">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`;
+    })(),
     ...etapesPouvoirs,
     `<div class="etape"><div class="eti-r">Les comptes sont bons</div>${lignesComptes}</div>`,
     etapeClassement
@@ -5438,11 +5449,18 @@ function renduBracket(){
           ${butsHtml}
         </div>`;
       };
+      const aProlong = joue && re.score_final && (re.scenario==='prolongation'||re.scenario==='tab');
+      const sfM = aProlong ? String(re.score_final).match(/(\d+)\s*[-–·:]\s*(\d+)/) : null;
       const centre = joue
-        ? `<div class="brk-centre">
-             <div class="brk-centre-score">${re.score_a}<span class="brk-centre-tiret">·</span>${re.score_b}</div>
-             ${re.score_final && (re.scenario==='prolongation'||re.scenario==='tab') ? `<div class="brk-centre-final">${re.score_final} ${re.scenario==='tab'?'t.a.b.':'a.p.'}</div>` : (re.scenario==='tab'?'<div class="brk-centre-scen">tab</div>':re.scenario==='prolongation'?'<div class="brk-centre-scen">a.p.</div>':'')}
+        ? (sfM
+          ? `<div class="brk-centre">
+             <div class="brk-centre-score">${sfM[1]}<span class="brk-centre-tiret">·</span>${sfM[2]}</div>
+             <div class="brk-centre-scen">${re.scenario==='tab'?'t.a.b.':'a.p.'}</div>
+             <div class="brk-centre-90">${re.score_a}–${re.score_b} à 90'</div>
            </div>`
+          : `<div class="brk-centre">
+             <div class="brk-centre-score">${re.score_a}<span class="brk-centre-tiret">·</span>${re.score_b}</div>
+           </div>`)
         : `<div class="brk-centre"><div class="brk-centre-vs">VS</div></div>`;
       /* buteurs indéterminés (non rattachés à une équipe) : sous l'affiche, neutre */
       const butsIndet = buts.indetermines.length
