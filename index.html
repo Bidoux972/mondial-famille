@@ -570,6 +570,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-centre-score{font-size:26px;font-weight:800;font-family:'Space Grotesk',sans-serif;color:var(--creme);line-height:1;white-space:nowrap}
 .brk-centre-tiret{color:var(--gris);margin:0 5px;font-weight:400}
 .brk-centre-scen{font-size:9px;font-weight:800;color:var(--or);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.brk-centre-final{font-size:13px;font-weight:800;color:var(--or);font-family:'Space Grotesk',sans-serif;margin-top:5px;white-space:nowrap}
 .brk-centre-vs{font-size:17px;font-weight:800;font-family:'Archivo Black',sans-serif;color:var(--gris);letter-spacing:1px}
 .brk-indet{text-align:center;font-size:10px;color:var(--gris);padding:0 8px 8px}
 .brk-pied-win{text-align:center;padding:7px;background:rgba(46,196,169,.1);font-size:11px;color:var(--lagon);font-weight:700;border-top:1px solid var(--ligne)}
@@ -714,7 +715,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.13';
+const APP_VERSION = '13.15';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1673,6 +1674,7 @@ function carteMatch(m, modePronos){
     </div>
     <input type="text" id="rbu-${m.id}" placeholder="⚽ Buteurs réels, séparés par des virgules" value="${re&&re.buteurs?String(re.buteurs).replace(/"/g,'&quot;'):''}">
     <input type="text" id="rca-${m.id}" placeholder="🟥 Cartons rouges (facultatif)" value="${re&&re.cartons?String(re.cartons).replace(/"/g,'&quot;'):''}">${m.phase==='finale'?`
+    <input type="text" id="rsf-${m.id}" placeholder="🏆 Score FINAL si prolong./tab (ex: 3-2) — facultatif" value="${re&&re.score_final?String(re.score_final).replace(/"/g,'&quot;'):''}" style="margin-top:6px">
     <select id="rqual-${m.id}" style="width:100%;margin-top:6px">
       <option value="">🎫 Qui s'est qualifié ? (phase finale)</option>
       <option value="${m.a.replace(/"/g,'&quot;')}" ${re&&re.qualifie===m.a?'selected':''}>${m.a} qualifié(e)</option>
@@ -1811,11 +1813,12 @@ async function validerScore(id){
   const elQ = $(`rqual-${id}`), elS = $(`rscen-${id}`);
   const qualifie = elQ && elQ.value ? elQ.value : null;
   const scenario = elS && elS.value ? elS.value : null;
+  const scoreFinal = $(`rsf-${id}`) && $(`rsf-${id}`).value.trim() ? $(`rsf-${id}`).value.trim() : null;
   try{
     await sb('mondial_resultats?on_conflict=match_id', {method:'POST',
       prefer:'resolution=merge-duplicates',
-      body: JSON.stringify({match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null, qualifie, scenario})});
-    resultats[id] = {match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null, qualifie, scenario}; _statsButeurs = null;
+      body: JSON.stringify({match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null, qualifie, scenario, score_final:scoreFinal})});
+    resultats[id] = {match_id:id, score_a:a, score_b:b, buteurs:buteurs||null, cartons:cartons||null, qualifie, scenario, score_final:scoreFinal}; _statsButeurs = null;
     toast('Score validé — classement mis à jour 🏆'); toutAfficher();
   }catch(e){ toast('Échec de la validation'); }
 }
@@ -5342,7 +5345,17 @@ function couloirDe(equipeCle){
 function buteursParEquipe(re, teamA, teamB){
   const res = { a:[], b:[], indetermines:[] };
   if(!re || !re.buteurs) return res;
-  const list = String(re.buteurs).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
+  /* Découpage SÛR : on ne coupe PAS sur les virgules situées DANS des parenthèses
+     (ex "Tielemans (89e, 120e+5 sp)" doit rester un seul segment = un doublé). */
+  const list = [];
+  let buf = '', prof = 0;
+  for(const ch of String(re.buteurs)){
+    if(ch==='(') prof++;
+    if(ch===')') prof = Math.max(0, prof-1);
+    if(prof===0 && /[,;\n]/.test(ch)){ if(buf.trim()) list.push(buf.trim()); buf=''; }
+    else buf += ch;
+  }
+  if(buf.trim()) list.push(buf.trim());
   const motsDe = nom => normNom(String(nom).replace(/\([^)]*\)/g,' ')).split(' ').filter(w=>w.length>1);
   const effA = teamA ? joueursDe(teamA).map(j=>normNom(parseJoueur(j).nom)) : [];
   const effB = teamB ? joueursDe(teamB).map(j=>normNom(parseJoueur(j).nom)) : [];
@@ -5421,7 +5434,7 @@ function renduBracket(){
       const centre = joue
         ? `<div class="brk-centre">
              <div class="brk-centre-score">${re.score_a}<span class="brk-centre-tiret">·</span>${re.score_b}</div>
-             ${re.scenario==='tab'?'<div class="brk-centre-scen">tab</div>':re.scenario==='prolongation'?'<div class="brk-centre-scen">a.p.</div>':''}
+             ${re.score_final && (re.scenario==='prolongation'||re.scenario==='tab') ? `<div class="brk-centre-final">${re.score_final} ${re.scenario==='tab'?'t.a.b.':'a.p.'}</div>` : (re.scenario==='tab'?'<div class="brk-centre-scen">tab</div>':re.scenario==='prolongation'?'<div class="brk-centre-scen">a.p.</div>':'')}
            </div>`
         : `<div class="brk-centre"><div class="brk-centre-vs">VS</div></div>`;
       /* buteurs indéterminés (non rattachés à une équipe) : sous l'affiche, neutre */
