@@ -203,6 +203,21 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .pouvoir-check:hover{background:rgba(122,162,255,.18)}
 .bonus-zone .pouvoir-check input[type=checkbox],.pouvoir-check input[type=checkbox]{width:18px;height:18px;min-width:18px;flex:0 0 18px;accent-color:#7aa2ff;cursor:pointer;margin:0;padding:0}
 .pouvoir-ko{font-size:11.5px;color:var(--corail);margin-top:8px;font-style:italic;background:rgba(255,107,94,.08);border:1px solid rgba(255,107,94,.25);border-radius:7px;padding:8px 10px}
+.cheikh-zone{background:linear-gradient(135deg,rgba(245,180,60,.14),rgba(245,180,60,.04));border:1.5px solid var(--or);border-radius:12px;padding:13px;margin-top:11px;box-shadow:0 2px 12px rgba(245,180,60,.12)}
+.cheikh-tete{font-family:'Space Grotesk',monospace;font-size:14px;font-weight:800;color:var(--or);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cheikh-badge{font-size:9px;background:var(--or);color:var(--nuit);padding:2px 8px;border-radius:9px;letter-spacing:.5px;font-weight:800}
+.cheikh-desc{font-size:12px;color:var(--creme);margin-top:6px;line-height:1.45}
+.cheikh-check{display:flex;align-items:center;gap:9px;margin-top:11px;font-size:13px;font-weight:700;color:var(--or);cursor:pointer;background:rgba(245,180,60,.10);padding:9px 11px;border-radius:9px;border:1px solid rgba(245,180,60,.35)}
+.bonus-zone .cheikh-check input[type=checkbox],.cheikh-check input[type=checkbox]{width:18px;height:18px;min-width:18px;flex:0 0 18px;accent-color:var(--or);cursor:pointer;margin:0;padding:0}
+.cheikh-zone.cheikh-ko{font-size:11.5px;color:var(--gris);font-style:italic;padding:10px 12px;border-color:var(--ligne);box-shadow:none;background:var(--panneau)}
+.cheikh-overlay{position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 35%, #2a2410 0%, #0E1B2C 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 18px;cursor:pointer;animation:apparait .5s ease}
+.cheikh-overlay .cheikh-halo{position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(245,180,60,.30),transparent 70%);top:12%;animation:pvHalo 2s ease-in-out infinite}
+.cheikh-overlay .cheikh-sur{position:relative;font-size:12px;font-weight:700;color:var(--or);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px}
+.cheikh-overlay .cheikh-emoji{position:relative;font-size:clamp(64px,20vw,90px);line-height:1;filter:drop-shadow(0 0 24px rgba(245,180,60,.55));animation:pvPop .6s cubic-bezier(.34,1.56,.64,1)}
+.cheikh-overlay .cheikh-titre{position:relative;font-family:'Archivo Black';font-size:clamp(26px,8vw,38px);font-weight:900;color:var(--creme);text-transform:uppercase;line-height:1.05;margin-top:12px}
+.cheikh-overlay .cheikh-accroche{position:relative;font-size:clamp(13.5px,4vw,15px);color:var(--or);font-style:italic;margin-top:16px;max-width:360px;line-height:1.55}
+.cheikh-overlay .cheikh-note{position:relative;font-size:11px;color:var(--gris);letter-spacing:2px;margin-top:22px}
+.cheikh-overlay .cheikh-fermer{position:absolute;bottom:26px;font-size:12px;color:var(--gris)}
 .mt-titre{font-family:'Space Grotesk',monospace;font-size:20px;font-weight:800;letter-spacing:1px;background:linear-gradient(90deg,var(--or),var(--corail));-webkit-background-clip:text;background-clip:text;color:transparent}
 .mt-sous{font-size:12px;color:var(--gris);margin-top:2px}
 .mt-duel{border:1px solid var(--ligne);border-radius:12px;padding:13px;margin-bottom:10px}
@@ -717,7 +732,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.23';
+const APP_VERSION = '13.24';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1037,6 +1052,7 @@ async function chargerTout() {
   try{ toutAfficher(); }catch(e){ console.error('toutAfficher:', e); }
   try{ signalerPresence(); }catch(e){ console.error('signalerPresence:', e); }
   try{ detecterReveals(); }catch(e){ console.error('detecterReveals:', e); }
+  try{ annonceCheikh(); }catch(e){ console.error('annonceCheikh:', e); }
 }
 
 /* ============ OUTILS ============ */
@@ -1108,24 +1124,27 @@ function ptsTotal(pr, re){
 
   /* ⚡ POUVOIRS de phase finale (posés sur ce prono via pr.pouvoir) */
   if(pouv === 'musa' && pr.buteur2){
-    /* Joker Petar Musa : 2e buteur misé, même barème +2/−1 */
+    /* Joker Petar Musa (revalorisé) : le 2e buteur rapporte +6 (−1 s'il ne marque pas) */
     const trouve = buteurEstMarque(pr.buteur2, re);
-    total += (trouve === true) ? 2 : (trouve === false ? -1 : 0);
+    total += (trouve === true) ? 6 : (trouve === false ? -1 : 0);
   }
   if(pouv === 'remontada'){
-    /* La Remontada : +2 garantis si bon qualifié */
-    if(pr.qualifie && re.qualifie && pr.qualifie === re.qualifie) total += 2;
+    /* La Remontada (revalorisée) : +4 garantis si bon qualifié */
+    if(pr.qualifie && re.qualifie && pr.qualifie === re.qualifie) total += 4;
   }
 
-  total = total * (orActif ? 2 : 1);
+  /* 🕋 L'Intervention du Cheikh : ×2 sur le match choisi (non cumulable Or/pouvoir) */
+  const cheikhActif = pr.cheikh && !pouv && !pr.en_or;
+
+  total = total * (orActif ? 2 : 1) * (cheikhActif ? 2 : 1);
 
   if(pouv === 'dd'){
     /* La Chatte à DD : ×2 si au moins la bonne tendance (sinon inchangé) */
     if(base >= 1) total = total * 2;
   }
   if(pouv === 'tapie'){
-    /* L'Assurance Tapie : +2 si score exact, et plancher à 0 (pertes annulées) */
-    if(base === 3) total += 2;
+    /* L'Assurance Tapie (revalorisée) : +4 si au moins la bonne tendance, et plancher à 0 */
+    if(base >= 1) total += 4;
     if(total < 0) total = 0;
   }
   return total;
@@ -1472,6 +1491,7 @@ function carteMatch(m, modePronos){
       if(pr.btts===true||pr.btts===false) tags.push(`<span class="ptag tag-neutre">${pr.btts?'Les 2 marquent':'Pas les 2 (une à 0)'}</span>`);
       if(pr.pouvoir && pr.match_id!==104){ const pv=POUVOIRS[Object.keys(POUVOIRS).find(k=>POUVOIRS[k].id===pr.pouvoir)]; if(pv) tags.push(`<span class="ptag tag-pouvoir">${pv.emoji} ${pv.nom}</span>`); }
       if(pr.en_or) tags.push(`<span class="ptag tag-or">🌟 Match en Or</span>`);
+      if(pr.cheikh) tags.push(`<span class="ptag tag-or">🕋 Intervention du Cheikh</span>`);
       return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-spacer"></span><span class="fam-attente">en attente</span></div><div class="fam-tags">${tags.join('')}</div>`;
     }
     let pts = '', chambre = '', etiquettes = '';
@@ -1520,6 +1540,10 @@ function carteMatch(m, modePronos){
       /* étiquette match en or */
       if(pr.en_or){
         tags.push(`<span class="ptag ${t>=0?'tag-or':'tag-lose'}">🌟 Match en Or ×2</span>`);
+      }
+      if(pr.cheikh && !pr.pouvoir && !pr.en_or){
+        const t = ptsTotal(pr, re);
+        tags.push(`<span class="ptag ${t>=0?'tag-or':'tag-lose'}">🕋 Le Cheikh ×2</span>`);
       }
       etiquettes = masquePts ? '' : `<div class="fam-tags">${tags.join('')}</div>`;
     }
@@ -1643,6 +1667,20 @@ function carteMatch(m, modePronos){
         <option value="">— Match normal —</option>
         <option value="or" ${monPr&&monPr.en_or?'selected':''}>🌟 OUI, je double tout sur ce match (gains ET pertes)</option>
       </select>
+      ${(()=>{
+        const tourC = tourCheikhDuMatch(m.id);
+        if(!tourC) return '';
+        const benef = cheikhBeneficiaire(tourC);
+        if(benef !== pseudo) return '';
+        const utiliseIci = monPr && monPr.cheikh;
+        const dejaAilleurs = cheikhUtiliseDansTour(pseudo, tourC) && !utiliseIci;
+        if(dejaAilleurs) return `<div class="cheikh-zone cheikh-ko">🕋 Le Cheikh est déjà intervenu sur un autre match des ${tourC.nom}. Il est remonté en tribune.</div>`;
+        return `<div class="cheikh-zone">
+          <div class="cheikh-tete">🕋 L'Intervention du Cheikh <span class="cheikh-badge">CE TOUR SEULEMENT</span></div>
+          <div class="cheikh-desc">Le Cheikh a négocié pour toi : sur ce match, <b>tous tes points comptent ×2</b>. Un seul match des ${tourC.nom} — choisis bien, il remonte en tribune après. <i>Non cumulable avec un pouvoir ou un Match en Or.</i></div>
+          <label class="cheikh-check"><input type="checkbox" id="cheikh-${m.id}" ${utiliseIci?'checked':''}> Faire descendre le Cheikh sur ce match</label>
+        </div>`;
+      })()}
     </div>
     <button class="btn corail" style="width:100%;margin-top:10px;font-weight:700" onclick="sauverProno(${m.id})">${monPr ? '💾 Enregistrer mes modifications (score + bonus)' : '✅ Valider mon prono (score + bonus)'}</button>`;
   } else if(monPr){
@@ -1656,12 +1694,14 @@ function carteMatch(m, modePronos){
       if(monPr.scenario) morceaux.push(bo.scen===1?`scénario +1 ⏱️`:`scénario raté 0`);
       if(monPr.btts===true||monPr.btts===false) morceaux.push(bo.btts===1?'2 équipes marquent +1 🥅':'2 équipes −1 ❌');
       if(monPr.en_or) morceaux.push('🌟 EN OR ×2');
+      if(monPr.cheikh) morceaux.push('🕋 CHEIKH ×2');
       detail = ` · <span class="pts p${tot>=3?3:tot>=1?1:0}">${tot>0?'+':''}${tot} pt${Math.abs(tot)>1?'s':''}</span> <span style="color:var(--gris)">(${morceaux.join(', ')})</span>`;
     } else {
       const extras = [];
       if(monPr.buteur) extras.push(`⚽ ${monPr.buteur}`);
       if(monPr.btts===true) extras.push('🥅 oui'); if(monPr.btts===false) extras.push('🥅 non');
       if(monPr.en_or) extras.push('🌟 EN OR');
+      if(monPr.cheikh) extras.push('🕋 CHEIKH');
       detail = extras.length ? ' · '+extras.join(' · ') : '';
     }
     bas = `<div class="monprono">Ton prono : <b>${monPr.score_a}–${monPr.score_b}</b>${detail}</div>`;
@@ -1783,6 +1823,17 @@ async function sauverProno(id){
   const enOr = $(`or-${id}`).value === 'or';
   /* garde-fou : pas de cumul Match en Or + pouvoir sur le même match (trop fort) */
   if(enOr && pouvoir){ toast('🚫 Pas de cumul : Match en Or OU pouvoir sur ce match, pas les deux.'); return; }
+  /* 🕋 L'Intervention du Cheikh */
+  const elCheikh = $(`cheikh-${id}`);
+  const cheikh = !!(elCheikh && elCheikh.checked);
+  if(cheikh){
+    const tourC = tourCheikhDuMatch(id);
+    if(!tourC){ toast('🕋 Le Cheikh ne descend pas sur ce match.'); return; }
+    if(cheikhBeneficiaire(tourC) !== pseudo){ toast('🕋 Le Cheikh ne se déplace pas pour toi.'); return; }
+    if(cheikh && (pouvoir || enOr)){ toast('🚫 Pas de cumul : le Cheikh intervient seul (ni pouvoir, ni Match en Or).'); return; }
+    const avaitIci = pronos[pseudo] && pronos[pseudo][id] && pronos[pseudo][id].cheikh;
+    if(!avaitIci && cheikhUtiliseDansTour(pseudo, tourC)){ toast('🕋 Le Cheikh est déjà intervenu sur un autre match de ce tour.'); return; }
+  }
   if(enOr){
     const cle = jourCle(m);
     const autres = Object.values(pronos[pseudo]||{}).filter(pr=>pr.en_or && pr.match_id!==id);
@@ -1802,9 +1853,9 @@ async function sauverProno(id){
   try{
     await sb('mondial_pronostics?on_conflict=pseudo,match_id', {method:'POST',
       prefer:'resolution=merge-duplicates',
-      body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, qualifie, scenario, pouvoir, buteur2, en_or:enOr})});
-    (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, qualifie, scenario, pouvoir, buteur2, en_or:enOr};
-    toast(`Prono ${a}–${b}${buteur?' · ⚽ '+buteur:''}${enOr?' · 🌟 EN OR':''} enregistré ✓`); listePronos(); hero();
+      body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, qualifie, scenario, pouvoir, buteur2, en_or:enOr, cheikh})});
+    (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, qualifie, scenario, pouvoir, buteur2, en_or:enOr, cheikh};
+    toast(`Prono ${a}–${b}${buteur?' · ⚽ '+buteur:''}${enOr?' · 🌟 EN OR':''}${cheikh?' · 🕋 CHEIKH ×2':''} enregistré ✓`); listePronos(); hero();
   }catch(e){ toast("Échec de l'enregistrement, réessaie"); }
 }
 async function validerScore(id){
@@ -4374,6 +4425,38 @@ function rejouerReveal(){
   revealQueue = [];
   ouvrirReveal(id);
 }
+/* 🕋 Annonce plein écran de l'Intervention du Cheikh — une fois par tour, pour tout le monde */
+function annonceCheikh(){
+  if(!(palmares && palmares.champion_poules)) return;
+  for(const tour of TOURS_CHEIKH){
+    /* tour "en cours" : au moins un match du tour pas encore joué, et le tour précédent est fini */
+    const matchsTour = M.filter(m => m.id >= tour.deb && m.id <= tour.fin);
+    if(!matchsTour.length) continue;
+    const tourFini = matchsTour.every(m => resultats[m.id]);
+    if(tourFini) continue;
+    /* les 16es doivent être finis avant d'annoncer les 8es, etc. */
+    const avantFini = M.filter(m => m.id >= 73 && m.id < tour.deb).every(m => resultats[m.id]);
+    if(!avantFini) return;
+    const benef = cheikhBeneficiaire(tour);
+    if(!benef) return;
+    const cle = 'mf_cheikh_' + tour.deb;
+    try{ if(localStorage.getItem(cle)) return; }catch(e){}
+    const div = document.createElement('div');
+    div.className = 'cheikh-overlay';
+    div.innerHTML = `
+      <div class="cheikh-halo"></div>
+      <div class="cheikh-sur">Incident en tribune officielle</div>
+      <div class="cheikh-emoji">🕋</div>
+      <div class="cheikh-titre">L'Intervention<br>du Cheikh</div>
+      <div class="cheikh-accroche">« ${benef} est trop loin au classement. Le Cheikh descend de sa tribune, palabre avec l'arbitre… et obtient réparation : sur UN match des ${tour.nom}, ses points compteront <b>double</b>. Valladolid 1982. L'arbitre s'excuse. »</div>
+      <div class="cheikh-note">⚖️ AUCUNE SANCTION — ÉVIDEMMENT</div>
+      <div class="cheikh-fermer">Touche pour fermer</div>`;
+    div.onclick = () => { try{ localStorage.setItem(cle,'1'); }catch(e){} div.remove(); };
+    document.body.appendChild(div);
+    return;
+  }
+}
+
 function detecterReveals(){
   if(!pseudo) return;
   const vus = vusReveal();
@@ -4422,7 +4505,7 @@ function etapesReveal(id){
   const lignesParis = PARTICIPANTS.map(p=>{
     const pr = pronos[p] && pronos[p][id];
     if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">n'a pas parié 🙈</span></div>`;
-    const extras = [pr.buteur?`⚽ ${pr.buteur}`:'', pr.btts===true?'🥅 oui':pr.btts===false?'🥅 non':'', pr.en_or?'🌟 EN OR':''].filter(Boolean).join(' · ');
+    const extras = [pr.buteur?`⚽ ${pr.buteur}`:'', pr.btts===true?'🥅 oui':pr.btts===false?'🥅 non':'', pr.en_or?'🌟 EN OR':'', pr.cheikh?'🕋 CHEIKH':''].filter(Boolean).join(' · ');
     return `<div class="ligne-r">${p} : <b>${pr.score_a}–${pr.score_b}</b>${extras?' · '+extras:''}</div>`;
   }).join('');
   const enMTcomptes = poulesScellees();
@@ -4434,7 +4517,7 @@ function etapesReveal(id){
       return `<div class="ligne-r">${p} : <span style="color:var(--gris)" title="Scellé jusqu'au verdict">🔒 points scellés</span></div>`;
     }
     const emo = t>=4?'🔥':t===3?'🎯':t>0?'👍':t===0?'😬':'💀';
-    return `<div class="ligne-r">${p} : <b class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t} pt${Math.abs(t)>1?'s':''}</b> ${emo}${pr.en_or?' (EN OR ×2 !)':''}</div>`;
+    return `<div class="ligne-r">${p} : <b class="pts p${t>=3?3:t>=1?1:0}">${t>0?'+':''}${t} pt${Math.abs(t)>1?'s':''}</b> ${emo}${pr.en_or?' (EN OR ×2 !)':''}${pr.cheikh?' (LE CHEIKH ×2 !)':''}</div>`;
   }).join('');
   const cl = calculTotaux(x => filtrePhase(x) && x.dt.getTime() <= m.dt.getTime());
   const lignesClassement = cl.map((l,i)=>`<div class="ligne-r">${i===0&&l.total>0?'👑':(i+1)+'.'} ${l.p} <b>${l.total}</b></div>`).join('');
@@ -4615,10 +4698,10 @@ function ouvrirReveal(id){
 /* Chaque joueur reçoit UN pouvoir selon son rang final des poules (gravé), utilisable
    UNE seule fois sur toute la phase finale, posé au moment de parier sur un match. */
 const POUVOIRS = {
-  1: {id:'tapie',  nom:"L'Assurance Tapie",     emoji:'🛡️', desc:"Sur ce match, tes pertes sont annulées (plancher à 0) et +2 bonus si score exact."},
+  1: {id:'tapie',  nom:"L'Assurance Tapie",     emoji:'🛡️', desc:"Sur ce match, tes pertes sont annulées (plancher à 0) et +4 bonus si tu as au moins la bonne tendance."},
   2: {id:'dd',     nom:"La Chatte à DD",         emoji:'🍀', desc:"Sur ce match, tes points sont doublés si tu trouves au moins la bonne tendance."},
-  3: {id:'musa',   nom:"Le Joker Petar Musa",    emoji:'⚽', desc:"Sur ce match, tu peux miser DEUX buteurs au lieu d'un (chacun +2/−1)."},
-  4: {id:'remontada',nom:"La Remontada",         emoji:'🔥', desc:"Sur ce match, +2 points garantis si tu trouves le bon qualifié."}
+  3: {id:'musa',   nom:"Le Joker Petar Musa",    emoji:'⚽', desc:"Sur ce match, tu peux miser un 2e buteur : il rapporte +6 s'il marque (−1 sinon). Ton 1er buteur reste à +2/−1."},
+  4: {id:'remontada',nom:"La Remontada",         emoji:'🔥', desc:"Sur ce match, +4 points garantis si tu trouves le bon qualifié."}
 };
 function rangPoules(p){
   let cl = (palmares && Array.isArray(palmares.classement_poules) && palmares.classement_poules.length)
@@ -4631,6 +4714,35 @@ function pouvoirDe(p){ const r = rangPoules(p); return r && POUVOIRS[r] ? POUVOI
    par erreur alors que son vrai pouvoir (Joker Musa) n'avait jamais pu être posé.
    On lui accorde donc UN pouvoir supplémentaire (2 au total au lieu de 1). Borné, traçable. */
 const POUVOIRS_BONUS = { 'Ginou': 1 };   /* nb de pouvoirs supplémentaires accordés */
+
+/* ===== 🕋 L'INTERVENTION DU CHEIKH (rattrapage façon Valladolid 1982) =====
+   À chaque tour (8es, quarts, demies), si le DERNIER du classement de phase finale
+   accuse 15+ points de retard sur l'AVANT-DERNIER, il reçoit le Cheikh :
+   sur UN match du tour, ses points comptent ×2. Visible de tous, perdu si non
+   utilisé dans le tour, interdit en finale/petite finale, non cumulable Or/pouvoir.
+   Le bénéficiaire est figé sur le classement AVANT le tour (matchs id < début du tour). */
+const CHEIKH_SEUIL = 15;
+const TOURS_CHEIKH = [
+  {deb:89,  fin:96,  nom:'8es de finale'},
+  {deb:97,  fin:100, nom:'quarts de finale'},
+  {deb:101, fin:102, nom:'demi-finales'}
+];
+function tourCheikhDuMatch(id){
+  return TOURS_CHEIKH.find(t => id >= t.deb && id <= t.fin) || null;
+}
+function cheikhBeneficiaire(tour){
+  /* classement de phase finale AVANT ce tour (stable : ne bouge pas en cours de tour) */
+  if(!(palmares && palmares.champion_poules)) return null;
+  const cl = calculTotaux(m => m.id >= 73 && m.id < tour.deb);
+  if(cl.length < 2) return null;
+  const dernier = cl[cl.length-1], avantDernier = cl[cl.length-2];
+  if(avantDernier.total - dernier.total >= CHEIKH_SEUIL) return dernier.p;
+  return null;
+}
+function cheikhUtiliseDansTour(p, tour){
+  return Object.values(pronos[p]||{}).some(pr => pr.cheikh && pr.match_id >= tour.deb && pr.match_id <= tour.fin);
+}
+
 
 /* ===== CARTOUCHES SCÉNARIO =====
    Chaque joueur a un stock fixe de "cartouches" pour miser le scénario (90/prolong/tab).
