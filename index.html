@@ -278,6 +278,7 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .grp-ligne .c-pts{text-align:center;font-weight:800;color:var(--or);font-family:'Space Grotesk',monospace;font-size:14px}
 .but-liste{margin-top:6px}
 .but-ligne{display:grid;grid-template-columns:34px 26px 1fr auto;align-items:center;column-gap:8px;padding:8px 0;border-top:1px solid var(--ligne)}
+.but-ligne.but-actif{background:rgba(46,196,169,.14);border-radius:8px;padding:8px 10px;border-top-color:transparent}
 .but-ligne:first-child{border-top:none}
 .but-rang{text-align:center;font-size:15px;font-family:'Space Grotesk',monospace;color:var(--gris)}
 .but-dra{font-size:18px;text-align:center}
@@ -715,7 +716,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.18';
+const APP_VERSION = '13.20';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2470,6 +2471,21 @@ function formeJoueursEquipe(equipe){
   return {feu, glace, transition, blesse};
 }
 
+/* Une équipe de phase finale est "encore en lice" tant qu'elle n'a pas perdu
+   un match à élimination directe (le perdant = celle qui n'est pas re.qualifie).
+   Avant la phase finale (aucun match id>=73 joué), tout le monde est en lice. */
+function equipeEncoreEnLice(equipe){
+  if(!equipe) return true;
+  for(const m of M){
+    if(m.id < 73) continue;
+    const re = resultats[m.id];
+    if(!re || !re.qualifie) continue;
+    const perdant = (m.a === re.qualifie) ? m.b : (m.b === re.qualifie ? m.a : null);
+    if(perdant && perdant === equipe) return false;   /* elle a perdu -> éliminée */
+  }
+  return true;
+}
+
 function classementButeurs(){
   const compteurs = {}; /* clé = nom normalisé -> {nom, equipe, buts} */
   /* ensemble des noms d'équipes connus (pour ne JAMAIS les compter comme buteurs) */
@@ -2574,7 +2590,8 @@ function vueButeurs(){
     rang++;
     if(x.buts !== prevButs){ rangAff = rang; prevButs = x.buts; }
     const medaille = rangAff===1 ? '🥇' : rangAff===2 ? '🥈' : rangAff===3 ? '🥉' : `${rangAff}`;
-    return `<div class="but-ligne">
+    const enLice = equipeEncoreEnLice(x.equipe);
+    return `<div class="but-ligne${enLice?' but-actif':''}">
       <span class="but-rang">${medaille}</span>
       <span class="but-dra">${x.equipe?F[x.equipe]||'⚽':'⚽'}</span>
       <span class="but-nom"><span class="but-nom-l1">${x.nom}${pictoForme(x.nom)}</span>${x.equipe?`<span class="but-eq">${x.equipe}</span>`:''}</span>
