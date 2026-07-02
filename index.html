@@ -543,18 +543,22 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-bandeau{background:var(--panneau2);border:1px solid var(--lagon);border-radius:10px;padding:10px 14px}
 .brk-bandeau-t{display:block;color:var(--lagon);font-weight:600;font-size:13px}
 .brk-bandeau-s{display:block;color:var(--gris);font-size:11px;margin-top:2px}
-.radar-chocs{background:var(--panneau);border:1px solid rgba(255,107,94,.45);border-radius:12px;padding:13px;margin:14px 0}
+.radar-chocs{background:var(--panneau);border:1px solid rgba(245,180,60,.45);border-radius:12px;padding:13px;margin:14px 0}
 .radar-tete{display:flex;align-items:center;gap:8px;margin-bottom:11px}
-.radar-titre{font-family:'Archivo Black';font-size:13px;color:var(--corail);text-transform:uppercase;letter-spacing:.5px}
+.radar-titre{font-family:'Archivo Black';font-size:13px;color:var(--or);text-transform:uppercase;letter-spacing:.5px}
 .radar-note{font-size:10px;color:var(--gris);margin-left:auto}
-.radar-ligne{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px dashed rgba(255,107,94,.35);border-radius:9px;margin-bottom:6px}
-.radar-ligne.radar-confirme{border-style:solid;border-color:rgba(255,107,94,.4);background:rgba(255,107,94,.12)}
-.radar-dra{font-size:17px;flex-shrink:0}
+.radar-secteur{display:flex;gap:10px;margin-bottom:10px}
+.radar-secteur:last-of-type{margin-bottom:0}
+.radar-stade{width:38px;flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-family:'Space Grotesk',monospace;font-size:14px;font-weight:800;color:var(--or)}
+.radar-lignes{flex:1;border-left:1px solid var(--ligne);padding-left:10px;min-width:0}
+.radar-ligne{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px dashed rgba(245,180,60,.4);border-radius:9px;margin-bottom:5px}
+.radar-lignes .radar-ligne:last-child{margin-bottom:0}
+.radar-ligne.radar-confirme{border-style:solid;border-color:rgba(245,180,60,.5);background:rgba(245,180,60,.12)}
+.radar-dra{font-size:16px;flex-shrink:0}
 .radar-aff{font-size:13px;font-weight:600;color:var(--creme);flex:1;min-width:0}
 .radar-confirme .radar-aff{font-weight:700}
-.radar-badge{font-size:9px;font-weight:700;color:#FF9B8F;border:1px solid rgba(255,107,94,.4);padding:2px 8px;border-radius:9px;white-space:nowrap;flex-shrink:0}
-.radar-confirme .radar-badge{background:var(--corail);color:#fff;border-color:var(--corail);font-weight:800}
-.radar-legende{font-size:10px;color:var(--gris);margin-top:9px;font-style:italic}
+.radar-acte{font-size:11px;color:var(--or);font-weight:800;flex-shrink:0}
+.radar-legende{font-size:10px;color:var(--gris);margin-top:10px;font-style:italic}
 .brk-tour-tete{display:flex;align-items:center;gap:9px;margin-bottom:10px;margin-top:6px}
 .brk-tour-titre{color:var(--or);font-weight:700;font-size:13px;letter-spacing:.3px;text-transform:uppercase}
 .brk-tour-pastille{font-size:14px;line-height:1}
@@ -744,7 +748,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.26';
+const APP_VERSION = '13.27';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -5605,15 +5609,21 @@ function renduBracket(){
       }
     }
   }
-  radarChocs.sort((x,y)=> (y.confirme-x.confirme) || (x.num-y.num));
+  radarChocs.sort((x,y)=> (x.num-y.num));
+  const LIB_STADE = {'8e':'1/8','quart':'1/4','demie':'1/2'};
+  const parStade = {};
+  radarChocs.slice(0,6).forEach(c=>{ (parStade[c.tour] = parStade[c.tour]||[]).push(c); });
   const radarHtml = radarChocs.length ? `<div class="radar-chocs">
     <div class="radar-tete"><span>🔥</span><span class="radar-titre">Radar des chocs</span><span class="radar-note">mis à jour à chaque résultat</span></div>
-    ${radarChocs.slice(0,6).map(c=>`<div class="radar-ligne${c.confirme?' radar-confirme':''}">
-      <span class="radar-dra">${F[c.a]||''}</span>
-      <span class="radar-aff">${c.a} 🆚 ${c.b}</span>
-      <span class="radar-badge">${c.confirme ? c.tour+' · CONFIRMÉ' : 'possible en '+c.tour}</span>
+    ${['8e','quart','demie'].filter(t=>parStade[t]).map(t=>`<div class="radar-secteur">
+      <div class="radar-stade">${LIB_STADE[t]}</div>
+      <div class="radar-lignes">${parStade[t].map(c=>`<div class="radar-ligne${c.confirme?' radar-confirme':''}">
+        <span class="radar-dra">${F[c.a]||''}</span>
+        <span class="radar-aff">${c.a} 🆚 ${c.b}</span>
+        ${c.confirme?'<span class="radar-acte">✓ acté</span>':''}
+      </div>`).join('')}</div>
     </div>`).join('')}
-    <div class="radar-legende">Plein = affiche actée · pointillé = collision encore possible. Les chocs morts disparaissent tout seuls.</div>
+    <div class="radar-legende">Plein = affiche actée (✓) · pointillé = collision encore possible.</div>
   </div>` : '';
 
   const carteMatch = (id, slots, tour) => {
