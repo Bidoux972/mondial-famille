@@ -625,7 +625,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   <div id="avm"></div>
 
   <section id="sec-matchs" class="actif">
-    <h2>La grille <small>72 matchs de poules · scores validés par le commissaire au fil du tournoi</small></h2>
+    <h2>La grille <small>72 matchs de poules puis 32 à élimination · scores validés par le commissaire au fil du tournoi</small></h2>
     <div class="admin-bloc" id="admin-maj" style="display:none">
       <div class="eti">Mise à jour du jour (commissaire)</div>
       <p class="note">Colle ici le bloc quotidien préparé avec Claude (résultats + buteurs + cartons + joueurs + avant-matchs), puis Appliquer. Tout se met à jour d'un coup.</p>
@@ -732,7 +732,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.24';
+const APP_VERSION = '13.25';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2115,7 +2115,17 @@ function classement(){
     </div>`;
   }).join('');
   const total = Object.keys(resultats).length;
-  $('note-classement').textContent = total===0 ? 'Le classement démarre dès le premier score validé.' : `${total} match${total>1?'s':''} validé${total>1?'s':''} sur 72. Flèches : évolution depuis hier.`;
+  const enFinale = palmares && palmares.champion_poules;
+  let noteTxt;
+  if(total===0){
+    noteTxt = 'Le classement démarre dès le premier score validé.';
+  } else if(enFinale){
+    const nbFinale = Object.keys(resultats).filter(k=>parseInt(k,10)>=73).length;
+    noteTxt = `Phase finale · ${nbFinale} match${nbFinale>1?'s':''} à élimination validé${nbFinale>1?'s':''} sur 32. Flèches : évolution depuis hier.`;
+  } else {
+    noteTxt = `${total} match${total>1?'s':''} validé${total>1?'s':''} sur 72. Flèches : évolution depuis hier.`;
+  }
+  $('note-classement').textContent = noteTxt;
   const c = $('commentaire-jour');
   if(total>0 && lignes.some(l=>l.total!==0)){
     const graine = new Date().getDate() + total;
