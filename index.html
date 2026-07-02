@@ -717,7 +717,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.21';
+const APP_VERSION = '13.22';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2472,19 +2472,24 @@ function formeJoueursEquipe(equipe){
   return {feu, glace, transition, blesse};
 }
 
-/* Une équipe de phase finale est "encore en lice" tant qu'elle n'a pas perdu
-   un match à élimination directe (le perdant = celle qui n'est pas re.qualifie).
-   Avant la phase finale (aucun match id>=73 joué), tout le monde est en lice. */
+/* Une équipe est "encore en lice" si :
+   (1) elle PARTICIPE à la phase finale (figure dans un match id>=73, résolu via a/b),
+   (2) ET elle n'a pas perdu de match à élimination directe.
+   Les équipes éliminées en poules (jamais présentes en phase finale) ne sont PAS en lice. */
 function equipeEncoreEnLice(equipe){
-  if(!equipe) return true;
+  if(!equipe) return false;
+  let participe = false;
   for(const m of M){
     if(m.id < 73) continue;
+    /* l'équipe figure-t-elle dans ce match de phase finale ? */
+    if(m.a === equipe || m.b === equipe) participe = true;
     const re = resultats[m.id];
-    if(!re || !re.qualifie) continue;
-    const perdant = (m.a === re.qualifie) ? m.b : (m.b === re.qualifie ? m.a : null);
-    if(perdant && perdant === equipe) return false;   /* elle a perdu -> éliminée */
+    if(re && re.qualifie){
+      const perdant = (m.a === re.qualifie) ? m.b : (m.b === re.qualifie ? m.a : null);
+      if(perdant && perdant === equipe) return false;   /* a perdu -> éliminée */
+    }
   }
-  return true;
+  return participe;   /* en lice seulement si elle joue vraiment la phase finale */
 }
 
 function classementButeurs(){
