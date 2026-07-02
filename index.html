@@ -543,6 +543,18 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .brk-bandeau{background:var(--panneau2);border:1px solid var(--lagon);border-radius:10px;padding:10px 14px}
 .brk-bandeau-t{display:block;color:var(--lagon);font-weight:600;font-size:13px}
 .brk-bandeau-s{display:block;color:var(--gris);font-size:11px;margin-top:2px}
+.radar-chocs{background:var(--panneau);border:1px solid rgba(255,107,94,.45);border-radius:12px;padding:13px;margin:14px 0}
+.radar-tete{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.radar-titre{font-family:'Archivo Black';font-size:13px;color:var(--corail);text-transform:uppercase;letter-spacing:.5px}
+.radar-note{font-size:10px;color:var(--gris);margin-left:auto}
+.radar-ligne{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px dashed rgba(255,107,94,.35);border-radius:9px;margin-bottom:6px}
+.radar-ligne.radar-confirme{border-style:solid;border-color:rgba(255,107,94,.4);background:rgba(255,107,94,.12)}
+.radar-dra{font-size:17px;flex-shrink:0}
+.radar-aff{font-size:13px;font-weight:600;color:var(--creme);flex:1;min-width:0}
+.radar-confirme .radar-aff{font-weight:700}
+.radar-badge{font-size:9px;font-weight:700;color:#FF9B8F;border:1px solid rgba(255,107,94,.4);padding:2px 8px;border-radius:9px;white-space:nowrap;flex-shrink:0}
+.radar-confirme .radar-badge{background:var(--corail);color:#fff;border-color:var(--corail);font-weight:800}
+.radar-legende{font-size:10px;color:var(--gris);margin-top:9px;font-style:italic}
 .brk-tour-tete{display:flex;align-items:center;gap:9px;margin-bottom:10px;margin-top:6px}
 .brk-tour-titre{color:var(--or);font-weight:700;font-size:13px;letter-spacing:.3px;text-transform:uppercase}
 .brk-tour-pastille{font-size:14px;line-height:1}
@@ -732,7 +744,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.25';
+const APP_VERSION = '13.26';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -5554,6 +5566,56 @@ function renduBracket(){
   /* grosses nations : sert à détecter les "chocs" (affiches qui claquent) */
   const GROSSE = new Set(['France','Brésil','Argentine','Espagne','Angleterre','Allemagne','Portugal','Pays-Bas','Belgique','Italie','Uruguay']);
 
+  /* ===== 🔥 RADAR DES CHOCS : collisions possibles entre grosses nations ===== */
+  const tousSlots = Object.assign({}, round32Fixed, round16Fixed, quartsFixed, demiesFixed);
+  const setPossibles = (code, num) => {
+    /* équipes pouvant occuper ce slot : résolu -> singleton ; Wxx -> possibles du match xx */
+    const eq = resoudreSlot(code, 'M'+num);
+    if(eq && F[eq]) return new Set([eq]);
+    if(code && code[0]==='W'){
+      const enfant = parseInt(code.slice(1),10);
+      const re = resultats[enfant];
+      if(re && re.qualifie) return new Set([re.qualifie]);
+      const slotsE = tousSlots['M'+enfant];
+      const mmE = M.find(x=>x.id===enfant);
+      const s = new Set();
+      (slotsE||[]).forEach((c,i)=>{
+        const sub = setPossibles(c, enfant);
+        if(sub.size) sub.forEach(x=>s.add(x));
+        else if(mmE){ const cand = i===0 ? mmE.a : mmE.b; if(cand && F[cand]) s.add(cand); }
+      });
+      return s;
+    }
+    return new Set();
+  };
+  const radarChocs = [];
+  const vus = new Set();
+  for(let num=89; num<=102; num++){
+    if(resultats[num]) continue;                       /* match joué = histoire, pas projection */
+    const slots = tousSlots['M'+num]; if(!slots) continue;
+    const sA = setPossibles(slots[0], num), sB = setPossibles(slots[1], num);
+    const tour = num<=96 ? '8e' : num<=100 ? 'quart' : 'demie';
+    const confirme = sA.size===1 && sB.size===1;
+    for(const a of sA){ if(!GROSSE.has(a)) continue;
+      for(const b of sB){ if(!GROSSE.has(b)) continue;
+        const clePaire = [a,b].sort().join('|');
+        if(vus.has(clePaire)) continue;
+        vus.add(clePaire);
+        radarChocs.push({a, b, tour, confirme, num});
+      }
+    }
+  }
+  radarChocs.sort((x,y)=> (y.confirme-x.confirme) || (x.num-y.num));
+  const radarHtml = radarChocs.length ? `<div class="radar-chocs">
+    <div class="radar-tete"><span>🔥</span><span class="radar-titre">Radar des chocs</span><span class="radar-note">mis à jour à chaque résultat</span></div>
+    ${radarChocs.slice(0,6).map(c=>`<div class="radar-ligne${c.confirme?' radar-confirme':''}">
+      <span class="radar-dra">${F[c.a]||''}</span>
+      <span class="radar-aff">${c.a} 🆚 ${c.b}</span>
+      <span class="radar-badge">${c.confirme ? c.tour+' · CONFIRMÉ' : 'possible en '+c.tour}</span>
+    </div>`).join('')}
+    <div class="radar-legende">Plein = affiche actée · pointillé = collision encore possible. Les chocs morts disparaissent tout seuls.</div>
+  </div>` : '';
+
   const carteMatch = (id, slots, tour) => {
     const surveille = couloir.has(id);
     const cal = CAL_FINALE[id];
@@ -5670,7 +5732,7 @@ function renduBracket(){
     </div>`;
   }
 
-  wrap.innerHTML = bandeau +
+  wrap.innerHTML = bandeau + radarHtml +
     bloc('16es de finale', round32Fixed, '16e') +
     bloc('8es de finale', round16Fixed, '8e') +
     bloc('Quarts de finale', quartsFixed, 'Quart') +
