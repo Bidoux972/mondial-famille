@@ -748,7 +748,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.27';
+const APP_VERSION = '13.28';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -5611,8 +5611,22 @@ function renduBracket(){
   }
   radarChocs.sort((x,y)=> (x.num-y.num));
   const LIB_STADE = {'8e':'1/8','quart':'1/4','demie':'1/2'};
+  const ecuriesFam = new Set(PARTICIPANTS.map(p=>ecurieDe(p)).filter(Boolean));
   const parStade = {};
-  radarChocs.slice(0,6).forEach(c=>{ (parStade[c.tour] = parStade[c.tour]||[]).push(c); });
+  radarChocs.forEach(c=>{ (parStade[c.tour] = parStade[c.tour]||[]).push(c); });
+  /* dans chaque stade : on garantit d'abord UN choc par écurie de la famille
+     (France, Brésil...), puis on complète jusqu'à 3 par proximité */
+  Object.keys(parStade).forEach(t=>{
+    const liste = parStade[t].slice().sort((x,y)=>x.num-y.num);
+    const pick = [];
+    for(const e of ecuriesFam){
+      const c = liste.find(x => (x.a===e || x.b===e) && !pick.includes(x));
+      if(c && pick.length<3) pick.push(c);
+    }
+    for(const c of liste){ if(pick.length>=3) break; if(!pick.includes(c)) pick.push(c); }
+    pick.sort((x,y)=>x.num-y.num);
+    parStade[t] = pick;
+  });
   const radarHtml = radarChocs.length ? `<div class="radar-chocs">
     <div class="radar-tete"><span>🔥</span><span class="radar-titre">Radar des chocs</span><span class="radar-note">mis à jour à chaque résultat</span></div>
     ${['8e','quart','demie'].filter(t=>parStade[t]).map(t=>`<div class="radar-secteur">
