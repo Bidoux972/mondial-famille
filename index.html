@@ -717,7 +717,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.22';
+const APP_VERSION = '13.23';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4663,7 +4663,9 @@ function pouvoirUtilise(p){
 /* Classement PUR PRONOS (sans bonus écurie : le Mondial n'est pas fini, le bonus
    finaliste/vainqueur viendra au sacre mondial, plus tard). Ton : sans pitié. */
 function classementPurPronos(){
-  return calculTotaux(null)
+  /* Classement des POULES uniquement (matchs id<73) — c'est ce classement qui est gravé
+     au sacre et qui attribue les pouvoirs. Il ne doit JAMAIS inclure la phase finale. */
+  return calculTotaux(m => m.id < 73)
     .map(l => Object.assign({}, l, {total: l.total - (l.bonusEc||0)}))
     .sort((x,y)=> y.total-x.total || y.exacts-x.exacts);
 }
@@ -4980,6 +4982,12 @@ async function sauverPalmares(){
 }
 
 async function graverSacrePoules(){
+  /* VERROU : un sacre déjà gravé est définitif. On refuse toute réécriture,
+     car re-graver refigerait le classement (et donc les pouvoirs) avec les points du moment. */
+  if(palmares && palmares.champion_poules){
+    toast('🔒 Le sacre est déjà gravé (' + palmares.champion_poules + ' champion). Il est définitif.');
+    return;
+  }
   const cl = classementPurPronos();
   if(!cl.length || !cl.some(l=>l.total!==0)){ toast('Aucun score à graver pour l\'instant.'); return; }
   const champ = cl[0];
