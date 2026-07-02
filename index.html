@@ -277,8 +277,9 @@ h2 small{font-family:'Public Sans';font-size:12px;color:var(--gris);text-transfo
 .grp-ligne .c-diff.neg{color:var(--corail)}
 .grp-ligne .c-pts{text-align:center;font-weight:800;color:var(--or);font-family:'Space Grotesk',monospace;font-size:14px}
 .but-liste{margin-top:6px}
-.but-ligne{display:grid;grid-template-columns:34px 26px 1fr auto;align-items:center;column-gap:8px;padding:8px 0;border-top:1px solid var(--ligne)}
-.but-ligne.but-actif{background:rgba(46,196,169,.14);border-radius:8px;padding:8px 10px;border-top-color:transparent}
+.but-ligne{display:grid;grid-template-columns:34px 26px 1fr auto;align-items:center;column-gap:8px;padding:9px 10px;border-top:1px solid var(--ligne);border-radius:8px}
+.but-ligne.but-actif{background:linear-gradient(90deg,rgba(46,196,169,.20),rgba(46,196,169,.05));border-top-color:transparent;box-shadow:inset 0 0 0 1px rgba(46,196,169,.25),0 2px 8px rgba(46,196,169,.10)}
+.but-ligne.but-actif + .but-ligne{border-top-color:transparent}
 .but-ligne:first-child{border-top:none}
 .but-rang{text-align:center;font-size:15px;font-family:'Space Grotesk',monospace;color:var(--gris)}
 .but-dra{font-size:18px;text-align:center}
@@ -716,7 +717,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.20';
+const APP_VERSION = '13.21';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
