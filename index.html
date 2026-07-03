@@ -748,7 +748,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.29';
+const APP_VERSION = '13.30';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -981,12 +981,9 @@ function statsButeurs(){
 function butsDe(nom){
   const map = statsButeurs(), cible = normNom(nom);
   if(!cible) return 0;
-  /* correspondance exacte d'abord */
-  if(map[cible]) return map[cible];
-  /* correspondance souple SÛRE : on matche seulement si le nom de famille (dernier mot)
-     du buteur saisi == dernier mot recherché, OU si l'un est un sous-ENSEMBLE de MOTS de l'autre.
-     On NE matche PLUS sur des sous-chaînes de lettres (qui faisait que "Kluivert" héritait
-     des buts d'un autre via includes). */
+  /* On ADDITIONNE toutes les variantes d'écriture du même joueur ("Messi", "Lionel Messi", "L. Messi").
+     La correspondance reste SÛRE : nom de famille identique, et si les deux écritures ont un
+     prénom, il doit correspondre (pour ne pas fusionner deux joueurs distincts). */
   const motsCible = cible.split(/\s+/).filter(Boolean);
   const dernierCible = motsCible[motsCible.length-1];
   const premierCible = motsCible[0];
@@ -1005,7 +1002,7 @@ function butsDe(nom){
     if(memeNomFamille && motsCle.length>1 && motsCible.length>1 && premierCle !== premierCible){
       memeNomFamille = false; /* même nom de famille mais prénoms différents -> joueurs distincts */
     }
-    if(memeNomFamille) total = Math.max(total, map[cle]);
+    if(memeNomFamille) total += map[cle];
   }
   return total;
 }
