@@ -748,7 +748,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.28';
+const APP_VERSION = '13.29';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4499,8 +4499,14 @@ function verdictMatch(m, re){
   /* Phase finale décidée après 90 min : le match n'est PAS nul, il y a un qualifié.
      On l'annonce selon le scénario (prolongation / tirs au but), avec le score final si dispo. */
   if(re.qualifie && (re.scenario==='prolongation' || re.scenario==='tab')){
+    if(re.scenario==='tab'){
+      /* score de la séance affiché dans le sens du VAINQUEUR (ex. "4-2" pour l'Égypte) */
+      let sf = '';
+      const mm = re.score_final ? String(re.score_final).match(/(\d+)\s*[-–·:]\s*(\d+)/) : null;
+      if(mm) sf = (re.qualifie === m.b) ? ` ${mm[2]} t.a.b. à ${mm[1]}` : ` ${mm[1]} t.a.b. à ${mm[2]}`;
+      return {titre:'AU BOUT DU SUSPENSE', sous:`${re.qualifie} passe aux tirs au but${sf ? ' ('+sf.trim()+')' : ''} !`, fete:true};
+    }
     const sf = re.score_final ? ` (${re.score_final})` : '';
-    if(re.scenario==='tab') return {titre:'AU BOUT DU SUSPENSE', sous:`${re.qualifie} passe aux tirs au but${sf} !`, fete:true};
     return {titre:'ARRACHÉ EN PROLONGATION', sous:`${re.qualifie} se qualifie après prolongation${sf} !`, fete:true};
   }
   const niveauA = (EQUIPES[m.a]||{}).niv || 3, niveauB = (EQUIPES[m.b]||{}).niv || 3;
@@ -4676,16 +4682,17 @@ function etapesReveal(id){
     `<div class="etape"><div class="eti-r">🎬 Le récap du match</div><div class="drapeaux">${F[m.a]} ${F[m.b]}</div><h3>${m.a}<br>${m.b}</h3><div class="ligne-r" style="color:var(--gris)">Groupe ${m.g} · terminé</div></div>`,
     `<div class="etape"><div class="eti-r">Les paris étaient posés…</div>${lignesParis}</div>`,
     (()=>{
-      /* si score final (prolongation/tab), le GRAND score affiché est le score final ;
-         le score à 90 min devient une petite mention au-dessus */
-      const sfMatch = re.score_final && (re.scenario==='prolongation'||re.scenario==='tab')
-        ? String(re.score_final).match(/(\d+)\s*[-–·:]\s*(\d+)/) : null;
-      const gA = sfMatch ? sfMatch[1] : re.score_a;
-      const gB = sfMatch ? sfMatch[2] : re.score_b;
-      const mention90 = sfMatch
-        ? `<div class="ligne-r" style="color:var(--gris);font-size:13px;margin-bottom:6px">${re.score_a}–${re.score_b} après 90 min · ${re.scenario==='tab'?'puis tirs au but':'puis prolongation'}</div>`
-        : '';
-      return `<div class="etape" data-reveal-score data-a="${gA}" data-b="${gB}" data-fete="${vd.fete?1:0}"><div class="eti-r">Le verdict du terrain</div>${mention90}<div class="grand-score"><span class="sc-a">0</span> – <span class="sc-b">0</span></div><div class="verdict-box"><div class="verdict-titre">${vd.titre}</div><div class="verdict-sous">${vd.sous}</div></div>${re.buteurs?`<div class="ligne-r" style="margin-top:14px">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`;
+      /* prolongation : le score final (3-2) est un vrai score de match -> c'est LUI le grand score.
+         tirs au but : le score du match reste le grand score (1-1), la séance de tab en mention. */
+      const sfMatch = re.score_final ? String(re.score_final).match(/(\d+)\s*[-–·:]\s*(\d+)/) : null;
+      const estProlong = re.scenario==='prolongation' && sfMatch;
+      const estTab = re.scenario==='tab';
+      const gA = estProlong ? sfMatch[1] : re.score_a;
+      const gB = estProlong ? sfMatch[2] : re.score_b;
+      const mention = estProlong
+        ? `<div class="ligne-r" style="color:var(--gris);font-size:13px;margin-bottom:6px">${re.score_a}–${re.score_b} après 90 min · puis prolongation</div>`
+        : (estTab ? `<div class="ligne-r" style="color:var(--gris);font-size:13px;margin-bottom:6px">Décidé aux tirs au but${sfMatch?` (${sfMatch[1]}–${sfMatch[2]})`:''}</div>` : '');
+      return `<div class="etape" data-reveal-score data-a="${gA}" data-b="${gB}" data-fete="${vd.fete?1:0}"><div class="eti-r">Le verdict du terrain</div>${mention}<div class="grand-score"><span class="sc-a">0</span> – <span class="sc-b">0</span></div><div class="verdict-box"><div class="verdict-titre">${vd.titre}</div><div class="verdict-sous">${vd.sous}</div></div>${re.buteurs?`<div class="ligne-r" style="margin-top:14px">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`;
     })(),
     ...etapesPouvoirs,
     `<div class="etape"><div class="eti-r">Les comptes sont bons</div>${lignesComptes}</div>`,
@@ -5688,19 +5695,29 @@ function renduBracket(){
           ${butsHtml}
         </div>`;
       };
-      const aProlong = joue && re.score_final && (re.scenario==='prolongation'||re.scenario==='tab');
-      const sfM = aProlong ? String(re.score_final).match(/(\d+)\s*[-–·:]\s*(\d+)/) : null;
-      const centre = joue
-        ? (sfM
-          ? `<div class="brk-centre">
+      const sfM = joue && re.score_final ? String(re.score_final).match(/(\d+)\s*[-–·:]\s*(\d+)/) : null;
+      let centre;
+      if(!joue){
+        centre = `<div class="brk-centre"><div class="brk-centre-vs">VS</div></div>`;
+      } else if(re.scenario==='prolongation' && sfM){
+        /* prolongation : le score final (3-2) est un VRAI score de match -> gros chiffre */
+        centre = `<div class="brk-centre">
              <div class="brk-centre-score">${sfM[1]}<span class="brk-centre-tiret">·</span>${sfM[2]}</div>
-             <div class="brk-centre-scen">${re.scenario==='tab'?'t.a.b.':'a.p.'}</div>
+             <div class="brk-centre-scen">a.p.</div>
              <div class="brk-centre-90">${re.score_a}–${re.score_b} à 90'</div>
-           </div>`
-          : `<div class="brk-centre">
+           </div>`;
+      } else if(re.scenario==='tab'){
+        /* tirs au but : le score du match reste LE score (1-1) ; la séance de tab en mention */
+        centre = `<div class="brk-centre">
              <div class="brk-centre-score">${re.score_a}<span class="brk-centre-tiret">·</span>${re.score_b}</div>
-           </div>`)
-        : `<div class="brk-centre"><div class="brk-centre-vs">VS</div></div>`;
+             <div class="brk-centre-scen">t.a.b.</div>
+             ${sfM?`<div class="brk-centre-90">${sfM[1]}–${sfM[2]} aux tirs au but</div>`:''}
+           </div>`;
+      } else {
+        centre = `<div class="brk-centre">
+             <div class="brk-centre-score">${re.score_a}<span class="brk-centre-tiret">·</span>${re.score_b}</div>
+           </div>`;
+      }
       /* buteurs indéterminés (non rattachés à une équipe) : sous l'affiche, neutre */
       const butsIndet = buts.indetermines.length
         ? `<div class="brk-indet">${buts.indetermines.map(b=>`⚽ ${b}`).join(' · ')}</div>` : '';
