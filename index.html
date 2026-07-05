@@ -541,6 +541,16 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 @keyframes pvBlink{0%,100%{opacity:.4}50%{opacity:1}}
 #bracket-wrap{display:flex;flex-direction:column;gap:18px}
 .brk-bandeau{background:var(--panneau2);border:1px solid var(--lagon);border-radius:10px;padding:10px 14px}
+.mc-carte .mc-intro{font-size:12px;color:var(--gris);line-height:1.5;margin-bottom:12px}
+.mc-carte .mc-intro b{color:var(--creme)}
+.mc-carte .mc-or{color:var(--or)}
+.mc-grille{display:flex;gap:6px;margin-bottom:12px;font-size:10.5px;text-align:center}
+.mc-tour{flex:1;background:var(--nuit);border:1px solid var(--ligne);border-radius:8px;padding:7px 4px;color:var(--gris);line-height:1.5}
+.mc-tour-actif{background:rgba(245,180,60,.12);border-color:rgba(245,180,60,.5);color:var(--creme)}
+.mc-tour-actif b{color:var(--or)}
+.mc-carte select{width:100%;margin-bottom:8px}
+.mc-btn{width:100%;background:var(--or);color:var(--nuit);font-weight:800;font-size:13px}
+.mc-note{font-size:10px;color:var(--gris);font-style:italic;margin-top:9px;line-height:1.5}
 .brk-bandeau-t{display:block;color:var(--lagon);font-weight:600;font-size:13px}
 .brk-bandeau-s{display:block;color:var(--gris);font-size:11px;margin-top:2px}
 .radar-chocs{background:var(--panneau);border:1px solid rgba(245,180,60,.45);border-radius:12px;padding:13px;margin:14px 0}
@@ -748,7 +758,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.30';
+const APP_VERSION = '13.31';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1955,7 +1965,6 @@ function calculTotaux(filtreMatch){
     total += duels;
     const bonusEc = bonusEcurie(p);
     total += bonusEc;
-    total += malusMercato(p);
     return {p,total,exacts,bons,buts,butsKo,ors,duels,bonusEc,n};
   }).sort((x,y)=>y.total-x.total || y.exacts-x.exacts);
 }
@@ -2867,8 +2876,10 @@ function lisereEcurie(){
 function bonusEcurie(p){
   const eq = ecurieDe(p);
   if(!eq || !palmares) return 0;
-  if(palmares.vainqueur === eq) return 10;
-  if(palmares.finaliste === eq) return 5;
+  const part = participants[p] || {};
+  /* la prime FOND selon les transferts mercato signés (jamais en dessous de 0) */
+  if(palmares.vainqueur === eq) return Math.max(0, 10 - (part.malus_v||0));
+  if(palmares.finaliste === eq) return Math.max(0, 5 - (part.malus_f||0));
   return 0;
 }
 /* Formulation correcte du nom d'écurie avec possessif : "ta France", "ton Brésil"... */
@@ -3503,6 +3514,36 @@ function qgEcurie(eq, supporters){
     ${proj?`<div class="qg-bloc"><div class="qg-titre">🗺️ Projection</div><div class="qg-proj">${proj}</div></div>`:''}
 
     ${actu?`<div class="qg-bloc"><div class="qg-titre">🍿 L'actu de l'équipe</div>${actu}</div>`:''}
+    ${(()=>{
+      /* ===== 🔄 Carte MERCATO — phase finale uniquement, ici et nulle part ailleurs ===== */
+      const t = tarifMercato();
+      if(t === null) return '';   /* pas encore la phase finale */
+      if(t.ferme) return `<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
+        <div class="mc-intro">🔒 Le guichet est fermé — à partir des demi-finales, on assume son écurie jusqu'au bout.</div></div>`;
+      const options = Object.keys(EQUIPES)
+        .filter(e => e !== eq && equipeEncoreEnLice(e))
+        .sort((a,b)=>a.localeCompare(b,'fr'))
+        .map(e=>{
+          const enQuarts = M.some(m=>m.id>=89 && m.id<=96 && resultats[m.id] && resultats[m.id].qualifie===e);
+          return `<option value="${e.replace(/"/g,'&quot;')}">${F[e]||''} ${e}${enQuarts?' · déjà en quarts':''}</option>`;
+        }).join('');
+      const grille = [
+        {nom:'8es',    v:4, f:1},
+        {nom:'Quarts', v:5, f:2},
+        {nom:'Demies', ferme:true}
+      ].map(g => g.ferme
+        ? `<div class="mc-tour">${g.nom==='Demies'?'<b>Demies</b><br>🔒 fermé':''}</div>`
+        : `<div class="mc-tour${t.nom.toLowerCase()===g.nom.toLowerCase()?' mc-tour-actif':''}"><b>${g.nom}${t.nom.toLowerCase()===g.nom.toLowerCase()?' · MAINTENANT':''}</b><br>prime −${g.v} / −${g.f}</div>`
+      ).join('');
+      return `<div class="qg-bloc mc-carte">
+        <div class="qg-titre">🔄 Le Mercato</div>
+        <div class="mc-intro">Ton écurie est <b>${F[eq]||''} ${eq}</b>. Tu peux signer ailleurs — mais ta <b class="mc-or">prime finale fond</b> à chaque tour qui passe. Tes points acquis, eux, ne bougent jamais.</div>
+        <div class="mc-grille">${grille}</div>
+        <select id="mercato-cible"><option value="">— Choisir ma nouvelle écurie (encore en lice) —</option>${options}</select>
+        <button class="btn mc-btn" onclick="signerMercatoUI()">🔄 Signer mon transfert (prime vainqueur −${t.v}, finaliste −${t.f})</button>
+        <div class="mc-note">Exemple : tu signes chez une équipe et elle est championne → prime 10−${t.v} = +${10-t.v}. Transferts cumulables, chacun au tarif de son tour.</div>
+      </div>`;
+    })()}
   </div>`;
 }
 
@@ -3696,6 +3737,25 @@ function potinsDeLEquipe(eq){
     <div id="${uid}" class="qg-potins-plus" style="display:none">${reste}</div>
     <button class="qg-voirplus" onclick="(function(b){const z=document.getElementById('${uid}');const o=z.style.display==='none';z.style.display=o?'block':'none';b.textContent=o?'Voir moins ▲':'Voir les ${liste.length-3} autres ▼';})(this)">Voir les ${liste.length-3} autres ▼</button>`;
 }
+/* ===== 🔄 MERCATO de phase finale =====
+   Le malus ne touche JAMAIS les points acquis : il fait fondre la PRIME écurie
+   de fin de tournoi (+10 vainqueur / +5 finaliste), au tarif du tour où l'on signe.
+   8es : prime vainqueur −4, finaliste −1 · quarts : −5 / −2 · demies et après : fermé.
+   Transferts cumulables, chacun au tarif de son tour. */
+function tarifMercato(){
+  if(!(palmares && palmares.champion_poules)) return null;   /* pas encore la phase finale */
+  const prochain = M.filter(m => m.id >= 89 && m.id <= 102 && !resultats[m.id])
+                    .sort((a,b)=>a.id-b.id)[0];
+  if(!prochain) return {ferme:true};
+  if(prochain.id <= 96)  return {v:4, f:1, nom:'8es'};
+  if(prochain.id <= 100) return {v:5, f:2, nom:'quarts'};
+  return {ferme:true};                                        /* demi-finales et après */
+}
+function signerMercatoUI(){
+  const sel = $('mercato-cible');
+  if(!sel || !sel.value){ toast('Choisis d\'abord ta nouvelle écurie'); return; }
+  sauverEcurie(sel.value);
+}
 async function sauverEcurie(eq){
   if(!pseudo){ toast('Choisis d\'abord qui tu es'); return; }
   const actuelle = participants[pseudo] && participants[pseudo].equipe_ecurie;
@@ -3705,17 +3765,21 @@ async function sauverEcurie(eq){
       toast(`🔒 Trop tard ! Ton écurie est ${actuelle} — on ne change pas de cheval en pleine course`);
       return;
     }
-    /* MERCATO de phase finale : changement autorisé, mais ça coûte (−4 puis −2) */
+    /* MERCATO de phase finale : la prime fond au tarif du tour, les points acquis ne bougent pas */
+    const t = tarifMercato();
+    if(!t || t.ferme){ toast('🔒 Le mercato est fermé — à partir des demi-finales, on assume son écurie.'); return; }
+    if(!equipeEncoreEnLice(eq)){ toast(`⚰️ ${eq} est éliminée — on ne signe pas chez un mort.`); return; }
     const dejaFait = (participants[pseudo].mercato||0);
-    const cout = dejaFait===0 ? 4 : 2;
-    if(!confirm(`🔄 MERCATO : quitter ${actuelle} pour ${eq} ?\nCoût : −${cout} points (transfert ${dejaFait===0?'n°1':'n°'+(dejaFait+1)}).`)) return;
+    const mv = (participants[pseudo].malus_v||0) + t.v;
+    const mf = (participants[pseudo].malus_f||0) + t.f;
+    if(!confirm(`🔄 MERCATO (${t.nom}) : quitter ${actuelle} pour ${eq} ?\nTa prime finale fond : vainqueur −${t.v} pt${t.v>1?'s':''} (cumul −${mv}), finaliste −${t.f} (cumul −${mf}).\nTes points acquis ne bougent pas. Transfert n°${dejaFait+1}.`)) return;
     try{
       const nb = dejaFait + 1;
       await sb('mondial_participants?on_conflict=pseudo', {method:'POST',
         prefer:'resolution=merge-duplicates',
-        body: JSON.stringify({pseudo, equipe_ecurie:eq, mercato:nb})});
-      participants[pseudo] = {...participants[pseudo], equipe_ecurie:eq, mercato:nb};
-      toast(`🔄 Transfert signé ! ${eq} ${F[eq]||''} · −${cout} pts`); toutAfficher();
+        body: JSON.stringify({pseudo, equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf})});
+      participants[pseudo] = {...participants[pseudo], equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf};
+      toast(`🔄 Transfert signé ! ${eq} ${F[eq]||''} · prime vainqueur ${Math.max(0,10-mv)} / finaliste ${Math.max(0,5-mf)}`); toutAfficher();
     }catch(e){ toast('Échec du transfert'); }
     return;
   }
@@ -3726,11 +3790,6 @@ async function sauverEcurie(eq){
     participants[pseudo] = {...(participants[pseudo]||{}), pseudo, equipe_ecurie:eq};
     toast(`${eq}, c'est noté ! ${F[eq]||''}`); toutAfficher();
   }catch(e){ toast('Échec, réessaie'); }
-}
-/* malus mercato cumulé d'un joueur : 0, puis -4, -6, -8... */
-function malusMercato(p){
-  const n = (participants[p] && participants[p].mercato) || 0;
-  return n===0 ? 0 : -(4 + (n-1)*2);
 }
 
 /* ============ POTINS ============ */
