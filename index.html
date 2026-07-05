@@ -569,6 +569,9 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .df-vs{font-family:'Archivo Black';font-size:18px;color:var(--gris)}
 .df-titre{font-family:'Archivo Black';font-size:16px;color:var(--creme);text-transform:uppercase;line-height:1.25;margin-bottom:10px}
 .df-texte{font-size:12.5px;color:var(--gris);font-style:italic;line-height:1.55;max-width:340px;margin:0 auto}
+.ex-ecurie{font-size:.82em;color:var(--gris);font-weight:400;font-style:italic}
+.memorial{font-size:12px;color:var(--gris);line-height:1.55;font-style:italic;border-style:dashed}
+.memorial b{color:var(--creme)}
 .brk-bandeau-t{display:block;color:var(--lagon);font-weight:600;font-size:13px}
 .brk-bandeau-s{display:block;color:var(--gris);font-size:11px;margin-top:2px}
 .radar-chocs{background:var(--panneau);border:1px solid rgba(245,180,60,.45);border-radius:12px;padding:13px;margin:14px 0}
@@ -776,7 +779,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.37';
+const APP_VERSION = '13.38';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -3321,14 +3324,14 @@ function faceAFace(eq){
         <div class="faf-tete" style="background:linear-gradient(180deg,${cA}38,transparent)">
           <div class="faf-flag">${F[eq]||'🏳️'}</div>
           <div class="faf-nom" style="color:${cA}">${eq}</div>
-          <div class="faf-sup">${supA.join(', ')||'—'}</div>
+          <div class="faf-sup">${supA.map(nomAvecPasse).join(', ')||'—'}</div>
           <div class="faf-matchs" style="${styMatchA}">${fmtMatchs(a.joues)}</div>
         </div>
         <div class="faf-vs">VS</div>
         <div class="faf-tete" style="background:linear-gradient(180deg,${cB}30,transparent)">
           <div class="faf-flag">${F[rival]||'🏳️'}</div>
           <div class="faf-nom" style="color:${cB}">${rival}</div>
-          <div class="faf-sup">${supB.join(', ')||'—'}</div>
+          <div class="faf-sup">${supB.map(nomAvecPasse).join(', ')||'—'}</div>
           <div class="faf-matchs" style="${styMatchB}">${fmtMatchs(b.joues)}</div>
         </div>
       </div>
@@ -3464,9 +3467,9 @@ function chocDeFamille(eq){
     <div class="choc-titre">⚔️ Choc de famille en vue</div>
     <div class="choc-box" style="border-color:${couleurBord};background:linear-gradient(135deg,${cA}22,${cB}14)">
       <div class="choc-vs">
-        <div class="choc-eq"><div class="choc-flag">${F[eq]||'🏳️'}</div><div class="choc-nom" style="color:${cA}">${eq}</div><div class="choc-sup">${supA.join(', ')||'—'}</div></div>
+        <div class="choc-eq"><div class="choc-flag">${F[eq]||'🏳️'}</div><div class="choc-nom" style="color:${cA}">${eq}</div><div class="choc-sup">${supA.map(nomAvecPasse).join(', ')||'—'}</div></div>
         <div class="choc-x">⚔️</div>
-        <div class="choc-eq"><div class="choc-flag">${F[rival]||'🏳️'}</div><div class="choc-nom" style="color:${cB}">${rival}</div><div class="choc-sup">${supB.join(', ')||'—'}</div></div>
+        <div class="choc-eq"><div class="choc-flag">${F[rival]||'🏳️'}</div><div class="choc-nom" style="color:${cB}">${rival}</div><div class="choc-sup">${supB.map(nomAvecPasse).join(', ')||'—'}</div></div>
       </div>
       <div class="choc-tour">Croisement possible dès <span style="color:var(--or)">${tour}</span></div>
       <div class="choc-txt">${phrase}</div>
@@ -3618,14 +3621,16 @@ function qgEcurie(eq, supporters){
     ${actu?`<div class="qg-bloc"><div class="qg-titre">🍿 L'actu de l'équipe</div>${actu}</div>`:''}
     ${(()=>{
       /* ===== 🔄 Carte MERCATO — phase finale uniquement, ici et nulle part ailleurs ===== */
+      const moiM = participants[pseudo] || {};
+      const stele = moiM.ecuries_passees ? `<div class="qg-bloc memorial">🪦 <b>Ici repose${String(moiM.ecuries_passees).includes(',')?'nt':''}</b> ${String(moiM.ecuries_passees).split(',').map(x=>{const e=x.trim();return `${F[e]||''} ${e}`;}).join(', ')} — écurie${String(moiM.ecuries_passees).includes(',')?'s':''} abandonnée${String(moiM.ecuries_passees).includes(',')?'s':''} en cours de route. La famille n'oublie rien.</div>` : '';
       const t = tarifMercato();
-      if(t === null) return '';   /* pas encore la phase finale */
-      if(t.ferme) return `<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
+      if(t === null) return stele;   /* pas encore la phase finale (mais la mémoire, elle, reste) */
+      if(t.ferme) return stele+`<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
         <div class="mc-intro">🔒 Le guichet est fermé — à partir des demi-finales, on assume son écurie jusqu'au bout.</div></div>`;
       const moi = participants[pseudo] || {};
-      if((moi.malus_v||0) >= 10) return `<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
+      if((moi.malus_v||0) >= 10) return stele+`<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
         <div class="mc-intro">🔒 Crédit épuisé — ta prime a entièrement fondu dans tes transferts. Fidèle jusqu'au bout, maintenant. C'est beau, quelque part.</div></div>`;
-      if(moi.mercato_tour === t.nom) return `<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
+      if(moi.mercato_tour === t.nom) return stele+`<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
         <div class="mc-intro">✍️ Transfert déjà signé pendant les ${t.nom} — un seul par tour. Le guichet rouvre au tour suivant${t.nom==='quarts'?'… ah non, il ferme aux demies. C’était le dernier':''}.</div></div>`;
       const options = Object.keys(EQUIPES)
         .filter(e => e !== eq && equipeEncoreEnLice(e))
@@ -3642,7 +3647,7 @@ function qgEcurie(eq, supporters){
         ? `<div class="mc-tour">${g.nom==='Demies'?'<b>Demies</b><br>🔒 fermé':''}</div>`
         : `<div class="mc-tour${t.nom.toLowerCase()===g.nom.toLowerCase()?' mc-tour-actif':''}"><b>${g.nom}${t.nom.toLowerCase()===g.nom.toLowerCase()?' · MAINTENANT':''}</b><br>prime −${g.v} / −${g.f}</div>`
       ).join('');
-      return `<div class="qg-bloc mc-carte">
+      return stele+`<div class="qg-bloc mc-carte">
         <div class="qg-titre">🔄 Le Mercato</div>
         <div class="mc-intro">Ton écurie est <b>${F[eq]||''} ${eq}</b>. Tu peux signer ailleurs — mais ta <b class="mc-or">prime finale fond</b> à chaque tour qui passe. Tes points acquis, eux, ne bougent jamais.</div>
         <div class="mc-grille">${grille}</div>
@@ -3869,6 +3874,13 @@ function nomPays(eq){
   const fem = new Set(["France","Espagne","Belgique","Croatie","Bosnie","Tchéquie","Norvège","Suède","Suisse","Tunisie","Jordanie","Colombie","Corée du Sud","Côte d'Ivoire","Nouvelle-Zélande","RD Congo"]);
   return (fem.has(eq) ? 'la ' : 'le ') + eq;
 }
+/* 🪦 Le casier du transfuge : son nom porte à vie la trace de ses anciennes écuries */
+function nomAvecPasse(p){
+  const passe = participants[p] && participants[p].ecuries_passees;
+  if(!passe) return p;
+  const derniere = String(passe).split(',').map(x=>x.trim()).filter(Boolean).pop();
+  return derniere ? `${p} <span class="ex-ecurie">(ex-${derniere} ⚰️)</span>` : p;
+}
 /* 📰 La presse familiale s'empare de chaque transfert : une vanne piochée au hasard,
    publiée automatiquement dans les Potins, visible de toute la famille. */
 const VANNES_MERCATO = [
@@ -3903,13 +3915,15 @@ async function sauverEcurie(eq){
     const dejaFait = (participants[pseudo].mercato||0);
     const mv = (participants[pseudo].malus_v||0) + t.v;
     const mf = (participants[pseudo].malus_f||0) + t.f;
+    const passe = String(participants[pseudo].ecuries_passees||'');
+    const passeMaj = passe ? passe+', '+actuelle : actuelle;
     if(!confirm(`🔄 MERCATO (${t.nom}) : quitter ${actuelle} pour ${eq} ?\nTa prime finale fond : vainqueur −${t.v} pt${t.v>1?'s':''} (cumul −${mv}), finaliste −${t.f} (cumul −${mf}).\nTes points acquis ne bougent pas. Transfert n°${dejaFait+1}.`)) return;
     try{
       const nb = dejaFait + 1;
       await sb('mondial_participants?on_conflict=pseudo', {method:'POST',
         prefer:'resolution=merge-duplicates',
-        body: JSON.stringify({pseudo, equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf, mercato_tour:t.nom})});
-      participants[pseudo] = {...participants[pseudo], equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf, mercato_tour:t.nom};
+        body: JSON.stringify({pseudo, equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf, mercato_tour:t.nom, ecuries_passees:passeMaj})});
+      participants[pseudo] = {...participants[pseudo], equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf, mercato_tour:t.nom, ecuries_passees:passeMaj};
       /* 📰 la presse s'empare du transfert : potin automatique visible de tous */
       try{
         const van = pioche(VANNES_MERCATO)(pseudo, actuelle, eq, t);
