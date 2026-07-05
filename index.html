@@ -758,7 +758,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.34';
+const APP_VERSION = '13.35';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1681,10 +1681,10 @@ function carteMatch(m, modePronos){
           if(pv.id==='musa'){
             const but2 = monPr && monPr.buteur2 ? monPr.buteur2 : '';
             const connu2 = [...jA, ...jB].some(x=>x.nom===but2);
-            /* mêmes listes que le 1er buteur, mais on retire le buteur déjà choisi en premier (pas de doublon) */
-            const buteur1Choisi = monPr && monPr.buteur ? monPr.buteur : '';
-            const optsA2 = jA.filter(j=>j.nom!==buteur1Choisi).map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===but2?'selected':''}>${labelAvecStats(j)}</option>`).join('');
-            const optsB2 = jB.filter(j=>j.nom!==buteur1Choisi).map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===but2?'selected':''}>${labelAvecStats(j)}</option>`).join('');
+            /* mêmes listes que le 1er buteur — le doublon est refusé à la SAUVEGARDE
+               (exclure ici depuis le prono sauvegardé créait des joueurs "fantômes" invisibles) */
+            const optsA2 = jA.map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===but2?'selected':''}>${labelAvecStats(j)}</option>`).join('');
+            const optsB2 = jB.map(j=>`<option value="${j.nom.replace(/"/g,'&quot;')}" ${j.nom===but2?'selected':''}>${labelAvecStats(j)}</option>`).join('');
             bloc += `<div id="pv2wrap-${m.id}" style="display:${utiliseIci?'':'none'};margin-top:6px">
               <div class="bonus-sous">⚽ 2e buteur — différent du premier</div>
               <select id="bu2-${m.id}" onchange="document.getElementById('pv2-${m.id}').style.display=this.value==='__autre__'?'':'none'">
@@ -1856,6 +1856,10 @@ async function sauverProno(id){
   if(pouvoir==='musa'){
     if(elPv2sel && elPv2sel.value && elPv2sel.value!=='__autre__') buteur2 = elPv2sel.value;
     else if(elPv2sel && elPv2sel.value==='__autre__' && elPv2 && elPv2.value.trim()) buteur2 = elPv2.value.trim();
+    /* garde-fou : pas deux fois le même buteur (Musa = DEUX buteurs différents) */
+    if(buteur2 && buteur && normNom(buteur2) === normNom(buteur)){
+      toast('⚽ Le 2e buteur doit être différent du premier — deux flèches, deux cibles !'); return;
+    }
   }
   /* garde-fou : un seul usage du pouvoir sur toute la phase finale */
   if(pouvoir){
@@ -4290,7 +4294,7 @@ function lancerRecapJour(jourClef){
     if(pr.qualifie) parts.push(bo.qualif===2?'qualifié ✓ +2':'qualifié ✗ −1');
     if(pr.scenario) parts.push(bo.scen===1?'scénario ✓ +1':'scénario ✗');
     if(pr.buteur) parts.push(bo.but===2?'buteur ✓ +2':'buteur ✗ −1');
-    if(pr.buteur2 && pr.pouvoir==='musa' && pr.match_id!==104) parts.push(buteurEstMarque(pr.buteur2,re)?'2e buteur ✓ +2':'2e buteur ✗ −1');
+    if(pr.buteur2 && pr.pouvoir==='musa' && pr.match_id!==104) parts.push(buteurEstMarque(pr.buteur2,re)?'2e buteur ✓ +6':'2e buteur ✗ −1');
     if(pr.btts===true||pr.btts===false) parts.push(bo.btts===1?'2 marquent ✓ +1':'2 marquent ✗ −1');
     let txt = parts.join(' · ');
     const orActif = pr.en_or && !(pr.pouvoir && pr.match_id!==104);
