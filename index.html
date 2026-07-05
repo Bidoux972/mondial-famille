@@ -758,7 +758,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.32';
+const APP_VERSION = '13.34';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1401,7 +1401,8 @@ function chambrage(p, pr, re, t){
     `🔥 Score, bonus, tout y passe : ${p} fait un carton plein historique.`,
     `🔥 On arrête le concours, ${p} a gagné le match à ${accord(p,'lui seul','elle seule')}.`,
     `🔥 ${p} déroule un sans-faute. Madame Irma peut ranger sa boule.`,
-    `🔥 Soirée parfaite pour ${p}. Indécent, presque.`
+    `🔥 Soirée parfaite pour ${p}. Indécent, presque.`,
+    `🔥 ${p} enchaîne. À ce niveau ce n'est plus du flair, c'est du délit d'initié. La CPI est prévenue.`
   ]);
   if(t>=4) return pick([
     `🎯 Score ET bonus pour ${p}. ${accord(p,'Bien vu','Bien vue')}, l'artiste.`,
@@ -1421,7 +1422,10 @@ function chambrage(p, pr, re, t){
     `🎯 Le score exact de ${p}. Coup de chance ? On ne dira rien.`,
     `🎯 ${p} pose le bon score sans trembler. Respect.`,
     `🎯 Pronostic chirurgical de ${p}. Net et précis.`,
-    `🎯 ${p} tape exactement juste. Le genre de truc qui agace les autres.`
+    `🎯 ${p} tape exactement juste. Le genre de truc qui agace les autres.`,
+    `🎯 Prono parfait de ${p}. Soit c'est du génie, soit son téléphone est sur écoute dans les vestiaires. La famille a lancé un audit.`,
+    `🎯 ${p} a vu juste. Profitez de ce moment rare, comme un but de Giroud du pied gauche.`,
+    `🎯 Score exact pour ${p}, qui célèbre sobrement — c'est-à-dire en le rappelant à tout le monde pendant quatre jours.`
   ]);
   if(t>=1) return pick([
     `👍 ${p} grappille des points malins, bonus compris.`,
@@ -1452,9 +1456,25 @@ function chambrage(p, pr, re, t){
     `💀 Le Match en Or de ${p} vire au plomb. ×2 dans le mauvais sens.`,
     `💀 ${p} a doublé la mise… et doublé la chute. Brutal.`,
     `💀 Quand on joue le 🌟 et qu'on se loupe : voilà ${p}, deux fois puni.`,
-    `💀 Le pari en Or de ${p} part en fumée. Avec les intérêts.`
+    `💀 Le pari en Or de ${p} part en fumée. Avec les intérêts.`,
+    `💀 ${p} a doublé la mise sur ce match. Le casino remercie ${p} et lui offre un café.`,
+    `💀 Le Match en Or de ${p} s'est transformé en plomb. L'alchimie inversée, c'est un talent aussi.`,
+    `💀 ${p} a mis son Or sur ce match. Quelque part, un conseiller financier pleure sans savoir pourquoi.`
   ]);
   return pick([
+    ...(bo.but===-1 && pr.buteur ? [
+      `❌ ${p} avait misé sur ${pr.buteur} buteur. Il a touché 12 ballons, dont 9 avec les mains — c'était le gardien qui s'échauffait.`,
+      `❌ Le buteur de ${p} a passé le match à courir. C'est déjà ça.`
+    ] : []),
+    ...(pr.scenario==='90' && re.scenario && re.scenario!=='90' ? [
+      `❌ ${p} avait dit « ça se règle en 90 minutes ». Le match a duré 2h30. ${p} avait déjà éteint la télé.`,
+      `❌ Prolongation. ${p} avait juré que non. Le foot adore les gens qui jurent.`
+    ] : []),
+    `❌ Le prono de ${p} a pris l'eau plus vite que le radeau de la Méduse, avec le même sens de l'organisation.`,
+    `❌ ${p} avait analysé les stats, la forme, la météo. Le foot a regardé tout ça et a dit non.`,
+    `❌ ${p} s'est trompé${accord(p,'','e')} avec une telle conviction que c'en est presque respectable. Presque.`,
+    `❌ Ce prono restera dans les annales. Malheureusement pour ${p}, dans le chapitre « à ne pas reproduire ».`,
+    `❌ ${p} a parié comme Domenech faisait ses compos : avec l'astrologie. Et le même résultat.`,
     `❌ Pari raté, ${p} lâche des points. Ça pique.`,
     `❌ ${p} dans le rouge. Le bonus s'est retourné.`,
     `❌ Mauvaise pioche pour ${p}. ${accord(p,'Refroidi','Refroidie')}.`,
@@ -1976,7 +1996,14 @@ const COMMENTAIRES = [
   l => `Le comité d'organisation signale que ${l[l.length-1].p} a encore le droit de rêver. C'est à peu près tout ce qui lui reste.`,
   l => `Classement provisoire. Très provisoire. ${l[0].p} ferait bien de ne pas imprimer de t-shirt tout de suite.`,
   l => `${l[0].p} en tête — coïncidence ? Les statisticiens de la famille mènent l'enquête. 🤨`,
-  l => `Un Match en Or mal placé et tout s'effondre. Demandez aux traders. Ou à ${l[l.length-1].p}.`
+  l => `Un Match en Or mal placé et tout s'effondre. Demandez aux traders. Ou à ${l[l.length-1].p}.`,
+  l => `${l[l.length-1].p} n'est plus dans la course, ${ilElle(l[l.length-1].p)} est dans le public. Bientôt on lui demandera de payer sa place.`,
+  l => `${l[l.length-1].p} collectionne les points comme le PSG les Ligues des champions : en en parlant beaucoup.`,
+  l => `Entre ${l[0].p} et ${l[1].p}, il y a l'épaisseur d'une feuille de rotation VAR. Et autant de tension.`,
+  l => `${l[2]?l[2].p:l[0].p} joue la montre. Le problème, c'est que la montre gagne.`,
+  l => `${l[1].p} est dauphin. C'est joli, dauphin. C'est intelligent, ça fait des sauts. Mais ça ne soulève jamais la coupe.`,
+  l => `Le retard de ${l[l.length-1].p} est désormais visible depuis l'espace, entre la Muraille de Chine et la défense de l'Allemagne.`,
+  l => `${l[1].p} voit ${l[0].p} s'éloigner au classement comme le bus de la victoire : de loin, et sous la pluie.`
 ];
 /* MONEY TIME : met en scène la dernière ligne droite — duel du titre (1-2) et du bronze (3-4).
    Dynamique : tiré de calculTotaux, ne s'affiche que s'il reste des matchs de poule à jouer. */
@@ -3520,6 +3547,11 @@ function qgEcurie(eq, supporters){
       if(t === null) return '';   /* pas encore la phase finale */
       if(t.ferme) return `<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
         <div class="mc-intro">🔒 Le guichet est fermé — à partir des demi-finales, on assume son écurie jusqu'au bout.</div></div>`;
+      const moi = participants[pseudo] || {};
+      if((moi.malus_v||0) >= 10) return `<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
+        <div class="mc-intro">🔒 Crédit épuisé — ta prime a entièrement fondu dans tes transferts. Fidèle jusqu'au bout, maintenant. C'est beau, quelque part.</div></div>`;
+      if(moi.mercato_tour === t.nom) return `<div class="qg-bloc mc-carte"><div class="qg-titre">🔄 Le Mercato</div>
+        <div class="mc-intro">✍️ Transfert déjà signé pendant les ${t.nom} — un seul par tour. Le guichet rouvre au tour suivant${t.nom==='quarts'?'… ah non, il ferme aux demies. C’était le dernier':''}.</div></div>`;
       const options = Object.keys(EQUIPES)
         .filter(e => e !== eq && equipeEncoreEnLice(e))
         .sort((a,b)=>a.localeCompare(b,'fr'))
@@ -3541,7 +3573,7 @@ function qgEcurie(eq, supporters){
         <div class="mc-grille">${grille}</div>
         <select id="mercato-cible"><option value="">— Choisir ma nouvelle écurie (encore en lice) —</option>${options}</select>
         <button class="btn mc-btn" onclick="signerMercatoUI()">🔄 Signer mon transfert (prime vainqueur −${t.v}, finaliste −${t.f})</button>
-        <div class="mc-note">Exemple : tu signes chez une équipe et elle est championne → prime 10−${t.v} = +${10-t.v}. Transferts cumulables, chacun au tarif de son tour.</div>
+        <div class="mc-note">Exemple : tu signes chez une équipe et elle est championne → prime 10−${t.v} = +${10-t.v}. Un seul transfert par tour, chacun au tarif de son tour.</div>
       </div>`;
     })()}
   </div>`;
@@ -3788,6 +3820,10 @@ async function sauverEcurie(eq){
     /* MERCATO de phase finale : la prime fond au tarif du tour, les points acquis ne bougent pas */
     const t = tarifMercato();
     if(!t || t.ferme){ toast('🔒 Le mercato est fermé — à partir des demi-finales, on assume son écurie.'); return; }
+    /* Garde-fou B : plus de prime à fondre = plus de droit de bouger */
+    if((participants[pseudo].malus_v||0) >= 10){ toast('🔒 Crédit mercato épuisé — ta prime est déjà fondue à zéro. Fidèle, maintenant.'); return; }
+    /* Garde-fou A : UN SEUL transfert par tour */
+    if(participants[pseudo].mercato_tour === t.nom){ toast(`🔒 Un seul transfert par tour — tu as déjà signé pendant les ${t.nom}. Guichet rouvert au tour suivant.`); return; }
     if(!equipeEncoreEnLice(eq)){ toast(`⚰️ ${eq} est éliminée — on ne signe pas chez un mort.`); return; }
     const dejaFait = (participants[pseudo].mercato||0);
     const mv = (participants[pseudo].malus_v||0) + t.v;
@@ -3797,8 +3833,8 @@ async function sauverEcurie(eq){
       const nb = dejaFait + 1;
       await sb('mondial_participants?on_conflict=pseudo', {method:'POST',
         prefer:'resolution=merge-duplicates',
-        body: JSON.stringify({pseudo, equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf})});
-      participants[pseudo] = {...participants[pseudo], equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf};
+        body: JSON.stringify({pseudo, equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf, mercato_tour:t.nom})});
+      participants[pseudo] = {...participants[pseudo], equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf, mercato_tour:t.nom};
       /* 📰 la presse s'empare du transfert : potin automatique visible de tous */
       try{
         const van = pioche(VANNES_MERCATO)(pseudo, actuelle, eq, t);
