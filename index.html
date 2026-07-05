@@ -539,6 +539,14 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .etape-pouvoir .pv-accroche{position:relative;font-size:clamp(14px,4vw,16px);color:var(--pvc);font-style:italic;margin-top:16px;max-width:340px;line-height:1.45}
 .etape-pouvoir .pv-activated{position:relative;font-size:12px;color:var(--gris);letter-spacing:2px;margin-top:22px;animation:pvBlink 1.4s ease-in-out infinite}
 @keyframes pvBlink{0%,100%{opacity:.4}50%{opacity:1}}
+.reveal .etape-deuil{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.etape-deuil .deuil-halo{position:absolute;width:270px;height:270px;border-radius:50%;background:radial-gradient(circle,rgba(143,163,184,.14),transparent 70%);top:50%;left:50%;transform:translate(-50%,-60%);pointer-events:none}
+.etape-deuil .deuil-sur{position:relative;font-size:12px;font-weight:700;color:var(--gris);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px}
+.etape-deuil .deuil-drapeau{position:relative;font-size:clamp(52px,16vw,66px);line-height:1;filter:grayscale(.55) drop-shadow(0 0 18px rgba(143,163,184,.35));animation:pvPop .6s cubic-bezier(.34,1.56,.64,1)}
+.etape-deuil .deuil-bougie{position:relative;font-size:24px;margin-top:-10px;animation:pvBlink 2.2s ease-in-out infinite}
+.etape-deuil .deuil-titre{position:relative;font-family:'Archivo Black';font-size:clamp(22px,7vw,28px);font-weight:900;color:var(--creme);text-transform:uppercase;line-height:1.1;margin-top:10px}
+.etape-deuil .deuil-oraison{position:relative;font-size:clamp(13px,3.8vw,14.5px);color:var(--gris);font-style:italic;margin-top:14px;max-width:350px;line-height:1.55}
+.etape-deuil .deuil-pied{position:relative;font-size:11px;color:var(--or);letter-spacing:1px;margin-top:20px}
 #bracket-wrap{display:flex;flex-direction:column;gap:18px}
 .brk-bandeau{background:var(--panneau2);border:1px solid var(--lagon);border-radius:10px;padding:10px 14px}
 .mc-carte .mc-intro{font-size:12px;color:var(--gris);line-height:1.5;margin-bottom:12px}
@@ -758,7 +766,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.35';
+const APP_VERSION = '13.36';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4698,6 +4706,35 @@ function etapesReveal(id){
       <div class="pv-activated">✨ POUVOIR ACTIVÉ ✨</div>
     </div>`;
   }).filter(Boolean);
+  /* ===== ⚰️ FUNÉRAILLES D'ÉCURIE : quand ce match élimine l'écurie d'un joueur ===== */
+  const ORAISONS_ECURIE = [
+    (noms,perdant,pl)=>`${perdant}, c'est fini. ${noms} ${pl?'observent':'observe'} une minute de silence. Personne n'a tenu dix secondes, les vannes fusaient déjà. Le maillot est à vendre — peu porté, beaucoup pleuré.`,
+    (noms,perdant,pl)=>`Avis aux supporters de ${nomPays(perdant)} dans cette famille : c'est terminé. Les drapeaux sont à ranger, les excuses à préparer. Le chambrage, lui, ne fait que commencer.`,
+    (noms,perdant,pl)=>`${noms} ${pl?'avaient':'avait'} choisi ${nomPays(perdant)} « pour la vie ». La vie a duré jusqu'à ce soir. Les fleurs et couronnes peuvent être envoyées directement au guichet du Mercato.`,
+    (noms,perdant,pl)=>`L'écurie ${perdant} tire sa révérence. ${noms} ${pl?'assurent':'assure'} « l'avoir toujours su ». Les archives de l'appli disent le contraire. Les archives disent toujours le contraire.`,
+    (noms,perdant,pl)=>`Clap de fin pour ${nomPays(perdant)}. ${noms} ${pl?'rejoignent':'rejoint'} le club très fermé des supporters sans équipe — cotisation gratuite, dignité en option.`
+  ];
+  const etapeDeuil = (()=>{
+    if(!(m.id>=73 && re.qualifie)) return null;
+    const perdant = (m.a===re.qualifie) ? m.b : (m.b===re.qualifie ? m.a : null);
+    if(!perdant) return null;
+    const endeuilles = PARTICIPANTS.filter(p=>ecurieDe(p)===perdant);
+    if(!endeuilles.length) return null;
+    const pl = endeuilles.length>1;
+    const noms = pl ? endeuilles.slice(0,-1).join(', ')+' et '+endeuilles[endeuilles.length-1] : endeuilles[0];
+    const oraison = pioche(ORAISONS_ECURIE)(noms, perdant, pl);
+    const tm = (typeof tarifMercato==='function') ? tarifMercato() : null;
+    const pied = tm && !tm.ferme ? '⚱️ LE MERCATO PRÉSENTE SES CONDOLÉANCES — ET SES TARIFS' : '⚱️ LE MERCATO EST FERMÉ — IL FALLAIT MOURIR PLUS TÔT';
+    return `<div class="etape etape-deuil">
+      <div class="deuil-halo"></div>
+      <div class="deuil-sur">Avis de décès sportif</div>
+      <div class="deuil-drapeau">${F[perdant]||'🏳️'}</div>
+      <div class="deuil-bougie">🕯️</div>
+      <div class="deuil-titre">L'écurie de ${noms}<br>s'est éteinte</div>
+      <div class="deuil-oraison">« ${oraison} »</div>
+      <div class="deuil-pied">${pied}</div>
+    </div>`;
+  })();
   const scores = PARTICIPANTS.map(p=>({p, t: pronos[p]&&pronos[p][id] ? ptsTotal(pronos[p][id], re) : null})).filter(x=>x.t!==null);
   let punch = "Le commissaire rappelle que les réclamations se font par écrit. Et qu'elles finissent à la poubelle.";
   if(scores.length){
@@ -4817,6 +4854,7 @@ function etapesReveal(id){
         : (estTab ? `<div class="ligne-r" style="color:var(--gris);font-size:13px;margin-bottom:6px">Décidé aux tirs au but${sfMatch?` (${sfMatch[1]}–${sfMatch[2]})`:''}</div>` : '');
       return `<div class="etape" data-reveal-score data-a="${gA}" data-b="${gB}" data-fete="${vd.fete?1:0}"><div class="eti-r">Le verdict du terrain</div>${mention}<div class="grand-score"><span class="sc-a">0</span> – <span class="sc-b">0</span></div><div class="verdict-box"><div class="verdict-titre">${vd.titre}</div><div class="verdict-sous">${vd.sous}</div></div>${re.buteurs?`<div class="ligne-r" style="margin-top:14px">⚽ ${re.buteurs}</div>`:''}${re.cartons?`<div class="ligne-r">🟥 ${re.cartons}</div>`:''}</div>`;
     })(),
+    ...(etapeDeuil ? [etapeDeuil] : []),
     ...etapesPouvoirs,
     `<div class="etape"><div class="eti-r">Les comptes sont bons</div>${lignesComptes}</div>`,
     etapeClassement
