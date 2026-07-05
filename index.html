@@ -559,6 +559,16 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .mc-carte select{width:100%;margin-bottom:8px}
 .mc-btn{width:100%;background:var(--or);color:var(--nuit);font-weight:800;font-size:13px}
 .mc-note{font-size:10px;color:var(--gris);font-style:italic;margin-top:9px;line-height:1.5}
+.df-regle{text-align:center}
+.df-sur{font-size:11px;font-weight:700;color:var(--gris);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.df-flags{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px}
+.df-camp .df-dra{font-size:34px;line-height:1}
+.df-camp .df-etat{font-size:12px;font-weight:800;color:var(--lagon);margin-top:3px}
+.df-camp.df-mort .df-dra{filter:grayscale(.6);opacity:.75}
+.df-camp.df-mort .df-etat{color:var(--gris)}
+.df-vs{font-family:'Archivo Black';font-size:18px;color:var(--gris)}
+.df-titre{font-family:'Archivo Black';font-size:16px;color:var(--creme);text-transform:uppercase;line-height:1.25;margin-bottom:10px}
+.df-texte{font-size:12.5px;color:var(--gris);font-style:italic;line-height:1.55;max-width:340px;margin:0 auto}
 .brk-bandeau-t{display:block;color:var(--lagon);font-weight:600;font-size:13px}
 .brk-bandeau-s{display:block;color:var(--gris);font-size:11px;margin-top:2px}
 .radar-chocs{background:var(--panneau);border:1px solid rgba(245,180,60,.45);border-radius:12px;padding:13px;margin:14px 0}
@@ -766,7 +776,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.36';
+const APP_VERSION = '13.37';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -3226,6 +3236,32 @@ function faceAFace(eq){
   const rival = autres.sort((a,b)=>compte(b)-compte(a))[0];
   const supA = PARTICIPANTS.filter(p=>participants[p]&&participants[p].equipe_ecurie===eq);
   const supB = PARTICIPANTS.filter(p=>participants[p]&&participants[p].equipe_ecurie===rival);
+  /* ⚰️ Une des deux écuries est morte -> le duel est RÉGLÉ, on grave le verdict */
+  const vivA = equipeEncoreEnLice(eq), vivB = equipeEncoreEnLice(rival);
+  if(!vivA || !vivB){
+    const noms = l => l.length>1 ? l.slice(0,-1).join(', ')+' et '+l[l.length-1] : (l[0]||'');
+    const cap = t => t.charAt(0).toUpperCase()+t.slice(1);
+    let titre, texte;
+    if(!vivA && !vivB){
+      titre = `Double enterrement — plus personne ne parade`;
+      texte = `Les deux écuries sont tombées. La guerre des écuries se termine sans vainqueur, comme les meilleures tragédies. Le Mercato, lui, reste ouvert — enfin, tant qu'il reste des vivants.`;
+    } else {
+      const eqV = vivA ? eq : rival, eqM = vivA ? rival : eq;
+      const supV = vivA ? supA : supB, supM = vivA ? supB : supA;
+      titre = `Duel réglé — ${cap(nomPays(eqV))} enterre ${nomPays(eqM)}`;
+      texte = `${noms(supV)} remport${supV.length>1?'ent':'e'} la guerre des écuries par forfait adverse. ${noms(supM)} peu${supM.length>1?'vent':'t'} déposer les armes avec les honneurs — ou passer au guichet du Mercato, ouvert aux grands blessés.`;
+    }
+    return `<div class="qg-bloc df-regle">
+      <div class="df-sur">⚔️ Guerre des écuries — verdict</div>
+      <div class="df-flags">
+        <div class="df-camp${vivA?'':' df-mort'}"><div class="df-dra">${F[eq]||''}</div><div class="df-etat">${vivA?'SURVIT':'⚰️ ÉLIMINÉ'}</div></div>
+        <div class="df-vs">🆚</div>
+        <div class="df-camp${vivB?'':' df-mort'}"><div class="df-dra">${F[rival]||''}</div><div class="df-etat">${vivB?'SURVIT':'⚰️ ÉLIMINÉ'}</div></div>
+      </div>
+      <div class="df-titre">${titre}</div>
+      <div class="df-texte">« ${texte} »</div>
+    </div>`;
+  }
 
   const a = statsEcurie(eq), b = statsEcurie(rival);
   if(!a.joues && !b.joues) return '';   /* rien à comparer tant que personne n'a joué */
@@ -3359,6 +3395,7 @@ function chocDeFamille(eq){
   if(!autres.length) return '';
   const compte = e => PARTICIPANTS.filter(p=>participants[p]&&participants[p].equipe_ecurie===e).length;
   const rival = autres.sort((a,b)=>compte(b)-compte(a))[0];
+  if(!equipeEncoreEnLice(eq) || !equipeEncoreEnLice(rival)) return '';  /* duel réglé : la tombe est dans faceAFace */
 
   const couloirA = couloirDe(eq), couloirB = couloirDe(rival);
   if(!couloirA.size || !couloirB.size) return '';   /* au moins une pas encore placée dans le tableau */
@@ -3383,6 +3420,32 @@ function chocDeFamille(eq){
   const cB = (ECURIES[rival]&&ECURIES[rival].c)||'var(--or)';
   const supA = PARTICIPANTS.filter(p=>participants[p]&&participants[p].equipe_ecurie===eq);
   const supB = PARTICIPANTS.filter(p=>participants[p]&&participants[p].equipe_ecurie===rival);
+  /* ⚰️ Une des deux écuries est morte -> le duel est RÉGLÉ, on grave le verdict */
+  const vivA = equipeEncoreEnLice(eq), vivB = equipeEncoreEnLice(rival);
+  if(!vivA || !vivB){
+    const noms = l => l.length>1 ? l.slice(0,-1).join(', ')+' et '+l[l.length-1] : (l[0]||'');
+    const cap = t => t.charAt(0).toUpperCase()+t.slice(1);
+    let titre, texte;
+    if(!vivA && !vivB){
+      titre = `Double enterrement — plus personne ne parade`;
+      texte = `Les deux écuries sont tombées. La guerre des écuries se termine sans vainqueur, comme les meilleures tragédies. Le Mercato, lui, reste ouvert — enfin, tant qu'il reste des vivants.`;
+    } else {
+      const eqV = vivA ? eq : rival, eqM = vivA ? rival : eq;
+      const supV = vivA ? supA : supB, supM = vivA ? supB : supA;
+      titre = `Duel réglé — ${cap(nomPays(eqV))} enterre ${nomPays(eqM)}`;
+      texte = `${noms(supV)} remport${supV.length>1?'ent':'e'} la guerre des écuries par forfait adverse. ${noms(supM)} peu${supM.length>1?'vent':'t'} déposer les armes avec les honneurs — ou passer au guichet du Mercato, ouvert aux grands blessés.`;
+    }
+    return `<div class="qg-bloc df-regle">
+      <div class="df-sur">⚔️ Guerre des écuries — verdict</div>
+      <div class="df-flags">
+        <div class="df-camp${vivA?'':' df-mort'}"><div class="df-dra">${F[eq]||''}</div><div class="df-etat">${vivA?'SURVIT':'⚰️ ÉLIMINÉ'}</div></div>
+        <div class="df-vs">🆚</div>
+        <div class="df-camp${vivB?'':' df-mort'}"><div class="df-dra">${F[rival]||''}</div><div class="df-etat">${vivB?'SURVIT':'⚰️ ÉLIMINÉ'}</div></div>
+      </div>
+      <div class="df-titre">${titre}</div>
+      <div class="df-texte">« ${texte} »</div>
+    </div>`;
+  }
   const possEq = `${/^[AEÉÈIOUaeiouéè]/.test(eq)?'ton':(['France','Suisse','Belgique','Allemagne','Angleterre','Croatie','Colombie','Norvège','Suède','Tunisie','Corée du Sud','Arabie Saoudite','Espagne','Argentine','Algérie'].includes(eq)?'ta':'ton')} ${eq}`;
   const artRiv = /^(Pays-Bas|États-Unis)$/.test(rival)?`les ${rival}`:/^[AEÉÈIOUaeiouéè]/.test(rival)?`l'${rival}`:(['France','Suisse','Belgique','Allemagne','Angleterre','Croatie','Colombie','Norvège','Suède','Tunisie','Corée du Sud','Arabie Saoudite','Espagne','Argentine','Algérie'].includes(rival)?`la ${rival}`:`le ${rival}`);
 
