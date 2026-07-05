@@ -758,7 +758,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.31';
+const APP_VERSION = '13.32';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -3756,6 +3756,26 @@ function signerMercatoUI(){
   if(!sel || !sel.value){ toast('Choisis d\'abord ta nouvelle écurie'); return; }
   sauverEcurie(sel.value);
 }
+/* article correct devant un nom de pays : le Brésil, la France, l'Argentine... */
+function nomPays(eq){
+  if(/^[AEIOUÉÈÊÀÂ]/.test(eq)) return "l'"+eq;
+  const fem = new Set(["France","Espagne","Belgique","Croatie","Bosnie","Tchéquie","Norvège","Suède","Suisse","Tunisie","Jordanie","Colombie","Corée du Sud","Côte d'Ivoire","Nouvelle-Zélande","RD Congo"]);
+  return (fem.has(eq) ? 'la ' : 'le ') + eq;
+}
+/* 📰 La presse familiale s'empare de chaque transfert : une vanne piochée au hasard,
+   publiée automatiquement dans les Potins, visible de toute la famille. */
+const VANNES_MERCATO = [
+  (p,anc,nvl,t)=>({titre:`💸 OFFICIEL — ${p} vend son âme : direction ${nvl} !`,
+    contenu:`Après des semaines d'amour prétendument inconditionnel, ${p} quitte ${nomPays(anc)} comme on quitte un navire qui prend l'eau : en courant, la valise à la main, sans se retourner. Côté ${anc}, le vestiaire se dit « soulagé ». Sa prime a fondu de ${t.v} points au passage — l'agent prend toujours sa commission. La famille attend des explications. Elle peut attendre longtemps.`}),
+  (p,anc,nvl,t)=>({titre:`🐀 Mercato : ${p} quitte le navire ${anc} !`,
+    contenu:`On dit que les rats quittent le navire avant le naufrage. ${p}, ${accord(p,'prévoyant','prévoyante')}, n'a même pas attendu la météo : ${ilElle(p)} signe chez ${nomPays(nvl)}, contrat de courte durée, loyauté en option. ${nomPays(anc).charAt(0).toUpperCase()+nomPays(anc).slice(1)} remercie ${p} pour ces belles années. Enfin, ces belles semaines.`}),
+  (p,anc,nvl,t)=>({titre:`🧭 La girouette de la famille a encore tourné : ${p} → ${nvl}`,
+    contenu:`Interrogé${accord(p,'','e')} sur ses valeurs, ${p} a répondu « ça dépend du vent ». C'est désormais officiel : ${ilElle(p)} soutient ${nomPays(nvl)}, avec la même ferveur éternelle que ${nomPays(anc)} la semaine dernière. Prime rabotée de ${t.v} points, dignité non incluse dans le transfert.`}),
+  (p,anc,nvl,t)=>({titre:`💼 ${p} signe chez ${nvl} — l'amour du maillot, version CDD`,
+    contenu:`Fidèle comme un sponsor maillot, ${p} a officialisé son transfert : ${ilElle(p)} quitte ${nomPays(anc)} pour ${nomPays(nvl)}. « C'était un choix de cœur », assure ${leLa(p)} principal${accord(p,'','e')} intéressé${accord(p,'','e')}, en rangeant son ancienne écharpe dans un tiroir déjà bien rempli. Le service comptable confirme : la prime a fondu, pas le culot.`}),
+  (p,anc,nvl,t)=>({titre:`⚖️ Tribunal du mercato : ${p} plaide « les raisons sportives »`,
+    contenu:`${p} a quitté ${nomPays(anc)} pour ${nomPays(nvl)} en invoquant des « raisons sportives ». Le tribunal familial, après délibération express, retient plutôt « l'appât du gain » et « la peur de perdre ». Verdict : prime fondue de ${t.v} points, et chambrage à perpétuité. La défense n'a pas fait appel — elle préparait déjà son prochain transfert.`})
+];
 async function sauverEcurie(eq){
   if(!pseudo){ toast('Choisis d\'abord qui tu es'); return; }
   const actuelle = participants[pseudo] && participants[pseudo].equipe_ecurie;
@@ -3779,6 +3799,13 @@ async function sauverEcurie(eq){
         prefer:'resolution=merge-duplicates',
         body: JSON.stringify({pseudo, equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf})});
       participants[pseudo] = {...participants[pseudo], equipe_ecurie:eq, mercato:nb, malus_v:mv, malus_f:mf};
+      /* 📰 la presse s'empare du transfert : potin automatique visible de tous */
+      try{
+        const van = pioche(VANNES_MERCATO)(pseudo, actuelle, eq, t);
+        await sb('mondial_potins', {method:'POST', body: JSON.stringify({titre:van.titre, contenu:van.contenu, type:'potin'})});
+        const frais = await sb('mondial_potins?select=*&order=created_at.desc').catch(()=>null);
+        if(frais) potinsCloud = frais;
+      }catch(e){}
       toast(`🔄 Transfert signé ! ${eq} ${F[eq]||''} · prime vainqueur ${Math.max(0,10-mv)} / finaliste ${Math.max(0,5-mf)}`); toutAfficher();
     }catch(e){ toast('Échec du transfert'); }
     return;
