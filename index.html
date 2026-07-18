@@ -829,7 +829,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.46';
+const APP_VERSION = '13.48';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1180,6 +1180,20 @@ const QUIZ_QUESTIONS = [
    o:["4","5","6","12, mais uniquement dans ses souvenirs"], b:2},
   {id:'q7', cat:'famille', t:"L'écurie familiale a connu un plan social brutal. Dans l'ordre chronologique, quelles équipes Ginou a-t-elle vu mourir sous ses couleurs ?",
    o:["Brésil puis France","France puis Brésil","Brésil, France, et son moral","Aucune : « tout allait bien », dit-elle"], b:2},
+  {id:'q17', cat:'famille', t:"Le « Joker Petar Musa » : un pouvoir nommé d'après un attaquant que même sa carte Panini renie. À qui appartenait ce culte officiel ?",
+   o:["Bidou","Véro","Ginou","Petar Musa lui-même, actionnaire majoritaire"], b:2},
+  {id:'q18', cat:'famille', t:"La « Chatte à DD » — le pouvoir du +16 légendaire de Véro — rend hommage à quel monument national ?",
+   o:["Didier Deschamps","Didier Drogba","Un chat qui s'appelle DD","Mystère médical non résolu"], b:0},
+  {id:'q19', cat:'famille', t:"L'« Intervention du Cheikh » (le ×2 de rattrapage) commémore quel fait d'armes historique et parfaitement réel ?",
+   o:["Un cheikh koweïtien descendu sur la pelouse pour faire annuler un but de la France en 1982","Un transfert saoudien à 300 millions","Une panne de VAR à La Mecque","Le pèlerinage spirituel de Raymond Domenech"], b:0},
+  {id:'q20', cat:'famille', t:"Ginou a un jour parié sur un buteur si inspiré qu'il est sorti à la MI-TEMPS, sans cadrer une frappe. L'app a donné son nom à un pouvoir en son honneur. Qui était ce héros ?",
+   o:["Erling Haaland","Petar Musa","Kylian Mbappé","« Il n'est jamais vraiment entré », selon les témoins"], b:1},
+  {id:'q21', cat:'famille', t:"Quel joueur fait vibrer Véro au point que la famille entière a modifié la prononciation officielle de son nom ?",
+   o:["Harry Kane","Harry Maguire","Harry Potter","Harry KAaaaaaaaanee"], b:3},
+  {id:'q22', cat:'famille', t:"Dimanche, un membre de cette famille aura un dilemme cardiaque : son idole joue la finale... contre le bon sens familial. Qui voue un culte au serial buteur de l'Espagne ?",
+   o:["Bidou","Véro","Alex","Personne — l'Espagne n'a pas de fans ici, juste des rescapés du mardi"], b:2},
+  {id:'q23', cat:'famille', t:"Samedi, un homme de cette famille regardera Mbappé avec les yeux de Chimène pour la dernière fois du tournoi. Qui ?",
+   o:["Bidou","Alex","Ginou","Didier Deschamps, mais lui ne compte pas, il est payé pour"], b:0},
   /* — Mémoire du tournoi (potins & news) — */
   {id:'q8', cat:'tournoi', t:"Contre l'Égypte, l'Australie n'a marqué que grâce à... un Égyptien. Qui a fusillé son propre gardien ?",
    o:["Mohamed Hany (csc)","Salah, par excès de générosité","Le gardien lui-même, par solitude","Le poteau, complice habituel"], b:0},
@@ -1316,7 +1330,7 @@ function carteQuiz(){
   z.innerHTML = `<div class="qz-carte">
     <div class="qz-tete">
       <div class="qz-titre">🧠 Le Grand Quiz du Mondial</div>
-      <div class="qz-sous">Qui a vraiment suivi ? 21 questions sur VOTRE tournoi, réponses scellées jusqu'à la Nuit du Jugement. Le meilleur entre au palmarès — le dernier repart avec le 🐟 Poisson Rouge d'Or. Fermeture au coup d'envoi de la finale.</div>
+      <div class="qz-sous">Qui a vraiment suivi ? 28 questions sur VOTRE tournoi, réponses scellées jusqu'à la Nuit du Jugement. Le meilleur entre au palmarès — le dernier repart avec le 🐟 Poisson Rouge d'Or. Fermeture au coup d'envoi de la finale.</div>
       ${dejaFait?'<div class="qz-fait">🔏 Ta copie est scellée — tu peux la modifier jusqu\'à dimanche 15h.</div>':''}
     </div>
     ${QUIZ_QUESTIONS.map((q,qi)=>{
