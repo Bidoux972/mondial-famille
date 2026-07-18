@@ -569,6 +569,30 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .df-vs{font-family:'Archivo Black';font-size:18px;color:var(--gris)}
 .df-titre{font-family:'Archivo Black';font-size:16px;color:var(--creme);text-transform:uppercase;line-height:1.25;margin-bottom:10px}
 .df-texte{font-size:12.5px;color:var(--gris);font-style:italic;line-height:1.55;max-width:340px;margin:0 auto}
+.hc-env{font-size:11px;color:#c9b8f5;letter-spacing:.5px;border:1px dashed #a78bfa;border-radius:8px;padding:3px 9px}
+.hc-annonce{background:linear-gradient(135deg,#1a1230,var(--panneau));border:1.5px solid #a78bfa;border-radius:12px;padding:15px;text-align:center;margin-bottom:12px}
+.hc-cadenas{font-size:26px}
+.hc-titre{font-family:'Archivo Black';font-size:17px;color:var(--creme);text-transform:uppercase;margin-top:4px}
+.hc-sous{font-size:12px;color:#c9b8f5;margin-top:6px;line-height:1.5}
+.hc-scelle{background:var(--panneau);border:1px solid var(--ligne);border-radius:12px;padding:13px}
+.hc-scelle-tete{font-weight:800;font-size:13px;color:var(--creme);margin-bottom:9px}
+.hc-badge{font-size:9px;background:#a78bfa;color:var(--nuit);padding:2px 7px;border-radius:8px;font-weight:800;vertical-align:middle;margin-left:6px}
+.hc-ligne{display:flex;align-items:center;gap:9px;padding:7px 9px}
+.hc-q{font-size:13px;color:var(--gris);width:14px;text-align:center}
+.hc-nom{flex:1;font-size:13.5px;font-weight:700;color:var(--creme)}
+.hc-pts{font-family:'Space Grotesk',monospace;font-size:15px;font-weight:800;color:var(--or);letter-spacing:2px;filter:blur(6px);user-select:none}
+.hc-note{font-size:10.5px;color:var(--gris);font-style:italic;margin-top:7px}
+.hc-vanne{font-size:12px;color:#c9b8f5;font-style:italic;margin-top:10px;padding-top:10px;border-top:1px dashed var(--ligne)}
+.aff-jour{background:linear-gradient(160deg,#2a1f0e,var(--panneau) 70%);border:1.5px solid var(--or);border-radius:14px;padding:16px;text-align:center;margin:0 0 12px}
+.aff-jour.aff-finale{background:linear-gradient(160deg,#241a05,#1a1230 75%);box-shadow:0 0 22px rgba(245,180,60,.18)}
+.aff-quand{font-size:10px;font-weight:800;color:var(--or);letter-spacing:3px;text-transform:uppercase}
+.aff-titre{font-family:'Archivo Black';font-size:20px;color:var(--creme);text-transform:uppercase;margin-top:6px}
+.aff-duel{display:flex;align-items:center;justify-content:center;gap:14px;margin:10px 0 6px}
+.aff-dra{font-size:36px;line-height:1}
+.aff-vs{font-family:'Archivo Black';font-size:15px;color:var(--gris)}
+.aff-enjeu{font-size:12.5px;color:var(--creme);line-height:1.55;margin-top:6px}
+.aff-vanne{font-size:11.5px;color:#c9b8f5;font-style:italic;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(245,180,60,.3)}
+.aff-btn{width:auto;background:var(--or);color:var(--nuit);font-weight:800;font-size:12px;padding:9px 18px;margin-top:12px}
 .ex-ecurie{font-size:.82em;color:var(--gris);font-weight:400;font-style:italic}
 .memorial{font-size:12px;color:var(--gris);line-height:1.55;font-style:italic;border-style:dashed}
 .memorial b{color:var(--creme)}
@@ -662,6 +686,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
     </div>
   </div>
   <div class="moi" id="bloc-moi" style="display:none"></div>
+  <div id="affiche-jour" style="display:none"></div>
   <div id="banniere-ecurie" style="display:none"></div>
   <div class="mini-cl" id="mini-classement" style="display:none" onclick="goTab('classement')"></div>
   <div id="alerte-duel"></div>
@@ -779,7 +804,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.40';
+const APP_VERSION = '13.43';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1049,6 +1074,72 @@ let palmares = null;
 /* Les poules sont SCELLÉES tant qu'il reste des matchs à jouer ET que le sacre n'a pas
    été gravé. Dès la gravure, on déscelle tout (classement détaillé, récaps, points). */
 function poulesScellees(){ return Object.keys(resultats).length < 72 && !(palmares && palmares.champion_poules); }
+/* ===== 🔒 LE HUIS CLOS FINAL =====
+   Rideau sur les deux derniers matchs (M103 petite finale, M104 finale) :
+   points masqués, classement scellé, paris des autres sous enveloppe.
+   Actif dès le coup d'envoi de la petite finale (ou dès qu'un résultat 103/104 existe).
+   Levé UNIQUEMENT par le dépouillement de la Nuit du Jugement (window.__rideauLeve). */
+function huisClosActif(){
+  if(window.__rideauLeve) return false;
+  const m = M.find(x=>x.id===103);
+  if(!m) return false;
+  return (m.dt && Date.now() >= m.dt.getTime()) || !!resultats[103] || !!resultats[104];
+}
+const VANNES_HUISCLOS = [
+  "Le classement est sous scellés. Les rumeurs disent que le leader transpire. Les rumeurs sont fondées.",
+  "Personne ne sait qui mène. Chacun est persuadé que c'est lui. Statistiquement, trois d'entre vous se trompent.",
+  "Enveloppes scellées, points masqués, sourires crispés. Bienvenue dans la pièce où l'on ment le mieux de toute la Martinique.",
+  "Quatre membres de cette famille regardent la petite finale « par pur détachement ». Quatre fois le même mensonge.",
+  "Quatre supporters, une seule écurie, zéro équipe encore en vie. La famille a réussi l'exploit de perdre à l'unanimité.",
+  "Trois pouvoirs ont déjà parlé. Le quatrième existe. C'est tout ce qu'on sait, et c'est déjà trop pour dormir tranquille.",
+  "Ginou a payé 4 points pour changer de naufrage. L'agence de voyages ne rembourse pas.",
+  "Les enveloppes vont parler dimanche. Certains vont rire. Les autres diront « de toute façon je m'en fichais ». Les archives noteront qui a dit quoi."
+];
+/* ===== 🎪 L'AFFICHE DU JOUR : teasing des deux finales, du matin au coup d'envoi ===== */
+const TEASE_BRONZE = [
+  "Le dernier match des Bleus — et les derniers pouvoirs jouables ce soir, à l'abri du rideau. Ce qui se dépose maintenant se découvre dimanche.",
+  "Mathématiquement, les quatre sont vivants. Officiellement, trois sont « détachés ». Le rideau, lui, sait déjà qui ment.",
+  "Le bronze pour l'écurie familiale, le Soulier d'Or pour Mbappé ou Kane — et quelque part, un collier qui n'a toujours pas parlé.",
+  "On dit que ce match ne compte pas. On dit aussi ça juste avant de hurler devant sa télé pendant 90 minutes."
+];
+const TEASE_FINALE = [
+  "Un champion du monde sera couronné ce soir. Un champion de famille aussi. Un seul des deux sera à table.",
+  "Dernier match, dernières enveloppes, dernier Or jouable. Après ce soir, plus personne ne pourra rien changer — juste tout découvrir.",
+  "Le monde regarde la finale. La famille, elle, regarde le rideau. Rendez-vous à la Nuit du Jugement.",
+  "104 matchs pour en arriver là. Ce soir, on ferme les comptes — et demain, quelqu'un parlera de ce titre pendant quatre ans."
+];
+function afficheDuJour(){
+  const z = $('affiche-jour');
+  if(!z) return;
+  const prochain = M.filter(m=>m.id>=103 && m.id<=104 && !resultats[m.id] && m.a && m.b && m.dt)
+                    .sort((x,y)=>x.dt-y.dt)[0];
+  const dansFenetre = prochain && Date.now() < prochain.dt.getTime()
+                      && (prochain.dt.getTime() - Date.now()) < 30*3600*1000;   /* affichée ~30h avant */
+  if(!dansFenetre){ z.style.display='none'; z.innerHTML=''; return; }
+  const m = prochain;
+  const estFinale = m.id===104;
+  const banque = estFinale ? TEASE_FINALE : TEASE_BRONZE;
+  const vanne = banque[Math.floor(Date.now()/86400000) % banque.length];
+  const cal = (typeof CAL_FINALE!=='undefined' && CAL_FINALE['M'+m.id]) ? CAL_FINALE['M'+m.id] : null;
+  const heure = cal ? cal.h : m.dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const jourMatch = jourCle(m) === jourCle({dt:new Date()}) ? "Aujourd'hui" : (cal ? cal.d : 'Demain');
+  const monPr = pronos[pseudo] && pronos[pseudo][m.id];
+  z.style.display='';
+  z.innerHTML = `<div class="aff-jour${estFinale?' aff-finale':''}">
+    <div class="aff-quand">${jourMatch} · ${heure} 🇲🇶</div>
+    <div class="aff-titre">${estFinale?'🏆 La Finale':'🥉 La Petite Finale'}</div>
+    <div class="aff-duel"><span class="aff-dra">${F[m.a]||''}</span><span class="aff-vs">VS</span><span class="aff-dra">${F[m.b]||''}</span></div>
+    <div class="aff-enjeu">${estFinale
+      ? `${m.a} 🆚 ${m.b} pour le titre suprême — et le dernier Match en Or jouable pour chacun.`
+      : `Le dernier match des Bleus : le bronze pour l'écurie familiale, le Soulier d'Or en jeu pour Mbappé et Kane.`}</div>
+    <div class="aff-vanne">🎙️ « ${vanne} »</div>
+    <button class="btn aff-btn" onclick="goTab('matchs')">${monPr?'🗳️ Mon enveloppe est déposée — la revoir':'✍️ Déposer mon enveloppe'}</button>
+  </div>`;
+}
+function vanneHuisClos(){
+  const jour = Math.floor(Date.now()/86400000);
+  return VANNES_HUISCLOS[jour % VANNES_HUISCLOS.length];
+}
 let pronos = {}, resultats = {}, participants = {}, potinsCloud = [];
 try { pseudo = localStorage.getItem('mf_pseudo') || null; admin = localStorage.getItem('mf_admin') === '1'; } catch(e){}
 
@@ -1546,10 +1637,14 @@ function carteMatch(m, modePronos){
     const t = ptsTotal(pr, re);
     /* match commencé mais pas encore validé : on montre les pronos de chacun (score + bonus), sans points ni verdict */
     if(t===null){
+      /* 🔒 huis clos : les paris des AUTRES sur les deux derniers matchs sont des enveloppes scellées */
+      if(huisClosActif() && pr.match_id>=103 && p!==pseudo){
+        return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-spacer"></span><span class="hc-env">🗳️ enveloppe déposée</span></div>`;
+      }
       const tags = [];
       tags.push(`<span class="ptag tag-neutre">Score ${pr.score_a}-${pr.score_b}</span>`);
       if(pr.buteur) tags.push(`<span class="ptag tag-neutre">⚽ ${pr.buteur}</span>`);
-      if(pr.qualifie) tags.push(`<span class="ptag tag-neutre">🎫 ${pr.qualifie} passe</span>`);
+      if(pr.qualifie) tags.push(`<span class="ptag tag-neutre">🎫 ${pr.qualifie} ${pr.match_id>=103?'vainqueur':'passe'}</span>`);
       if(pr.scenario) tags.push(`<span class="ptag tag-neutre">⏱️ ${pr.scenario==='90'?'90 min':pr.scenario==='prolongation'?'prolong.':'tab'}</span>`);
       if(pr.buteur2) tags.push(`<span class="ptag tag-neutre">⚽ ${pr.buteur2} (2e)</span>`);
       if(pr.btts===true||pr.btts===false) tags.push(`<span class="ptag tag-neutre">${pr.btts?'Les 2 marquent':'Pas les 2 (une à 0)'}</span>`);
@@ -1560,7 +1655,7 @@ function carteMatch(m, modePronos){
     }
     let pts = '', chambre = '', etiquettes = '';
     if(t!==null){
-      const enMoneyTime = poulesScellees();
+      const enMoneyTime = poulesScellees() || (huisClosActif() && pr.match_id>=103);
       const masquePts = enMoneyTime && p!==pseudo;   /* en money time : on cache les POINTS des autres */
       pts = masquePts
         ? `<span class="pts" style="color:var(--gris)" title="Scellé jusqu'au verdict">🔒</span>`
@@ -1585,7 +1680,7 @@ function carteMatch(m, modePronos){
       /* étiquettes phase finale : qualifié, scénario, 2e buteur (Musa), pouvoir */
       if(pr.qualifie){
         const ok = re.qualifie && pr.qualifie===re.qualifie;
-        tags.push(`<span class="ptag ${ok?'tag-win':'tag-lose'}">🎫 ${pr.qualifie} ${ok?'passe ✓':'✗'}</span>`);
+        tags.push(`<span class="ptag ${ok?'tag-win':'tag-lose'}">🎫 ${pr.qualifie} ${pr.match_id>=103?(ok?'vainqueur ✓':'battu ✗'):(ok?'passe ✓':'✗')}</span>`);
       }
       if(pr.scenario){
         const ok = re.scenario && pr.scenario===re.scenario;
@@ -1643,11 +1738,11 @@ function carteMatch(m, modePronos){
       </select>
       <input type="text" id="but-${m.id}" placeholder="Nom du buteur" value="${buteurActuel&&!connu?buteurActuel.replace(/"/g,'&quot;'):''}" style="display:${buteurActuel&&!connu?'':'none'}">
       ${m.phase==='finale' ? `
-      <label class="bonus-l">🎫 Qui se qualifie ? <span class="bonus-pts">+2 juste / −1 faux</span></label>
+      <label class="bonus-l">${m.id===104?'🏆 Qui est champion du monde ?':m.id===103?'🥉 Qui prend le bronze ?':'🎫 Qui se qualifie ?'} <span class="bonus-pts">+2 juste / −1 faux</span></label>
       <select id="qual-${m.id}">
         <option value="">— Je ne parie pas sur le qualifié —</option>
-        <option value="${m.a.replace(/"/g,'&quot;')}" ${monPr&&monPr.qualifie===m.a?'selected':''}>${F[m.a]||'⚽'} ${m.a} passe</option>
-        <option value="${m.b.replace(/"/g,'&quot;')}" ${monPr&&monPr.qualifie===m.b?'selected':''}>${F[m.b]||'⚽'} ${m.b} passe</option>
+        <option value="${m.a.replace(/"/g,'&quot;')}" ${monPr&&monPr.qualifie===m.a?'selected':''}>${F[m.a]||'⚽'} ${m.a} ${m.id>=103?'vainqueur':'passe'}</option>
+        <option value="${m.b.replace(/"/g,'&quot;')}" ${monPr&&monPr.qualifie===m.b?'selected':''}>${F[m.b]||'⚽'} ${m.b} ${m.id>=103?'vainqueur':'passe'}</option>
       </select>
       ${(()=>{
         const reste = cartouchesRestantes(pseudo);
@@ -1754,7 +1849,7 @@ function carteMatch(m, modePronos){
       const morceaux = [];
       morceaux.push(base===3?'score exact +3 🎯':base===1?'tendance +1':'score raté 0');
       if(monPr.buteur) morceaux.push(bo.but===2?`buteur ${monPr.buteur} +2 ⚽`:`buteur ${monPr.buteur} −1 ❌`);
-      if(monPr.qualifie) morceaux.push(bo.qualif===2?`${monPr.qualifie} qualifié +2 🎫`:`${monPr.qualifie} éliminé −1 ❌`);
+      if(monPr.qualifie) morceaux.push(bo.qualif===2?`${monPr.qualifie} ${monPr.match_id>=103?'vainqueur':'qualifié'} +2 🎫`:`${monPr.qualifie} ${monPr.match_id>=103?'battu':'éliminé'} −1 ❌`);
       if(monPr.scenario) morceaux.push(bo.scen===1?`scénario +1 ⏱️`:`scénario raté 0`);
       if(monPr.btts===true||monPr.btts===false) morceaux.push(bo.btts===1?'2 équipes marquent +1 🥅':'2 équipes −1 ❌');
       if(monPr.en_or) morceaux.push('🌟 EN OR ×2');
@@ -2102,6 +2197,25 @@ function moneyTime(lignes){
 }
 
 function classement(){
+  /* ÉTAT 0 — 🔒 HUIS CLOS FINAL : rideau total sur le classement */
+  if(huisClosActif()){
+    const noms = PARTICIPANTS.slice().sort((a,b)=>a.localeCompare(b,'fr'));
+    $('tableau-classement').innerHTML = `
+      <div class="hc-annonce">
+        <div class="hc-cadenas">🔒</div>
+        <div class="hc-titre">Le Huis Clos Final</div>
+        <div class="hc-sous">Rideau sur les deux derniers matchs. Points masqués, classement scellé, paris sous enveloppe. Vous saurez qui est champion… quand tout sera fini.</div>
+      </div>
+      <div class="hc-scelle">
+        <div class="hc-scelle-tete">🏆 Classement <span class="hc-badge">SCELLÉ</span></div>
+        ${noms.map(p=>`<div class="hc-ligne"><span class="hc-q">?</span><span class="hc-nom">${p}${participants[p]&&participants[p].equipe_ecurie?' · '+(F[participants[p].equipe_ecurie]||''):''}</span><span class="hc-pts">${String(Math.floor(100+Math.random()*60))}</span></div>`).join('')}
+        <div class="hc-note">Dernier état connu : avant la petite finale. Ordre alphabétique — même le podium est secret.</div>
+        <div class="hc-vanne">🎙️ ${vanneHuisClos()}</div>
+      </div>`;
+    $('note-classement').textContent = `Le dépouillement aura lieu à la Nuit du Jugement, après la finale.`;
+    const cj=$('commentaire-jour'); if(cj) cj.style.display='none';
+    return;
+  }
   const lignes = calculTotaux(filtrePhase);
   const aujourdhui = jourCle({dt: new Date()});
   const lignesHier = calculTotaux(m => filtrePhase(m) && jourCle(m) !== aujourdhui);
@@ -2949,6 +3063,7 @@ const DDAY_HISTOIRE = {
 };
 function banniereEcurie(){
   const z = $('banniere-ecurie');
+  afficheDuJour();
   if(!pseudo){ z.style.display='none'; return; }
   const eq = ecurieDe(pseudo);
   if(!eq){
@@ -4562,7 +4677,7 @@ function lancerRecapJour(jourClef){
     });
     /* 3) Le sort du leader provisoire : on aime taper sur celui d'en haut.
        MASQUÉ en Money Time (poules non finies) pour ne pas spoiler le classement. */
-    const enMoneyTime = poulesScellees();
+    const enMoneyTime = poulesScellees() || huisClosActif();
     if(!enMoneyTime){
     const clAvant = calculTotaux(x => x.dt.getTime() < matchs[0].dt.getTime());
     const clApres = calculTotaux(x => x.dt.getTime() <= matchs[matchs.length-1].dt.getTime());
@@ -4688,7 +4803,7 @@ function annonceCheikh(){
 function detecterReveals(){
   if(!pseudo) return;
   const vus = vusReveal();
-  const nouveaux = M.filter(m => resultats[m.id] && !vus.includes(m.id));
+  const nouveaux = M.filter(m => resultats[m.id] && !vus.includes(m.id) && !(huisClosActif() && m.id>=103));
   if(!nouveaux.length) return;
   /* on ne théâtralise que les 3 plus récents, le reste est marqué vu */
   const aJouer = nouveaux.slice(-3);
@@ -4700,17 +4815,26 @@ function verdictMatch(m, re){
   const a = re.score_a, b = re.score_b, tot = a+b, ecart = Math.abs(a-b);
   /* Phase finale décidée après 90 min : le match n'est PAS nul, il y a un qualifié.
      On l'annonce selon le scénario (prolongation / tirs au but), avec le score final si dispo. */
+  /* 🥉🏆 petite finale et finale : on ne "se qualifie" pas, on prend le bronze ou le TITRE */
+  const estBronze = m.id===103, estTitre = m.id===104;
   if(re.qualifie && (re.scenario==='prolongation' || re.scenario==='tab')){
     if(re.scenario==='tab'){
       /* score de la séance affiché dans le sens du VAINQUEUR (ex. "4-2" pour l'Égypte) */
       let sf = '';
       const mm = re.score_final ? String(re.score_final).match(/(\d+)\s*[-–·:]\s*(\d+)/) : null;
       if(mm) sf = (re.qualifie === m.b) ? ` ${mm[2]} t.a.b. à ${mm[1]}` : ` ${mm[1]} t.a.b. à ${mm[2]}`;
-      return {titre:'AU BOUT DU SUSPENSE', sous:`${re.qualifie} passe aux tirs au but${sf ? ' ('+sf.trim()+')' : ''} !`, fete:true};
+      const sfx = sf ? ' ('+sf.trim()+')' : '';
+      if(estTitre) return {titre:'🏆 CHAMPION DU MONDE AU BOUT DU SUSPENSE', sous:`${re.qualifie} sur le toit du monde, aux tirs au but${sfx} !`, fete:true};
+      if(estBronze) return {titre:'🥉 LE BRONZE AU BOUT DU SUSPENSE', sous:`${re.qualifie} arrache la médaille aux tirs au but${sfx} !`, fete:true};
+      return {titre:'AU BOUT DU SUSPENSE', sous:`${re.qualifie} passe aux tirs au but${sfx} !`, fete:true};
     }
     const sf = re.score_final ? ` (${re.score_final})` : '';
+    if(estTitre) return {titre:'🏆 CHAMPION DU MONDE EN PROLONGATION', sous:`${re.qualifie} est sacré au bout de la nuit${sf} !`, fete:true};
+    if(estBronze) return {titre:'🥉 LE BRONZE EN PROLONGATION', sous:`${re.qualifie} décroche la médaille après prolongation${sf} !`, fete:true};
     return {titre:'ARRACHÉ EN PROLONGATION', sous:`${re.qualifie} se qualifie après prolongation${sf} !`, fete:true};
   }
+  if(re.qualifie && estTitre) return {titre:'🏆 CHAMPION DU MONDE', sous:`${re.qualifie} sur le toit du monde !`, fete:true};
+  if(re.qualifie && estBronze) return {titre:'🥉 LA MÉDAILLE DE BRONZE', sous:`${re.qualifie} termine sur le podium !`, fete:true};
   const niveauA = (EQUIPES[m.a]||{}).niv || 3, niveauB = (EQUIPES[m.b]||{}).niv || 3;
   const favori = niveauA > niveauB ? m.a : (niveauB > niveauA ? m.b : null);
   const ecartNiv = Math.abs(niveauA - niveauB);
@@ -4861,7 +4985,7 @@ function etapesReveal(id){
   /* MONEY TIME : tant que les 72 matchs de poules ne sont pas tous joués, on SCELLE le
      classement général dans le reveal pour préserver le suspense du sacre. Le détail des
      points du match ("Les comptes sont bons") reste affiché. En phase 2, plus de scellé. */
-  const enMoneyTime = poulesScellees();
+  const enMoneyTime = poulesScellees() || huisClosActif();
   const etapeClassement = enMoneyTime
     ? (()=>{ const reste = 72 - Object.keys(resultats).length;
         const tease = reste>=15 ? `Encore <b>${reste}</b> matchs avant que le coffre s'ouvre. Le classement mijote.`
@@ -5954,7 +6078,11 @@ function renduBracket(){
       const butsIndet = buts.indetermines.length
         ? `<div class="brk-indet">${buts.indetermines.map(b=>`⚽ ${b}`).join(' · ')}</div>` : '';
       const pied = joue && vainqueur
-        ? `<div class="brk-pied-win">✅ <b>${vainqueur}</b> file ${tour==='16e'?'en 8es':tour==='8e'?'en quarts':tour==='Quart'?'en demies':tour==='Demie'?'en finale':'au sommet'}</div>`
+        ? (tour==='3e place'
+            ? `<div class="brk-pied-win">🥉 <b>${vainqueur}</b> prend la médaille de bronze</div>`
+            : tour==='Finale'
+              ? `<div class="brk-pied-win">🏆 <b>${vainqueur}</b> — CHAMPION DU MONDE</div>`
+              : `<div class="brk-pied-win">✅ <b>${vainqueur}</b> file ${tour==='16e'?'en 8es':tour==='8e'?'en quarts':tour==='Quart'?'en demies':'en finale'}</div>`)
         : (!joue && cal ? `<div class="brk-pied-lieu">📍 ${cal.v}</div>` : '');
       return `<div class="brk-match brk-match-affiche${surveille?' brk-hot':''}${choc?' brk-choc':''}${joue?' brk-joue':''}">
         ${tete}
