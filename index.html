@@ -804,7 +804,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.43';
+const APP_VERSION = '13.44';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1637,8 +1637,9 @@ function carteMatch(m, modePronos){
     const t = ptsTotal(pr, re);
     /* match commencé mais pas encore validé : on montre les pronos de chacun (score + bonus), sans points ni verdict */
     if(t===null){
-      /* 🔒 huis clos : les paris des AUTRES sur les deux derniers matchs sont des enveloppes scellées */
-      if(huisClosActif() && pr.match_id>=103 && p!==pseudo){
+      /* 🔒 huis clos : les paris des AUTRES sur les deux derniers matchs sont des enveloppes
+         scellées DÈS LE DÉPÔT (sinon les pouvoirs/Ors déposés avant le coup d'envoi fuiteraient) */
+      if(pr.match_id>=103 && p!==pseudo && !window.__rideauLeve){
         return `<div class="fam-l"><span class="fam-n">${p}</span><span class="fam-spacer"></span><span class="hc-env">🗳️ enveloppe déposée</span></div>`;
       }
       const tags = [];
