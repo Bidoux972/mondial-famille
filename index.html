@@ -623,6 +623,25 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .qz-opt.qz-fige{cursor:default;opacity:.55}
 .qz-opt.qz-fige.qz-choisie{opacity:1;border-color:#a78bfa;background:rgba(167,139,250,.15);font-weight:700}
 .qz-grave{font-size:13px;color:var(--creme);background:rgba(167,139,250,.12);border:1px solid #a78bfa;border-radius:8px;padding:9px 11px}
+.qz-mini{background:linear-gradient(135deg,#1a1230,var(--panneau));border:1.5px solid #a78bfa;border-radius:12px;padding:12px;margin:0 0 12px}
+.qz-mini-tete{display:flex;gap:10px;align-items:center}
+.qz-mini-emo{font-size:24px}
+.qz-mini-titre{font-family:'Archivo Black';font-size:14px;color:var(--creme);text-transform:uppercase}
+.qz-mini-sous{font-size:11px;color:#c9b8f5;margin-top:2px}
+.qz-mini-btn{width:100%;background:#a78bfa;color:var(--nuit);font-weight:800;font-size:12.5px;margin-top:10px}
+.qz-mini-fini{font-size:12px;color:#c9b8f5;line-height:1.5}
+.qz-mini-fini b{color:var(--creme)}
+.qz-lien{color:var(--or);font-weight:700;text-decoration:underline;cursor:pointer}
+#quiz-salle{position:fixed;inset:0;z-index:9000;background:radial-gradient(circle at 50% 0%, #1a1230 0%, #0A0F18 60%);display:flex;flex-direction:column;animation:pvFade .35s ease}
+.qz-salle-tete{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;border-bottom:1px solid rgba(167,139,250,.35);flex-shrink:0}
+.qz-salle-titre{font-family:'Archivo Black';font-size:16px;color:var(--creme);text-transform:uppercase}
+.qz-salle-sous{font-size:10.5px;color:#c9b8f5;margin-top:2px}
+.qz-salle-etat{margin-left:auto;font-family:'Space Grotesk',monospace;font-size:14px;font-weight:800;color:var(--or);flex-shrink:0}
+.qz-salle-x{background:none;border:1px solid rgba(167,139,250,.5);color:#c9b8f5;border-radius:8px;width:32px;height:32px;font-size:15px;flex-shrink:0;cursor:pointer}
+.qz-salle-corps{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+.qz-fini-msg{font-size:13px;color:#c9b8f5;text-align:center;padding:24px 10px;line-height:1.6}
+.qz-relire{margin-top:16px;border-top:1px dashed rgba(167,139,250,.35);padding-top:12px}
+.qz-relire summary{font-size:12.5px;font-weight:800;color:#c9b8f5;cursor:pointer;margin-bottom:10px}
 .ex-ecurie{font-size:.82em;color:var(--gris);font-weight:400;font-style:italic}
 .memorial{font-size:12px;color:var(--gris);line-height:1.55;font-style:italic;border-style:dashed}
 .memorial b{color:var(--creme)}
@@ -717,7 +736,6 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   </div>
   <div class="moi" id="bloc-moi" style="display:none"></div>
   <div id="affiche-jour" style="display:none"></div>
-  <div id="quiz-zone" style="display:none"></div>
   <div id="banniere-ecurie" style="display:none"></div>
   <div class="mini-cl" id="mini-classement" style="display:none" onclick="goTab('classement')"></div>
   <div id="alerte-duel"></div>
@@ -728,6 +746,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   <div id="avm"></div>
 
   <section id="sec-matchs" class="actif">
+    <div id="quiz-zone" style="display:none"></div>
     <h2>La grille <small>72 matchs de poules puis 32 à élimination · scores validés par le commissaire au fil du tournoi</small></h2>
     <div class="admin-bloc" id="admin-maj" style="display:none">
       <div class="eti">Mise à jour du jour (commissaire)</div>
@@ -835,7 +854,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.51';
+const APP_VERSION = '13.52';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1383,38 +1402,76 @@ async function dernierMot(qid){
 function carteQuiz(){
   const z = $('quiz-zone');
   if(!z) return;
-  if(!quizOuvert()){ z.style.display='none'; z.innerHTML=''; return; }
+  if(!quizOuvert()){ z.style.display='none'; z.innerHTML=''; const sal=$('quiz-salle'); if(sal) sal.remove(); return; }
   chargerMaCopieQuiz();
   const scelle = quizReponsesLocales();
   const nb = Object.keys(scelle).filter(k=>QUIZ_QUESTIONS.some(q=>q.id===k)).length;
   const fini = nb >= QUIZ_QUESTIONS.length;
   z.style.display='';
+  z.innerHTML = fini
+    ? `<div class="qz-mini qz-mini-fini">🔏 <b>Grand Quiz : copie complète (32/32).</b> Rendez-vous au dépouillement de la Nuit du Jugement. <span class="qz-lien" onclick="ouvrirQuiz()">Relire mes réponses</span></div>`
+    : `<div class="qz-mini">
+        <div class="qz-mini-tete"><span class="qz-mini-emo">🧠</span>
+          <div><div class="qz-mini-titre">Le Grand Quiz du Mondial</div>
+          <div class="qz-mini-sous">32 questions · scellement définitif · ${nb===0?'ta copie est vierge':'✍️ '+nb+'/32 gravées'} · ferme dimanche 15h</div></div>
+        </div>
+        <button class="btn qz-mini-btn" onclick="ouvrirQuiz()">🏛️ Entrer dans la salle d'examen</button>
+      </div>`;
+  if(document.getElementById('quiz-salle')) renduSalle(true);
+}
+function fermerQuiz(){ const s=document.getElementById('quiz-salle'); if(s) s.remove(); carteQuiz(); }
+function ouvrirQuiz(){
+  if(document.getElementById('quiz-salle')) return;
+  const d=document.createElement('div');
+  d.id='quiz-salle';
+  document.body.appendChild(d);
+  renduSalle(false);
+}
+function renduSalle(garderScroll){
+  const salle = document.getElementById('quiz-salle');
+  if(!salle) return;
+  const corps = document.getElementById('qz-salle-corps');
+  const scrollAvant = (garderScroll && corps) ? corps.scrollTop : 0;
+  const scelle = quizReponsesLocales();
+  const nb = Object.keys(scelle).filter(k=>QUIZ_QUESTIONS.some(q=>q.id===k)).length;
   const CATS = {famille:"🏠 La mémoire de la famille", tournoi:"⚽ La mémoire du tournoi", archives:"🗄️ Les révélations des archives", sub:"⚖️ La subsidiaire"};
-  let derniereCat = '';
-  z.innerHTML = `<div class="qz-carte">
-    <div class="qz-tete">
-      <div class="qz-titre">🧠 Le Grand Quiz du Mondial</div>
-      <div class="qz-sous">Qui a vraiment suivi ? 32 questions sur VOTRE tournoi. Règle du jeu : chaque réponse se scelle UNE PAR UNE — une fois gravée, tu peux la relire, jamais la changer. Réponds à ton rythme d'ici dimanche 15h. Le meilleur entre au palmarès, le dernier reçoit le 🐟 Poisson Rouge d'Or.</div>
-      <div class="qz-compteur">${fini?'🔏 Copie complète — 32/32 gravées. Rendez-vous au dépouillement.':`✍️ ${nb}/32 réponses gravées`}</div>
+  const rendreQ = (q, qi, grave) => {
+    let corpsQ;
+    if(grave){
+      corpsQ = q.num
+        ? `<div class="qz-grave">🔏 Ta réponse gravée : <b>${scelle[q.id]}</b></div>`
+        : `<div class="qz-opts">${q.o.map((opt,i)=>`<div class="qz-opt qz-fige${scelle[q.id]===i?' qz-choisie':''}"><span>${String.fromCharCode(65+i)}) ${opt}${scelle[q.id]===i?' 🔏':''}</span></div>`).join('')}</div>`;
+    } else {
+      corpsQ = (q.num
+        ? `<input type="number" id="qz-${q.id}" class="qz-num" placeholder="Ton chiffre">`
+        : `<div class="qz-opts">${q.o.map((opt,i)=>`<label class="qz-opt"><input type="radio" name="qz-${q.id}" value="${i}"><span>${String.fromCharCode(65+i)}) ${opt}</span></label>`).join('')}</div>`)
+        + `<button class="btn qz-btn-q" id="qzbtn-${q.id}" onclick="dernierMot('${q.id}')">🔏 Sceller ma réponse</button>`;
+    }
+    return `<div class="qz-q${grave?' qz-q-grave':''}"><div class="qz-qt">${qi+1}. ${q.t}</div>${corpsQ}</div>`;
+  };
+  let derniereCat='';
+  const aSceller = QUIZ_QUESTIONS.map((q,qi)=>({q,qi})).filter(x=>scelle[x.q.id]===undefined || scelle[x.q.id]===null);
+  const graves   = QUIZ_QUESTIONS.map((q,qi)=>({q,qi})).filter(x=>!(scelle[x.q.id]===undefined || scelle[x.q.id]===null));
+  const htmlASceller = aSceller.map(({q,qi})=>{
+    const tete = q.cat!==derniereCat ? `<div class="qz-cat">${CATS[q.cat]}</div>` : '';
+    derniereCat = q.cat;
+    return tete + rendreQ(q, qi, false);
+  }).join('');
+  salle.innerHTML = `
+    <div class="qz-salle-tete">
+      <div>
+        <div class="qz-salle-titre">🏛️ La Salle d'Examen</div>
+        <div class="qz-salle-sous">Huis clos. Silence. On ne copie pas sur son voisin — de toute façon il a coché D.</div>
+      </div>
+      <div class="qz-salle-etat">✍️ ${nb}/32</div>
+      <button class="qz-salle-x" onclick="fermerQuiz()">✕</button>
     </div>
-    ${QUIZ_QUESTIONS.map((q,qi)=>{
-      const tete = q.cat!==derniereCat ? `<div class="qz-cat">${CATS[q.cat]}</div>` : '';
-      derniereCat = q.cat;
-      const grave = scelle[q.id] !== undefined && scelle[q.id] !== null;
-      let corps;
-      if(grave){
-        corps = q.num
-          ? `<div class="qz-grave">🔏 Ta réponse gravée : <b>${scelle[q.id]}</b></div>`
-          : `<div class="qz-opts">${q.o.map((opt,i)=>`<div class="qz-opt qz-fige${scelle[q.id]===i?' qz-choisie':''}"><span>${String.fromCharCode(65+i)}) ${opt}${scelle[q.id]===i?' 🔏':''}</span></div>`).join('')}</div>`;
-      } else {
-        corps = (q.num
-          ? `<input type="number" id="qz-${q.id}" class="qz-num" placeholder="Ton chiffre">`
-          : `<div class="qz-opts">${q.o.map((opt,i)=>`<label class="qz-opt"><input type="radio" name="qz-${q.id}" value="${i}"><span>${String.fromCharCode(65+i)}) ${opt}</span></label>`).join('')}</div>`)
-          + `<button class="btn qz-btn-q" id="qzbtn-${q.id}" onclick="dernierMot('${q.id}')">🔏 Sceller ma réponse</button>`;
-      }
-      return `${tete}<div class="qz-q${grave?' qz-q-grave':''}"><div class="qz-qt">${qi+1}. ${q.t}</div>${corps}</div>`;
-    }).join('')}
-  </div>`;
+    <div class="qz-salle-corps" id="qz-salle-corps">
+      ${aSceller.length ? htmlASceller : `<div class="qz-fini-msg">🔏 Copie complète. Il ne reste qu'à attendre le verdict — ou à relire tes choix en tremblant.</div>`}
+      ${graves.length ? `<details class="qz-relire"${aSceller.length?'':' open'}><summary>🔏 Relire mes réponses gravées (${graves.length})</summary>${graves.map(({q,qi})=>rendreQ(q,qi,true)).join('')}</details>` : ''}
+    </div>`;
+  const corpsApres = document.getElementById('qz-salle-corps');
+  if(corpsApres && scrollAvant) corpsApres.scrollTop = scrollAvant;
 }
 /* ===== 🔏 LA CÉRÉMONIE DU SCEAU : plein écran à chaque mise sous scellés ===== */
 const VANNES_SCEAU = [
