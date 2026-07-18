@@ -616,7 +616,13 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .qz-opt input{margin-top:2px;flex-shrink:0;width:auto}
 .qz-opt:has(input:checked){border-color:#a78bfa;background:rgba(167,139,250,.12)}
 .qz-num{width:100%;background:var(--nuit);color:var(--creme);border:1px solid var(--ligne);border-radius:8px;padding:9px;font-size:13px}
-.qz-btn{width:100%;background:#a78bfa;color:var(--nuit);font-weight:800;font-size:13px;margin-top:6px}
+.qz-btn-q{width:100%;background:#a78bfa;color:var(--nuit);font-weight:800;font-size:12px;margin-top:7px;padding:8px}
+.qz-btn-q.qz-arme{background:var(--or);animation:pvBlink 1s ease-in-out infinite}
+.qz-compteur{font-size:11.5px;color:var(--or);font-weight:800;margin-top:8px}
+.qz-q-grave{opacity:.92}
+.qz-opt.qz-fige{cursor:default;opacity:.55}
+.qz-opt.qz-fige.qz-choisie{opacity:1;border-color:#a78bfa;background:rgba(167,139,250,.15);font-weight:700}
+.qz-grave{font-size:13px;color:var(--creme);background:rgba(167,139,250,.12);border:1px solid #a78bfa;border-radius:8px;padding:9px 11px}
 .ex-ecurie{font-size:.82em;color:var(--gris);font-weight:400;font-style:italic}
 .memorial{font-size:12px;color:var(--gris);line-height:1.55;font-style:italic;border-style:dashed}
 .memorial b{color:var(--creme)}
@@ -829,7 +835,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.48';
+const APP_VERSION = '13.50';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1213,6 +1219,14 @@ const QUIZ_QUESTIONS = [
    o:["L'Argentine","La Norvège","Le Portugal","Contre la VAR, comme d'habitude"], b:0},
   {id:'q16', cat:'tournoi', t:"Question de riches : combien de places fait le MetLife Stadium, théâtre du sacre de dimanche ?",
    o:["62 500","72 500","82 500","Toujours une de moins que prévu, c'est le foot"], b:2},
+  {id:'q24', cat:'tournoi', t:"Stat cruelle des Potins : sur 48 nations, 47 ont marqué au moins un but en phase de poules. Qui est reparti totalement bredouille ?",
+   o:["Le Panamá","Curaçao","La Jordanie","La France, mais elle a attendu la demi-finale pour ça"], b:0},
+  {id:'q25', cat:'tournoi', t:"Mbappé et Messi, 8 buts partout au Soulier d'Or. Quel critère FIFA place l'Argentin devant au classement, à la fureur du Français ?",
+   o:["Le nombre de passes décisives","Le nombre de minutes jouées","Le tirage au sort","Un simple appel d'Infantino, selon le sélectionneur égyptien"], b:0},
+  {id:'q26', cat:'tournoi', t:"En larmes après Brésil–Norvège, Neymar a résumé sa carrière internationale en une phrase. Laquelle ?",
+   o:["« J'ai commencé ici, j'ai fini ici »","« Le football me devait une Coupe »","« Rendez-vous en 2030 »","« Ginou m'a lâché au mercato, je n'avais plus de raison de rester »"], b:0},
+  {id:'q27', cat:'tournoi', t:"Hécatombe historique sur les bancs de touche : combien de sélectionneurs ont quitté leurs fonctions pendant ce Mondial, record absolu ?",
+   o:["8","12","18","Tous — même Deschamps s'en va, c'est dire l'ambiance"], b:2},
   /* — Les révélations des archives (réponses CALCULÉES, preuves au dépouillement) — */
   {id:'a1', cat:'archives', calc:'remontada', t:"La plus belle remontada d'une soirée : quelqu'un a grimpé plus de places en un soir que certains en un mois — et personne ne l'a applaudi sur le moment. Qui ?",
    o:["Bidou","Véro","Alex","Ginou"]},
@@ -1294,54 +1308,92 @@ function quizOuvert(){
 function quizReponsesLocales(){
   try{ return JSON.parse(localStorage.getItem('mf_quiz_'+pseudo)||'{}'); }catch(e){ return {}; }
 }
-async function scellerQuiz(){
-  const rep = {};
-  let manquantes = 0;
-  QUIZ_QUESTIONS.forEach(q=>{
-    if(q.num){
-      const el = $('qz-'+q.id);
-      if(el && el.value.trim()!=='') rep[q.id] = parseInt(el.value,10);
-      else manquantes++;
-    } else {
-      const coche = document.querySelector(`input[name="qz-${q.id}"]:checked`);
-      if(coche) rep[q.id] = parseInt(coche.value,10);
-      else manquantes++;
+/* copie cloud chargée une fois par session (multi-appareils : le scellé te suit partout) */
+async function chargerMaCopieQuiz(){
+  if(window.__quizCharge || !pseudo) return;
+  window.__quizCharge = true;
+  try{
+    const rows = await sb(`mondial_quiz?pseudo=eq.${encodeURIComponent(pseudo)}&select=reponses`);
+    if(rows && rows[0] && rows[0].reponses){
+      const fusion = {...rows[0].reponses, ...quizReponsesLocales()};
+      localStorage.setItem('mf_quiz_'+pseudo, JSON.stringify(fusion));
+      carteQuiz();
     }
-  });
-  if(manquantes > 0){ toast(`🧠 ${manquantes} question${manquantes>1?'s':''} sans réponse — un limier répond à tout.`); return; }
+  }catch(e){}
+}
+/* ✍️ scellement QUESTION PAR QUESTION : une réponse donnée est GRAVÉE — relisible, jamais modifiable */
+async function dernierMot(qid){
+  const q = QUIZ_QUESTIONS.find(x=>x.id===qid);
+  if(!q) return;
+  let valeur = null;
+  if(q.num){
+    const el = $('qz-'+qid);
+    if(!el || el.value.trim()==='') { toast('Un chiffre d\'abord, le scellement ensuite.'); return; }
+    valeur = parseInt(el.value,10);
+  } else {
+    const coche = document.querySelector(`input[name="qz-${qid}"]:checked`);
+    if(!coche){ toast('Coche une réponse d\'abord — même la D, on ne juge pas. Enfin si.'); return; }
+    valeur = parseInt(coche.value,10);
+  }
+  const btn = $('qzbtn-'+qid);
+  /* le rituel : premier clic = « C'est ton dernier mot ? », second clic = gravé */
+  if(btn && btn.dataset.arme !== '1'){
+    btn.dataset.arme = '1';
+    btn.textContent = '❓ C\'est ton dernier mot ?';
+    btn.classList.add('qz-arme');
+    setTimeout(()=>{ if(btn && btn.dataset.arme==='1'){ btn.dataset.arme='0'; btn.textContent='🔏 Sceller ma réponse'; btn.classList.remove('qz-arme'); } }, 5000);
+    return;
+  }
+  const rep = quizReponsesLocales();
+  rep[qid] = valeur;
+  localStorage.setItem('mf_quiz_'+pseudo, JSON.stringify(rep));
   try{
     await sb('mondial_quiz?on_conflict=pseudo', {method:'POST', prefer:'resolution=merge-duplicates',
       body: JSON.stringify({pseudo, reponses: rep})});
-    localStorage.setItem('mf_quiz_'+pseudo, JSON.stringify(rep));
-    ceremonieSceau('Le Grand Quiz du Mondial', 'Ta copie<br>est scellée',
-      `${Object.keys(rep).length} réponses au coffre. Dépouillement à la <b>Nuit du Jugement</b> — le meilleur limier entre au palmarès, le dernier reçoit le Poisson Rouge d'Or.`);
-    carteQuiz();
-  }catch(e){ toast('Échec du scellement — réessaie'); }
+  }catch(e){ toast('Réseau capricieux — la réponse est gardée sur ton appareil, elle repartira au prochain scellement.'); }
+  const total = Object.keys(rep).filter(k=>QUIZ_QUESTIONS.some(q2=>q2.id===k)).length;
+  if(total >= QUIZ_QUESTIONS.length){
+    ceremonieSceau('Le Grand Quiz du Mondial', 'Ta copie<br>est complète',
+      `${QUIZ_QUESTIONS.length} réponses gravées, plus rien à toucher. Dépouillement à la <b>Nuit du Jugement</b> — que le meilleur limier gagne, que le dernier assume son Poisson Rouge.`);
+  } else {
+    toast(`🔏 Gravée. ${total}/${QUIZ_QUESTIONS.length} — plus de retour en arrière possible.`);
+  }
+  carteQuiz();
 }
 function carteQuiz(){
   const z = $('quiz-zone');
   if(!z) return;
   if(!quizOuvert()){ z.style.display='none'; z.innerHTML=''; return; }
-  const deja = quizReponsesLocales();
-  const dejaFait = Object.keys(deja).length >= QUIZ_QUESTIONS.length;
+  chargerMaCopieQuiz();
+  const scelle = quizReponsesLocales();
+  const nb = Object.keys(scelle).filter(k=>QUIZ_QUESTIONS.some(q=>q.id===k)).length;
+  const fini = nb >= QUIZ_QUESTIONS.length;
   z.style.display='';
   const CATS = {famille:"🏠 La mémoire de la famille", tournoi:"⚽ La mémoire du tournoi", archives:"🗄️ Les révélations des archives", sub:"⚖️ La subsidiaire"};
   let derniereCat = '';
   z.innerHTML = `<div class="qz-carte">
     <div class="qz-tete">
       <div class="qz-titre">🧠 Le Grand Quiz du Mondial</div>
-      <div class="qz-sous">Qui a vraiment suivi ? 28 questions sur VOTRE tournoi, réponses scellées jusqu'à la Nuit du Jugement. Le meilleur entre au palmarès — le dernier repart avec le 🐟 Poisson Rouge d'Or. Fermeture au coup d'envoi de la finale.</div>
-      ${dejaFait?'<div class="qz-fait">🔏 Ta copie est scellée — tu peux la modifier jusqu\'à dimanche 15h.</div>':''}
+      <div class="qz-sous">Qui a vraiment suivi ? 32 questions sur VOTRE tournoi. Règle du jeu : chaque réponse se scelle UNE PAR UNE — une fois gravée, tu peux la relire, jamais la changer. Réponds à ton rythme d'ici dimanche 15h. Le meilleur entre au palmarès, le dernier reçoit le 🐟 Poisson Rouge d'Or.</div>
+      <div class="qz-compteur">${fini?'🔏 Copie complète — 32/32 gravées. Rendez-vous au dépouillement.':`✍️ ${nb}/32 réponses gravées`}</div>
     </div>
     ${QUIZ_QUESTIONS.map((q,qi)=>{
       const tete = q.cat!==derniereCat ? `<div class="qz-cat">${CATS[q.cat]}</div>` : '';
       derniereCat = q.cat;
-      const corps = q.num
-        ? `<input type="number" id="qz-${q.id}" class="qz-num" placeholder="Ton chiffre" value="${deja[q.id]!=null?deja[q.id]:''}">`
-        : `<div class="qz-opts">${q.o.map((opt,i)=>`<label class="qz-opt"><input type="radio" name="qz-${q.id}" value="${i}" ${deja[q.id]===i?'checked':''}><span>${String.fromCharCode(65+i)}) ${opt}</span></label>`).join('')}</div>`;
-      return `${tete}<div class="qz-q"><div class="qz-qt">${qi+1}. ${q.t}</div>${corps}</div>`;
+      const grave = scelle[q.id] !== undefined && scelle[q.id] !== null;
+      let corps;
+      if(grave){
+        corps = q.num
+          ? `<div class="qz-grave">🔏 Ta réponse gravée : <b>${scelle[q.id]}</b></div>`
+          : `<div class="qz-opts">${q.o.map((opt,i)=>`<div class="qz-opt qz-fige${scelle[q.id]===i?' qz-choisie':''}"><span>${String.fromCharCode(65+i)}) ${opt}${scelle[q.id]===i?' 🔏':''}</span></div>`).join('')}</div>`;
+      } else {
+        corps = (q.num
+          ? `<input type="number" id="qz-${q.id}" class="qz-num" placeholder="Ton chiffre">`
+          : `<div class="qz-opts">${q.o.map((opt,i)=>`<label class="qz-opt"><input type="radio" name="qz-${q.id}" value="${i}"><span>${String.fromCharCode(65+i)}) ${opt}</span></label>`).join('')}</div>`)
+          + `<button class="btn qz-btn-q" id="qzbtn-${q.id}" onclick="dernierMot('${q.id}')">🔏 Sceller ma réponse</button>`;
+      }
+      return `${tete}<div class="qz-q${grave?' qz-q-grave':''}"><div class="qz-qt">${qi+1}. ${q.t}</div>${corps}</div>`;
     }).join('')}
-    <button class="btn qz-btn" onclick="scellerQuiz()">${dejaFait?'🔏 Re-sceller ma copie':'🧠 Sceller mes réponses'}</button>
   </div>`;
 }
 /* ===== 🔏 LA CÉRÉMONIE DU SCEAU : plein écran à chaque mise sous scellés ===== */
