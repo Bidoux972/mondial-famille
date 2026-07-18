@@ -835,7 +835,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.50';
+const APP_VERSION = '13.51';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1321,6 +1321,25 @@ async function chargerMaCopieQuiz(){
     }
   }catch(e){}
 }
+/* ⚖️ Les sentences définitives : chaque question a sa formule de scellement, façon FIFA */
+const PHRASES_DERNIER_MOT = [
+  "❓ Infantino valide. Toi aussi ?",
+  "❓ La VAR a vérifié ta décision. Elle rigole. On grave ?",
+  "❓ Sûr ? La FIFA ne rembourse jamais rien.",
+  "❓ Décision finale ? Le tribunal familial ne fait pas appel.",
+  "❓ On scelle, ou tu appelles ton agent ?",
+  "❓ La commission d'éthique regarde ailleurs. On y va ?",
+  "❓ Aujourd'hui, tu te sens... sûr de toi ?",
+  "❓ Le Cheikh est prêt à descendre sur la pelouse. On confirme ?",
+  "❓ Aucun recours possible, même avec une valise. On grave ?",
+  "❓ Pas de prolongation pour réfléchir. On signe ?",
+  "❓ Domenech aurait consulté les astres. Toi, tu confirmes ?",
+  "❓ Les archives chauffent le burin. Dernier mot ?",
+  "❓ Réponse définitive, sous serment, devant Collina ?",
+  "❓ La valise est pleine. On la scelle ?",
+  "❓ Le 4e arbitre lève son panneau. C'est ta réponse ?",
+  "❓ Un stylo, un contrat, zéro clause de sortie. On signe ?"
+];
 /* ✍️ scellement QUESTION PAR QUESTION : une réponse donnée est GRAVÉE — relisible, jamais modifiable */
 async function dernierMot(qid){
   const q = QUIZ_QUESTIONS.find(x=>x.id===qid);
@@ -1339,7 +1358,8 @@ async function dernierMot(qid){
   /* le rituel : premier clic = « C'est ton dernier mot ? », second clic = gravé */
   if(btn && btn.dataset.arme !== '1'){
     btn.dataset.arme = '1';
-    btn.textContent = '❓ C\'est ton dernier mot ?';
+    const qi = QUIZ_QUESTIONS.findIndex(x=>x.id===qid);
+    btn.textContent = PHRASES_DERNIER_MOT[(qi>=0?qi:0) % PHRASES_DERNIER_MOT.length];
     btn.classList.add('qz-arme');
     setTimeout(()=>{ if(btn && btn.dataset.arme==='1'){ btn.dataset.arme='0'; btn.textContent='🔏 Sceller ma réponse'; btn.classList.remove('qz-arme'); } }, 5000);
     return;
