@@ -593,6 +593,30 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .aff-enjeu{font-size:12.5px;color:var(--creme);line-height:1.55;margin-top:6px}
 .aff-vanne{font-size:11.5px;color:#c9b8f5;font-style:italic;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(245,180,60,.3)}
 .aff-btn{width:auto;background:var(--or);color:var(--nuit);font-weight:800;font-size:12px;padding:9px 18px;margin-top:12px}
+#sceau-overlay{position:fixed;inset:0;z-index:9999;background:rgba(6,10,18,.92);display:flex;align-items:center;justify-content:center;padding:20px;animation:pvFade .3s ease}
+.sceau-boite{position:relative;background:radial-gradient(circle at 50% 35%, #1a1230 0%, #0A0F18 78%);border:1.5px solid #a78bfa;border-radius:16px;padding:34px 22px;text-align:center;max-width:380px;width:100%;overflow:hidden}
+.sceau-halo{position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.16),transparent 70%);top:20px;left:50%;transform:translateX(-50%);pointer-events:none}
+.sceau-sur{position:relative;font-size:11px;font-weight:700;color:#c9b8f5;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px}
+.sceau-urne{position:relative;font-size:56px;line-height:1;animation:pvPop .6s cubic-bezier(.34,1.56,.64,1)}
+.sceau-cachet{position:relative;font-size:30px;margin-top:-16px;filter:drop-shadow(0 0 10px rgba(167,139,250,.8));animation:pvPop .6s .25s cubic-bezier(.34,1.56,.64,1) backwards}
+.sceau-titre{position:relative;font-family:'Archivo Black';font-size:23px;font-weight:900;color:var(--creme);text-transform:uppercase;line-height:1.15;margin-top:12px}
+.sceau-texte{position:relative;font-size:13px;color:#c9b8f5;margin-top:12px;line-height:1.55}
+.sceau-texte b{color:var(--or)}
+.sceau-vanne{position:relative;font-size:12px;color:var(--gris);font-style:italic;margin-top:14px;line-height:1.5}
+.sceau-btn{position:relative;width:auto;background:#a78bfa;color:var(--nuit);font-weight:800;font-size:12px;padding:9px 20px;margin-top:18px}
+.qz-carte{background:var(--panneau);border:1.5px solid #a78bfa;border-radius:14px;padding:15px;margin:0 0 12px}
+.qz-titre{font-family:'Archivo Black';font-size:16px;color:var(--creme);text-transform:uppercase}
+.qz-sous{font-size:11.5px;color:#c9b8f5;margin-top:5px;line-height:1.5}
+.qz-fait{font-size:11px;color:var(--lagon);margin-top:8px;font-weight:700}
+.qz-cat{font-size:11px;font-weight:800;color:var(--or);letter-spacing:1.5px;text-transform:uppercase;margin:16px 0 8px;padding-top:12px;border-top:1px dashed var(--ligne)}
+.qz-q{margin-bottom:13px}
+.qz-qt{font-size:13px;font-weight:700;color:var(--creme);line-height:1.45;margin-bottom:7px}
+.qz-opts{display:flex;flex-direction:column;gap:5px}
+.qz-opt{display:flex;gap:8px;align-items:flex-start;background:var(--nuit);border:1px solid var(--ligne);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--creme);cursor:pointer;line-height:1.4}
+.qz-opt input{margin-top:2px;flex-shrink:0;width:auto}
+.qz-opt:has(input:checked){border-color:#a78bfa;background:rgba(167,139,250,.12)}
+.qz-num{width:100%;background:var(--nuit);color:var(--creme);border:1px solid var(--ligne);border-radius:8px;padding:9px;font-size:13px}
+.qz-btn{width:100%;background:#a78bfa;color:var(--nuit);font-weight:800;font-size:13px;margin-top:6px}
 .ex-ecurie{font-size:.82em;color:var(--gris);font-weight:400;font-style:italic}
 .memorial{font-size:12px;color:var(--gris);line-height:1.55;font-style:italic;border-style:dashed}
 .memorial b{color:var(--creme)}
@@ -687,6 +711,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
   </div>
   <div class="moi" id="bloc-moi" style="display:none"></div>
   <div id="affiche-jour" style="display:none"></div>
+  <div id="quiz-zone" style="display:none"></div>
   <div id="banniere-ecurie" style="display:none"></div>
   <div class="mini-cl" id="mini-classement" style="display:none" onclick="goTab('classement')"></div>
   <div id="alerte-duel"></div>
@@ -804,7 +829,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.45';
+const APP_VERSION = '13.46';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1135,6 +1160,200 @@ function afficheDuJour(){
     <div class="aff-vanne">🎙️ « ${vanne} »</div>
     <button class="btn aff-btn" onclick="goTab('matchs')">${monPr?'🗳️ Mon enveloppe est déposée — la revoir':'✍️ Déposer mon enveloppe'}</button>
   </div>`;
+}
+/* ===== 🧠 LE GRAND QUIZ DU MONDIAL — « Qui a vraiment suivi ? » =====
+   Ouvert pendant le rideau (du coup d'envoi de la petite finale au coup d'envoi de la finale).
+   Réponses scellées en base, dépouillées à la Nuit du Jugement. Zéro point de classement. */
+const QUIZ_QUESTIONS = [
+  /* — Mémoire de la famille — */
+  {id:'q1', cat:'famille', t:"Le casse du siècle : +16 points en une soirée, la banque n'a rien vu venir. Sur quel match Véro a-t-elle dégainé sa Chatte à DD ?",
+   o:["Côte d'Ivoire – Norvège","France – Suède","Brésil – Japon","Elle nie tout, son avocat confirme"], b:0},
+  {id:'q2', cat:'famille', t:"Ginou a grillé sa Remontada comme on envoie un message à la mauvaise personne : par accident, et devant tout le monde. C'était sur quel match ?",
+   o:["Allemagne – Paraguay","Brésil – Norvège","Mexique – Équateur","« C'était voulu », version officielle de l'intéressée"], b:0},
+  {id:'q3', cat:'famille', t:"Fin du mercato : qu'a payé Ginou pour quitter un naufrage et monter à bord du suivant ?",
+   o:["4 points","5 points","Sa dignité","Les réponses A et C"], b:3},
+  {id:'q4', cat:'famille', t:"11 buteurs flairés sur le tournoi, au museau, sans VAR. Qui est le meilleur renifleur de buteurs de la famille ?",
+   o:["Bidou","Véro","Alex","Ginou"], b:2},
+  {id:'q5', cat:'famille', t:"Trois pouvoirs ont parlé pendant ce tournoi. Combien n'ont JAMAIS été dégainés — et dorment encore quelque part ?",
+   o:["Aucun, tout a été joué","Un seul","Deux","Personne ne sait compter dans cette famille"], b:1},
+  {id:'q6', cat:'famille', t:"Le Sniper le plus froid du tournoi : combien de scores EXACTS pour le meilleur d'entre vous en phase de poules + phase finale ?",
+   o:["4","5","6","12, mais uniquement dans ses souvenirs"], b:2},
+  {id:'q7', cat:'famille', t:"L'écurie familiale a connu un plan social brutal. Dans l'ordre chronologique, quelles équipes Ginou a-t-elle vu mourir sous ses couleurs ?",
+   o:["Brésil puis France","France puis Brésil","Brésil, France, et son moral","Aucune : « tout allait bien », dit-elle"], b:2},
+  /* — Mémoire du tournoi (potins & news) — */
+  {id:'q8', cat:'tournoi', t:"Contre l'Égypte, l'Australie n'a marqué que grâce à... un Égyptien. Qui a fusillé son propre gardien ?",
+   o:["Mohamed Hany (csc)","Salah, par excès de générosité","Le gardien lui-même, par solitude","Le poteau, complice habituel"], b:0},
+  {id:'q9', cat:'tournoi', t:"Dans cette même séance de tirs au but, Salah a réussi le sien avec la manière. Comment ?",
+   o:["D'une frappe en lucarne","D'un chip plein axe, façon Panenka","Du talon, par mépris","Il a laissé sa place, trop de pression"], b:1},
+  {id:'q10', cat:'tournoi', t:"Samedi, un homme dirige les Bleus pour la dernière fois après 14 ans de bons, loyaux et insupportables services. Qui ?",
+   o:["Didier Deschamps","Zinédine Zidane","Thierry Henry","Domenech et son astrologue, en cas d'égalité"], b:0},
+  {id:'q11', cat:'tournoi', t:"La FIFA a prévu quoi d'inédit à la mi-temps de la finale de dimanche ?",
+   o:["Un show façon Super Bowl","Une minute de silence pour la France","Un mercato en direct","Un discours d'Infantino de 45 minutes"], b:0},
+  {id:'q12', cat:'tournoi', t:"Le Japon a perdu son magicien dès les poules, sorti en fauteuil roulant. Qui ?",
+   o:["Takefusa Kubo","Kamada","Mitoma","Son kiné, par solidarité"], b:0},
+  {id:'q13', cat:'tournoi', t:"La demi-finale perdue par la France (0-2 contre l'Espagne), c'était où — le seul déplacement des Bleus hors de la côte Est ?",
+   o:["Dallas","Los Angeles","Kansas City","Dans nos pires cauchemars, principalement"], b:0},
+  {id:'q14', cat:'tournoi', t:"La finale de dimanche se joue au MetLife Stadium. La petite finale des Bleus, elle, se joue dans l'antre de quelle équipe NFL ?",
+   o:["Les Dolphins de Miami","Les Giants de New York","Les Cowboys de Dallas","Les Bleus n'ont plus d'antre, ils squattent"], b:0},
+  {id:'q15', cat:'tournoi', t:"L'Angleterre a perdu sa demie 1-2. Contre qui — et donc contre qui l'Espagne joue-t-elle le titre ?",
+   o:["L'Argentine","La Norvège","Le Portugal","Contre la VAR, comme d'habitude"], b:0},
+  {id:'q16', cat:'tournoi', t:"Question de riches : combien de places fait le MetLife Stadium, théâtre du sacre de dimanche ?",
+   o:["62 500","72 500","82 500","Toujours une de moins que prévu, c'est le foot"], b:2},
+  /* — Les révélations des archives (réponses CALCULÉES, preuves au dépouillement) — */
+  {id:'a1', cat:'archives', calc:'remontada', t:"La plus belle remontada d'une soirée : quelqu'un a grimpé plus de places en un soir que certains en un mois — et personne ne l'a applaudi sur le moment. Qui ?",
+   o:["Bidou","Véro","Alex","Ginou"]},
+  {id:'a2', cat:'archives', calc:'gadin', t:"Le Gadin d'Or : la pire soirée comptable jamais enregistrée par les archives de l'appli. Qui a signé ce chef-d'œuvre ?",
+   o:["Bidou","Véro","Alex","Ginou"]},
+  {id:'a3', cat:'archives', calc:'statue', t:"La statue de l'île de Pâques : qui a passé le plus de soirées d'affilée exactement à la même place du classement, sans bouger d'un millimètre ?",
+   o:["Bidou","Véro","Alex","Ginou"]},
+  {id:'a4', cat:'archives', calc:'regne', num:true, t:"Le règne : combien de JOURS le trône a-t-il été squatté sans interruption par son occupant actuel ? (Les archives ont compté. Lui aussi, probablement.)"},
+  /* — La subsidiaire Pékin Express — */
+  {id:'sub', cat:'sub', num:true, sub:true, t:"LA SUBSIDIAIRE : combien de buts au total dans ce Mondial, prolongations comprises, tirs au but exclus ? Le plus proche rafle le titre en cas d'égalité."}
+];
+/* — résolveurs des questions calculées (utilisés au dépouillement) — */
+function quizPositionsParJour(){
+  const jours = [...new Set(M.filter(m=>resultats[m.id]).map(m=>jourCle(m)))].sort();
+  const pos = {};   /* pos[jour][pseudo] = place (0-based) */
+  jours.forEach(j=>{
+    const cl = calculTotaux(m => resultats[m.id] && jourCle(m) <= j);
+    pos[j] = {}; cl.forEach((l,i)=>pos[j][l.p]=i);
+  });
+  return {jours, pos};
+}
+function quizVerite(calc){
+  const {jours, pos} = quizPositionsParJour();
+  if(calc==='remontada' || calc==='statue'){
+    let best={p:null,val:-1,jour:null}, statue={p:null,val:-1};
+    PARTICIPANTS.forEach(p=>{
+      let serie=0, serieMax=0;
+      for(let i=1;i<jours.length;i++){
+        const avant=pos[jours[i-1]][p], apres=pos[jours[i]][p];
+        if(avant==null||apres==null) continue;
+        const gain = avant - apres;
+        if(calc==='remontada' && gain > best.val) best={p, val:gain, jour:jours[i]};
+        if(avant===apres){ serie++; serieMax=Math.max(serieMax,serie); } else serie=0;
+      }
+      if(calc==='statue' && serieMax > statue.val) statue={p, val:serieMax};
+    });
+    return calc==='remontada' ? best : statue;
+  }
+  if(calc==='gadin'){
+    let pire={p:null,val:Infinity,jour:null};
+    PARTICIPANTS.forEach(p=>{
+      jours.forEach(j=>{
+        let tot=0, n=0;
+        M.filter(m=>resultats[m.id] && jourCle(m)===j).forEach(m=>{
+          const pr = pronos[p] && pronos[p][m.id];
+          if(pr){ const t=ptsTotal(pr, resultats[m.id]); if(t!==null){ tot+=t; n++; } }
+        });
+        if(n>0 && tot < pire.val) pire={p, val:tot, jour:j};
+      });
+    });
+    return pire;
+  }
+  if(calc==='regne'){
+    let n=0;
+    for(let i=jours.length-1;i>=0;i--){
+      const leader = Object.keys(pos[jours[i]]).find(p=>pos[jours[i]][p]===0);
+      const leaderActuel = Object.keys(pos[jours[jours.length-1]]).find(p=>pos[jours[jours.length-1]][p]===0);
+      if(leader===leaderActuel) n++; else break;
+    }
+    return {val:n};
+  }
+  if(calc==='buts'){
+    let tot=0;
+    Object.values(resultats).forEach(re=>{
+      if(re.score_a==null) return;
+      if(re.scenario==='prolongation' && re.score_final){
+        const mm=String(re.score_final).match(/(\d+)\s*[-–·:]\s*(\d+)/);
+        tot += mm ? (+mm[1] + +mm[2]) : (re.score_a+re.score_b);
+      } else tot += re.score_a + re.score_b;
+    });
+    return {val:tot};
+  }
+  return null;
+}
+function quizOuvert(){
+  const m104 = M.find(x=>x.id===104);
+  return huisClosActif() && m104 && m104.dt && Date.now() < m104.dt.getTime();
+}
+function quizReponsesLocales(){
+  try{ return JSON.parse(localStorage.getItem('mf_quiz_'+pseudo)||'{}'); }catch(e){ return {}; }
+}
+async function scellerQuiz(){
+  const rep = {};
+  let manquantes = 0;
+  QUIZ_QUESTIONS.forEach(q=>{
+    if(q.num){
+      const el = $('qz-'+q.id);
+      if(el && el.value.trim()!=='') rep[q.id] = parseInt(el.value,10);
+      else manquantes++;
+    } else {
+      const coche = document.querySelector(`input[name="qz-${q.id}"]:checked`);
+      if(coche) rep[q.id] = parseInt(coche.value,10);
+      else manquantes++;
+    }
+  });
+  if(manquantes > 0){ toast(`🧠 ${manquantes} question${manquantes>1?'s':''} sans réponse — un limier répond à tout.`); return; }
+  try{
+    await sb('mondial_quiz?on_conflict=pseudo', {method:'POST', prefer:'resolution=merge-duplicates',
+      body: JSON.stringify({pseudo, reponses: rep})});
+    localStorage.setItem('mf_quiz_'+pseudo, JSON.stringify(rep));
+    ceremonieSceau('Le Grand Quiz du Mondial', 'Ta copie<br>est scellée',
+      `${Object.keys(rep).length} réponses au coffre. Dépouillement à la <b>Nuit du Jugement</b> — le meilleur limier entre au palmarès, le dernier reçoit le Poisson Rouge d'Or.`);
+    carteQuiz();
+  }catch(e){ toast('Échec du scellement — réessaie'); }
+}
+function carteQuiz(){
+  const z = $('quiz-zone');
+  if(!z) return;
+  if(!quizOuvert()){ z.style.display='none'; z.innerHTML=''; return; }
+  const deja = quizReponsesLocales();
+  const dejaFait = Object.keys(deja).length >= QUIZ_QUESTIONS.length;
+  z.style.display='';
+  const CATS = {famille:"🏠 La mémoire de la famille", tournoi:"⚽ La mémoire du tournoi", archives:"🗄️ Les révélations des archives", sub:"⚖️ La subsidiaire"};
+  let derniereCat = '';
+  z.innerHTML = `<div class="qz-carte">
+    <div class="qz-tete">
+      <div class="qz-titre">🧠 Le Grand Quiz du Mondial</div>
+      <div class="qz-sous">Qui a vraiment suivi ? 21 questions sur VOTRE tournoi, réponses scellées jusqu'à la Nuit du Jugement. Le meilleur entre au palmarès — le dernier repart avec le 🐟 Poisson Rouge d'Or. Fermeture au coup d'envoi de la finale.</div>
+      ${dejaFait?'<div class="qz-fait">🔏 Ta copie est scellée — tu peux la modifier jusqu\'à dimanche 15h.</div>':''}
+    </div>
+    ${QUIZ_QUESTIONS.map((q,qi)=>{
+      const tete = q.cat!==derniereCat ? `<div class="qz-cat">${CATS[q.cat]}</div>` : '';
+      derniereCat = q.cat;
+      const corps = q.num
+        ? `<input type="number" id="qz-${q.id}" class="qz-num" placeholder="Ton chiffre" value="${deja[q.id]!=null?deja[q.id]:''}">`
+        : `<div class="qz-opts">${q.o.map((opt,i)=>`<label class="qz-opt"><input type="radio" name="qz-${q.id}" value="${i}" ${deja[q.id]===i?'checked':''}><span>${String.fromCharCode(65+i)}) ${opt}</span></label>`).join('')}</div>`;
+      return `${tete}<div class="qz-q"><div class="qz-qt">${qi+1}. ${q.t}</div>${corps}</div>`;
+    }).join('')}
+    <button class="btn qz-btn" onclick="scellerQuiz()">${dejaFait?'🔏 Re-sceller ma copie':'🧠 Sceller mes réponses'}</button>
+  </div>`;
+}
+/* ===== 🔏 LA CÉRÉMONIE DU SCEAU : plein écran à chaque mise sous scellés ===== */
+const VANNES_SCEAU = [
+  "Le silence commence maintenant. Le mensonge aussi, probablement.",
+  "Ce qui entre au coffre n'en sort qu'à la Nuit du Jugement. Même les regrets.",
+  "Tu peux encore changer d'avis jusqu'au coup d'envoi. Après, c'est entre toi et dimanche soir.",
+  "Les archives ont noté l'heure du dépôt. Elles notent tout. C'est leur charme."
+];
+function ceremonieSceau(sur, titre, texte){
+  const old = document.getElementById('sceau-overlay');
+  if(old) old.remove();
+  const v = VANNES_SCEAU[Math.floor(Math.random()*VANNES_SCEAU.length)];
+  const d = document.createElement('div');
+  d.id = 'sceau-overlay';
+  d.innerHTML = `<div class="sceau-boite">
+    <div class="sceau-halo"></div>
+    <div class="sceau-sur">${sur}</div>
+    <div class="sceau-urne">🗳️</div>
+    <div class="sceau-cachet">🔏</div>
+    <div class="sceau-titre">${titre}</div>
+    <div class="sceau-texte">${texte}</div>
+    <div class="sceau-vanne">« ${v} »</div>
+    <button class="btn sceau-btn" onclick="document.getElementById('sceau-overlay').remove()">Sceller 🔏</button>
+  </div>`;
+  document.body.appendChild(d);
 }
 function vanneHuisClos(){
   const jour = Math.floor(Date.now()/86400000);
@@ -2019,7 +2238,18 @@ async function sauverProno(id){
       prefer:'resolution=merge-duplicates',
       body: JSON.stringify({pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, qualifie, scenario, pouvoir, buteur2, en_or:enOr, cheikh})});
     (pronos[pseudo] = pronos[pseudo]||{})[id] = {pseudo, match_id:id, score_a:a, score_b:b, buteur:buteur||null, btts, qualifie, scenario, pouvoir, buteur2, en_or:enOr, cheikh};
-    toast(`Prono ${a}–${b}${buteur?' · ⚽ '+buteur:''}${enOr?' · 🌟 EN OR':''}${cheikh?' · 🕋 CHEIKH ×2':''} enregistré ✓`); listePronos(); hero();
+    if(id>=103 && !window.__rideauLeve){
+      const estF = id===104;
+      const autresDeposes = PARTICIPANTS.filter(px=>px!==pseudo && pronos[px] && pronos[px][id]).length;
+      const compte = autresDeposes===0 ? "Ton enveloppe ouvre le coffre — les autres se font attendre."
+        : autresDeposes===1 ? "Une autre enveloppe dort déjà au coffre. La tienne la rejoint."
+        : `${autresDeposes} enveloppes dorment déjà au coffre. La tienne les rejoint.`;
+      ceremonieSceau(`Huis clos final · ${estF?'Finale':'Petite finale'}`, 'Ton enveloppe<br>est scellée',
+        `Ni les points, ni le verdict, ni ce qu'elle contient ne seront révélés avant la <b>Nuit du Jugement</b>, dimanche soir. ${compte}`);
+    } else {
+      toast(`Prono ${a}–${b}${buteur?' · ⚽ '+buteur:''}${enOr?' · 🌟 EN OR':''}${cheikh?' · 🕋 CHEIKH ×2':''} enregistré ✓`);
+    }
+    listePronos(); hero();
   }catch(e){ toast("Échec de l'enregistrement, réessaie"); }
 }
 async function validerScore(id){
@@ -3065,6 +3295,7 @@ const DDAY_HISTOIRE = {
 function banniereEcurie(){
   const z = $('banniere-ecurie');
   afficheDuJour();
+  carteQuiz();
   if(!pseudo){ z.style.display='none'; return; }
   const eq = ecurieDe(pseudo);
   if(!eq){
