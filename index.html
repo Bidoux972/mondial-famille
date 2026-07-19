@@ -854,7 +854,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.52';
+const APP_VERSION = '13.53';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4825,6 +4825,7 @@ function boutonRecapJour(){
   M.forEach(m=>{ const j = jourCle(m); (parJour[j]=parJour[j]||[]).push(m); });
   const joursComplets = Object.entries(parJour)
     .filter(([j,ms]) => ms.every(m=>resultats[m.id]))
+    .filter(([j,ms]) => !(huisClosActif() && ms.some(m=>m.id>=103)))   /* 🔒 huis clos : ces journées attendent la Nuit */
     .map(([j,ms]) => ({j, ts: Math.max(...ms.map(m=>m.dt.getTime()))}))
     .sort((a,b)=>b.ts-a.ts);
   if(!joursComplets.length){ z.innerHTML=''; return; }
@@ -5241,7 +5242,7 @@ function etapesReveal(id){
     const extras = [pr.buteur?`⚽ ${pr.buteur}`:'', pr.btts===true?'🥅 oui':pr.btts===false?'🥅 non':'', pr.en_or?'🌟 EN OR':'', pr.cheikh?'🕋 CHEIKH':''].filter(Boolean).join(' · ');
     return `<div class="ligne-r">${p} : <b>${pr.score_a}–${pr.score_b}</b>${extras?' · '+extras:''}</div>`;
   }).join('');
-  const enMTcomptes = poulesScellees();
+  const enMTcomptes = poulesScellees() || huisClosActif();
   const lignesComptes = PARTICIPANTS.map(p=>{
     const pr = pronos[p] && pronos[p][id];
     if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">${enMTcomptes && p!==pseudo ? '🔒' : '0 pt (spectateur)'}</span></div>`;
