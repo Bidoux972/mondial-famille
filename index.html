@@ -874,7 +874,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.59';
+const APP_VERSION = '13.60';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -6017,6 +6017,12 @@ function etapesNuit(copiesQuiz){
     });
   });
 
+  /* le collier jamais dégainé : révélation posthume du dernier pouvoir secret */
+  (()=>{
+    const tapieJouee = PARTICIPANTS.some(p=>Object.values(pronos[p]||{}).some(pr=>pr.pouvoir==='tapie'));
+    if(tapieJouee) return;
+    E.push(`<div class="etape etape-pouvoir" style="--pv:#F5B43C;--pv2:rgba(245,180,60,.35)"><div class="eti-r">Avant de refermer les enveloppes…</div><div style="font-size:56px">💼</div><h3>Le pouvoir<br>qui n'a jamais parlé</h3><div class="ligne-r" style="margin-top:8px">Trois pouvoirs ont claqué dans ce tournoi. Le quatrième a passé un mois au fond d'une poche : <b>L'Assurance Tapie</b> de Bidou — pertes annulées sur un match, +4 si la tendance est bonne. Une assurance tous risques… jamais déclarée.</div><div class="ligne-r" style="color:var(--gris);margin-top:8px">Sang-froid de champion, ou oubli de retraité — le tribunal laisse la famille trancher. Bruyamment, de préférence.</div></div>`);
+  })();
   /* ── ACTE V · LE CLASSEMENT BASCULE + COURONNEMENT ───────── */
   const posAvant = {}; clAvant.forEach((l,i)=>posAvant[l.p]=i);
   E.push(`<div class="etape"><div class="eti-r">Le rideau se lève</div><h3>Le classement<br>final</h3>${clApres.map((l,i)=>{
