@@ -660,6 +660,8 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .qz-solo-bas{display:flex;justify-content:center;gap:18px;margin-top:14px;flex-wrap:wrap}
 .qz-passer{font-size:11.5px;color:var(--gris);text-decoration:underline;cursor:pointer}
 .qz-retour{width:100%;background:var(--panneau2);color:#c9b8f5;font-size:12px;margin-bottom:12px}
+.qz-off{opacity:.3;pointer-events:none}
+.qz-grave-solo{font-size:15px;padding:14px;max-width:280px;margin:0 auto}
 .ex-ecurie{font-size:.82em;color:var(--gris);font-weight:400;font-style:italic}
 .memorial{font-size:12px;color:var(--gris);line-height:1.55;font-style:italic;border-style:dashed}
 .memorial b{color:var(--creme)}
@@ -872,7 +874,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.58';
+const APP_VERSION = '13.59';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1460,18 +1462,31 @@ function renduSalle(garder){
       <div class="qz-salle-etat">✍️ ${nb}/32</div>
       <button class="qz-salle-x" onclick="fermerQuiz()">✕</button>
     </div>`;
-  /* mode relecture des gravées */
+  /* mode relecture des gravées : même plateau, une gravée par écran, navigation ← → */
   if(window.__qzVoirGravees || !restantes.length){
-    salle.innerHTML = tete + `<div class="qz-salle-corps" id="qz-salle-corps">
-      ${!restantes.length ? `<div class="qz-fini-msg">🔏 Copie complète. Il ne reste qu'à attendre le verdict — ou à relire tes choix en tremblant.</div>` : `<button class="btn qz-retour" onclick="window.__qzVoirGravees=false; renduSalle()">← Revenir aux questions (${restantes.length} restantes)</button>`}
-      ${graves.map(({q,qi})=>{
-        const corpsQ = q.num
-          ? `<div class="qz-grave">🔏 Ta réponse gravée : <b>${scelle[q.id]}</b></div>`
-          : `<div class="qz-opts">${q.o.map((opt,i)=>`<div class="qz-opt qz-fige${scelle[q.id]===i?' qz-choisie':''}"><span>${String.fromCharCode(65+i)}) ${opt}${scelle[q.id]===i?' 🔏':''}</span></div>`).join('')}</div>`;
-        return `<div class="qz-q qz-q-grave"><div class="qz-qt">${qi+1}. ${q.t}</div>${corpsQ}</div>`;
-      }).join('')}
-    </div>`;
-    return;
+    if(!graves.length){ window.__qzVoirGravees=false; }
+    else {
+      window.__qzRelire = Math.min(Math.max(window.__qzRelire||0, 0), graves.length-1);
+      const {q, qi} = graves[window.__qzRelire];
+      const corpsQ = q.num
+        ? `<div class="qz-grave qz-grave-solo">🔏 Ta réponse gravée : <b>${scelle[q.id]}</b></div>`
+        : `<div class="qz-opts qz-opts-solo">${q.o.map((opt,i)=>`<div class="qz-opt qz-opt-solo qz-fige${scelle[q.id]===i?' qz-choisie':''}"><span><b>${String.fromCharCode(65+i)}</b> ${opt}${scelle[q.id]===i?' 🔏':''}</span></div>`).join('')}</div>`;
+      salle.innerHTML = tete + `<div class="qz-salle-corps qz-plateau" id="qz-salle-corps">
+        <div class="qz-solo">
+          <div class="qz-solo-cat">${CATS[q.cat]} · relecture</div>
+          <div class="qz-solo-num">Gravée ${window.__qzRelire+1} / ${graves.length}</div>
+          <div class="qz-solo-txt">${qi+1}. ${q.t}</div>
+          ${corpsQ}
+          <div class="qz-solo-bas">
+            <span class="qz-passer${window.__qzRelire===0?' qz-off':''}" onclick="window.__qzRelire--; renduSalle()">← Précédente</span>
+            <span class="qz-passer${window.__qzRelire>=graves.length-1?' qz-off':''}" onclick="window.__qzRelire++; renduSalle()">Suivante →</span>
+            ${restantes.length?`<span class="qz-passer" onclick="window.__qzVoirGravees=false; renduSalle()">✍️ Reprendre (${restantes.length} restantes)</span>`:''}
+          </div>
+          ${!restantes.length && window.__qzRelire>=graves.length-1 ? `<div class="qz-fini-msg" style="padding:14px 0 0">🔏 Fin de la relecture. Copie complète — rendez-vous au dépouillement, et bon courage pour dormir.</div>`:''}
+        </div>
+      </div>`;
+      return;
+    }
   }
   /* mode PLATEAU : une seule question à l'écran */
   window.__qzSkip = window.__qzSkip || 0;
