@@ -874,7 +874,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.60';
+const APP_VERSION = '13.61';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1443,6 +1443,7 @@ function carteQuiz(){
 function fermerQuiz(){ const s=document.getElementById('quiz-salle'); if(s) s.remove(); carteQuiz(); }
 function ouvrirQuiz(){
   if(document.getElementById('quiz-salle')) return;
+  window.__qzRelire = 0;   /* la relecture repart toujours de la première gravée */
   const d=document.createElement('div');
   d.id='quiz-salle';
   document.body.appendChild(d);
@@ -1478,6 +1479,7 @@ function renduSalle(garder){
           <div class="qz-solo-txt">${qi+1}. ${q.t}</div>
           ${corpsQ}
           <div class="qz-solo-bas">
+            <span class="qz-passer${window.__qzRelire===0?' qz-off':''}" onclick="window.__qzRelire=0; renduSalle()">⟲ Début</span>
             <span class="qz-passer${window.__qzRelire===0?' qz-off':''}" onclick="window.__qzRelire--; renduSalle()">← Précédente</span>
             <span class="qz-passer${window.__qzRelire>=graves.length-1?' qz-off':''}" onclick="window.__qzRelire++; renduSalle()">Suivante →</span>
             ${restantes.length?`<span class="qz-passer" onclick="window.__qzVoirGravees=false; renduSalle()">✍️ Reprendre (${restantes.length} restantes)</span>`:''}
@@ -1504,7 +1506,7 @@ function renduSalle(garder){
         <button class="btn qz-btn-q qz-btn-solo" id="qzbtn-${q.id}" onclick="dernierMot('${q.id}')">🔏 Sceller ma réponse</button>
         <div class="qz-solo-bas">
           ${restantes.length>1?`<span class="qz-passer" onclick="window.__qzSkip=(window.__qzSkip||0)+1; renduSalle()">Passer, j'y reviendrai →</span>`:''}
-          ${graves.length?`<span class="qz-passer" onclick="window.__qzVoirGravees=true; renduSalle()">🔏 Relire mes ${graves.length} gravées</span>`:''}
+          ${graves.length?`<span class="qz-passer" onclick="window.__qzVoirGravees=true; window.__qzRelire=0; renduSalle()">🔏 Relire mes ${graves.length} gravées</span>`:''}
         </div>
       </div>
     </div>`;
