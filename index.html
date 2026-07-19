@@ -644,6 +644,15 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .qz-relire summary{font-size:12.5px;font-weight:800;color:#c9b8f5;cursor:pointer;margin-bottom:10px}
 .nuit-btn{width:100%;background:linear-gradient(135deg,#a78bfa,#7c5ce0);color:var(--nuit);font-weight:800;font-size:13px;margin-top:12px;box-shadow:0 0 18px rgba(167,139,250,.35)}
 .nuit-attente{font-size:11px;color:#c9b8f5;text-align:center;margin-top:12px;font-style:italic}
+.fd-carte{background:linear-gradient(160deg,#241a05,var(--panneau) 70%);border:1.5px solid var(--or);border-radius:14px;padding:13px;margin:0 0 12px;animation:pvFade .3s ease}
+.fd-tete{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.fd-dot{width:9px;height:9px;border-radius:50%;background:var(--corail);animation:pvBlink 1.2s ease-in-out infinite}
+.fd-live{font-size:11px;font-weight:800;color:var(--corail);letter-spacing:2px}
+.fd-chrono{margin-left:auto;font-family:'Space Grotesk',monospace;font-size:11.5px;color:var(--or);font-weight:700}
+.fd-duel{display:flex;align-items:center;justify-content:center;gap:10px;font-size:22px;margin-bottom:9px}
+.fd-vs{font-size:14px;font-weight:800;color:var(--creme)}
+.fd-vanne{font-size:12px;color:#c9b8f5;font-style:italic;line-height:1.5;text-align:center}
+.fd-pied{font-size:10.5px;color:var(--gris);text-align:center;margin-top:9px;padding-top:9px;border-top:1px dashed var(--ligne)}
 #ce-finale{position:fixed;inset:0;z-index:9998;background:rgba(6,10,18,.94);display:flex;align-items:center;justify-content:center;padding:20px;animation:pvFade .35s ease}
 .ce-boite{position:relative;background:radial-gradient(circle at 50% 30%, #241a05 0%, #0A0F18 78%);border:1.5px solid var(--or);border-radius:16px;padding:34px 22px;text-align:center;max-width:390px;width:100%;overflow:hidden;box-shadow:0 0 30px rgba(245,180,60,.25)}
 .ce-halo{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(245,180,60,.18),transparent 70%);top:14px;left:50%;transform:translateX(-50%);pointer-events:none}
@@ -885,7 +894,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.63';
+const APP_VERSION = '13.64';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1193,6 +1202,7 @@ const TEASE_FINALE = [
 function afficheDuJour(){
   const z = $('affiche-jour');
   if(!z) return;
+  if(carteFinaleEnCours()) return;   /* 🔴 pendant la finale, la carte du direct prend la main */
   const prochain = M.filter(m=>m.id>=103 && m.id<=104 && !resultats[m.id] && m.a && m.b && m.dt)
                     .sort((x,y)=>x.dt-y.dt)[0];
   const dansFenetre = prochain && Date.now() < prochain.dt.getTime()
@@ -1547,6 +1557,39 @@ function ceremonieSceau(sur, titre, texte){
   document.body.appendChild(d);
 }
 /* 🏆 LE COUP D'ENVOI DE LA FINALE : plein écran, une fois par personne, dès l'ouverture pendant le match */
+/* 🔴 LA FINALE EN COURS : carte vivante pendant le match (minute qui avance, vannes qui tournent) */
+const VANNES_DIRECT = [
+  "Quatre paires d'yeux sur le même écran, quatre scénarios différents en tête. Trois vont mal finir.",
+  "Chaque but qui tombe fait un heureux secret et trois deuils discrets. Les visages, eux, ne bougent pas. Beau travail.",
+  "Rappel amical : hurler « JE L'AVAIS DIT » révèle ton enveloppe. Souffre en silence.",
+  "Le champion de la famille est peut-être en train de gagner son titre là, maintenant. Il ne le sait même pas.",
+  "Quelqu'un a misé un Match en Or sur cette finale. Chaque action vaut double quelque part dans cette pièce.",
+  "La Nuit du Jugement se rapproche à chaque minute. Certains la préparent. D'autres devraient.",
+  "Statistiquement, l'un de vous s'est déjà trompé de scénario. Il applaudit quand même. Le courage existe.",
+  "Ce soir, les enveloppes parleront. En attendant, elles écoutent. Surveillez ce que vous criez."
+];
+function carteFinaleEnCours(){
+  const z = $('affiche-jour');
+  if(!z) return false;
+  const m = M.find(x=>x.id===104);
+  if(!m || !m.dt || Date.now() < m.dt.getTime() || resultats[104]) return false;
+  const mins = Math.floor((Date.now() - m.dt.getTime())/60000);
+  let chrono;
+  if(mins <= 47) chrono = `≈ ${Math.max(1,mins)}e minute`;
+  else if(mins <= 62) chrono = `mi-temps (ou presque)`;
+  else if(mins <= 112) chrono = `≈ ${mins-15}e minute · 2e période`;
+  else if(mins <= 155) chrono = `prolongation en vue… ou en cours`;
+  else chrono = `ça sent les tirs au but — ou la sieste du commissaire`;
+  const van = VANNES_DIRECT[Math.floor(mins/6) % VANNES_DIRECT.length];
+  z.style.display='';
+  z.innerHTML = `<div class="fd-carte">
+    <div class="fd-tete"><span class="fd-dot"></span><span class="fd-live">FINALE EN COURS</span><span class="fd-chrono">${chrono}</span></div>
+    <div class="fd-duel">${F[m.a]||''} <span class="fd-vs">${m.a} 🆚 ${m.b}</span> ${F[m.b]||''}</div>
+    <div class="fd-vanne">🎙️ « ${van} »</div>
+    <div class="fd-pied">🌑 Ce soir : la Nuit du Jugement · <span class="qz-lien" onclick="localStorage.removeItem('mf_ce_104'); coupDenvoiFinale()">revoir le coup d'envoi</span></div>
+  </div>`;
+  return true;
+}
 function coupDenvoiFinale(){
   if(!pseudo) return;
   const m = M.find(x=>x.id===104);
