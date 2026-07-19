@@ -647,6 +647,19 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .nuit-coffre-bloc{background:var(--panneau2);border:1px solid var(--ligne);border-radius:10px;padding:11px;margin-top:10px;max-width:420px;width:100%}
 .nuit-coffre-t{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--or);margin-bottom:5px}
 .nuit-coffre-v{font-size:11.5px;color:var(--gris);font-style:italic;margin-top:5px}
+.qz-plateau{display:flex;align-items:center;justify-content:center}
+.qz-solo{max-width:460px;width:100%;text-align:center;animation:pvFade .3s ease}
+.qz-solo-cat{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#a78bfa;margin-bottom:6px}
+.qz-solo-num{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--gris);margin-bottom:14px}
+.qz-solo-txt{font-size:clamp(16px,4.6vw,20px);font-weight:800;color:var(--creme);line-height:1.4;margin-bottom:18px}
+.qz-opts-solo{gap:8px}
+.qz-opt-solo{padding:12px;font-size:13.5px;text-align:left;border-radius:10px}
+.qz-opt-solo b{color:#a78bfa;margin-right:4px}
+.qz-num-solo{font-size:18px;text-align:center;padding:12px;max-width:200px;margin:0 auto;display:block}
+.qz-btn-solo{margin-top:16px;font-size:13px;padding:11px}
+.qz-solo-bas{display:flex;justify-content:center;gap:18px;margin-top:14px;flex-wrap:wrap}
+.qz-passer{font-size:11.5px;color:var(--gris);text-decoration:underline;cursor:pointer}
+.qz-retour{width:100%;background:var(--panneau2);color:#c9b8f5;font-size:12px;margin-bottom:12px}
 .ex-ecurie{font-size:.82em;color:var(--gris);font-weight:400;font-style:italic}
 .memorial{font-size:12px;color:var(--gris);line-height:1.55;font-style:italic;border-style:dashed}
 .memorial b{color:var(--creme)}
@@ -859,7 +872,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.57';
+const APP_VERSION = '13.58';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1433,53 +1446,54 @@ function ouvrirQuiz(){
   document.body.appendChild(d);
   renduSalle(false);
 }
-function renduSalle(garderScroll){
+function renduSalle(garder){
   const salle = document.getElementById('quiz-salle');
   if(!salle) return;
-  const corps = document.getElementById('qz-salle-corps');
-  const scrollAvant = (garderScroll && corps) ? corps.scrollTop : 0;
   const scelle = quizReponsesLocales();
   const nb = Object.keys(scelle).filter(k=>QUIZ_QUESTIONS.some(q=>q.id===k)).length;
-  const CATS = {famille:"🏠 La mémoire de la famille", tournoi:"⚽ La mémoire du tournoi", archives:"🗄️ Les révélations des archives", sub:"⚖️ La subsidiaire"};
-  const rendreQ = (q, qi, grave) => {
-    let corpsQ;
-    if(grave){
-      corpsQ = q.num
-        ? `<div class="qz-grave">🔏 Ta réponse gravée : <b>${scelle[q.id]}</b></div>`
-        : `<div class="qz-opts">${q.o.map((opt,i)=>`<div class="qz-opt qz-fige${scelle[q.id]===i?' qz-choisie':''}"><span>${String.fromCharCode(65+i)}) ${opt}${scelle[q.id]===i?' 🔏':''}</span></div>`).join('')}</div>`;
-    } else {
-      corpsQ = (q.num
-        ? `<input type="number" id="qz-${q.id}" class="qz-num" placeholder="Ton chiffre">`
-        : `<div class="qz-opts">${q.o.map((opt,i)=>`<label class="qz-opt"><input type="radio" name="qz-${q.id}" value="${i}"><span>${String.fromCharCode(65+i)}) ${opt}</span></label>`).join('')}</div>`)
-        + `<button class="btn qz-btn-q" id="qzbtn-${q.id}" onclick="dernierMot('${q.id}')">🔏 Sceller ma réponse</button>`;
-    }
-    return `<div class="qz-q${grave?' qz-q-grave':''}"><div class="qz-qt">${qi+1}. ${q.t}</div>${corpsQ}</div>`;
-  };
-  let derniereCat='';
-  const aSceller = QUIZ_QUESTIONS.map((q,qi)=>({q,qi})).filter(x=>scelle[x.q.id]===undefined || scelle[x.q.id]===null);
-  const graves   = QUIZ_QUESTIONS.map((q,qi)=>({q,qi})).filter(x=>!(scelle[x.q.id]===undefined || scelle[x.q.id]===null));
-  const htmlASceller = aSceller.map(({q,qi})=>{
-    const tete = q.cat!==derniereCat ? `<div class="qz-cat">${CATS[q.cat]}</div>` : '';
-    derniereCat = q.cat;
-    return tete + rendreQ(q, qi, false);
-  }).join('');
-  salle.innerHTML = `
-    <div class="qz-salle-tete">
-      <div>
-        <div class="qz-salle-titre">🏛️ La Salle d'Examen</div>
-        <div class="qz-salle-sous">Huis clos. Silence. On ne copie pas sur son voisin — de toute façon il a coché D.</div>
-      </div>
+  const CATS = {famille:"🏠 Mémoire de la famille", tournoi:"⚽ Mémoire du tournoi", archives:"🗄️ Révélations des archives", sub:"⚖️ La subsidiaire"};
+  const restantes = QUIZ_QUESTIONS.map((q,qi)=>({q,qi})).filter(x=>scelle[x.q.id]===undefined || scelle[x.q.id]===null);
+  const graves    = QUIZ_QUESTIONS.map((q,qi)=>({q,qi})).filter(x=>!(scelle[x.q.id]===undefined || scelle[x.q.id]===null));
+  const tete = `<div class="qz-salle-tete">
+      <div><div class="qz-salle-titre">🏛️ La Salle d'Examen</div>
+      <div class="qz-salle-sous">Une question. Un dernier mot. Un cachet. On avance.</div></div>
       <div class="qz-salle-etat">✍️ ${nb}/32</div>
       <button class="qz-salle-x" onclick="fermerQuiz()">✕</button>
-    </div>
-    <div class="qz-salle-corps" id="qz-salle-corps">
-      ${aSceller.length ? htmlASceller : `<div class="qz-fini-msg">🔏 Copie complète. Il ne reste qu'à attendre le verdict — ou à relire tes choix en tremblant.</div>`}
-      ${graves.length ? `<details class="qz-relire"${aSceller.length?'':' open'}><summary>🔏 Relire mes réponses gravées (${graves.length})</summary>${graves.map(({q,qi})=>rendreQ(q,qi,true)).join('')}</details>` : ''}
     </div>`;
-  const corpsApres = document.getElementById('qz-salle-corps');
-  if(corpsApres && scrollAvant) corpsApres.scrollTop = scrollAvant;
-}
-/* ===== 🔏 LA CÉRÉMONIE DU SCEAU : plein écran à chaque mise sous scellés ===== */
+  /* mode relecture des gravées */
+  if(window.__qzVoirGravees || !restantes.length){
+    salle.innerHTML = tete + `<div class="qz-salle-corps" id="qz-salle-corps">
+      ${!restantes.length ? `<div class="qz-fini-msg">🔏 Copie complète. Il ne reste qu'à attendre le verdict — ou à relire tes choix en tremblant.</div>` : `<button class="btn qz-retour" onclick="window.__qzVoirGravees=false; renduSalle()">← Revenir aux questions (${restantes.length} restantes)</button>`}
+      ${graves.map(({q,qi})=>{
+        const corpsQ = q.num
+          ? `<div class="qz-grave">🔏 Ta réponse gravée : <b>${scelle[q.id]}</b></div>`
+          : `<div class="qz-opts">${q.o.map((opt,i)=>`<div class="qz-opt qz-fige${scelle[q.id]===i?' qz-choisie':''}"><span>${String.fromCharCode(65+i)}) ${opt}${scelle[q.id]===i?' 🔏':''}</span></div>`).join('')}</div>`;
+        return `<div class="qz-q qz-q-grave"><div class="qz-qt">${qi+1}. ${q.t}</div>${corpsQ}</div>`;
+      }).join('')}
+    </div>`;
+    return;
+  }
+  /* mode PLATEAU : une seule question à l'écran */
+  window.__qzSkip = window.__qzSkip || 0;
+  const pick = restantes[window.__qzSkip % restantes.length];
+  const q = pick.q, qi = pick.qi;
+  const corpsQ = q.num
+    ? `<input type="number" id="qz-${q.id}" class="qz-num qz-num-solo" placeholder="Ton chiffre">`
+    : `<div class="qz-opts qz-opts-solo">${q.o.map((opt,i)=>`<label class="qz-opt qz-opt-solo"><input type="radio" name="qz-${q.id}" value="${i}"><span><b>${String.fromCharCode(65+i)}</b> ${opt}</span></label>`).join('')}</div>`;
+  salle.innerHTML = tete + `<div class="qz-salle-corps qz-plateau" id="qz-salle-corps">
+      <div class="qz-solo">
+        <div class="qz-solo-cat">${CATS[q.cat]}</div>
+        <div class="qz-solo-num">Question ${qi+1} / 32</div>
+        <div class="qz-solo-txt">${q.t}</div>
+        ${corpsQ}
+        <button class="btn qz-btn-q qz-btn-solo" id="qzbtn-${q.id}" onclick="dernierMot('${q.id}')">🔏 Sceller ma réponse</button>
+        <div class="qz-solo-bas">
+          ${restantes.length>1?`<span class="qz-passer" onclick="window.__qzSkip=(window.__qzSkip||0)+1; renduSalle()">Passer, j'y reviendrai →</span>`:''}
+          ${graves.length?`<span class="qz-passer" onclick="window.__qzVoirGravees=true; renduSalle()">🔏 Relire mes ${graves.length} gravées</span>`:''}
+        </div>
+      </div>
+    </div>`;
+}/* ===== 🔏 LA CÉRÉMONIE DU SCEAU : plein écran à chaque mise sous scellés ===== */
 const VANNES_SCEAU = [
   "Le silence commence maintenant. Le mensonge aussi, probablement.",
   "Ce qui entre au coffre n'en sort qu'à la Nuit du Jugement. Même les regrets.",
