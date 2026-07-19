@@ -642,6 +642,11 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .qz-fini-msg{font-size:13px;color:#c9b8f5;text-align:center;padding:24px 10px;line-height:1.6}
 .qz-relire{margin-top:16px;border-top:1px dashed rgba(167,139,250,.35);padding-top:12px}
 .qz-relire summary{font-size:12.5px;font-weight:800;color:#c9b8f5;cursor:pointer;margin-bottom:10px}
+.nuit-btn{width:100%;background:linear-gradient(135deg,#a78bfa,#7c5ce0);color:var(--nuit);font-weight:800;font-size:13px;margin-top:12px;box-shadow:0 0 18px rgba(167,139,250,.35)}
+.nuit-attente{font-size:11px;color:#c9b8f5;text-align:center;margin-top:12px;font-style:italic}
+.nuit-coffre-bloc{background:var(--panneau2);border:1px solid var(--ligne);border-radius:10px;padding:11px;margin-top:10px;max-width:420px;width:100%}
+.nuit-coffre-t{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--or);margin-bottom:5px}
+.nuit-coffre-v{font-size:11.5px;color:var(--gris);font-style:italic;margin-top:5px}
 .ex-ecurie{font-size:.82em;color:var(--gris);font-weight:400;font-style:italic}
 .memorial{font-size:12px;color:var(--gris);line-height:1.55;font-style:italic;border-style:dashed}
 .memorial b{color:var(--creme)}
@@ -854,7 +859,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.55';
+const APP_VERSION = '13.57';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1131,6 +1136,7 @@ function poulesScellees(){ return Object.keys(resultats).length < 72 && !(palmar
    Levé UNIQUEMENT par le dépouillement de la Nuit du Jugement (window.__rideauLeve). */
 function huisClosActif(){
   if(window.__rideauLeve) return false;
+  if(palmares && palmares.champion_final) return false;   /* 👑 le couronnement gravé lève le rideau partout */
   const m = M.find(x=>x.id===103);
   if(!m) return false;
   return (m.dt && Date.now() >= m.dt.getTime()) || !!resultats[103] || !!resultats[104];
@@ -2585,12 +2591,16 @@ function classement(){
         ${noms.map(p=>`<div class="hc-ligne"><span class="hc-q">?</span><span class="hc-nom">${p}${participants[p]&&participants[p].equipe_ecurie?' · '+(F[participants[p].equipe_ecurie]||''):''}</span><span class="hc-pts">${String(Math.floor(100+Math.random()*60))}</span></div>`).join('')}
         <div class="hc-note">Dernier état connu : avant la petite finale. Ordre alphabétique — même le podium est secret.</div>
         <div class="hc-vanne">🎙️ ${vanneHuisClos()}</div>
-      </div>`;
+      </div>
+      ${nuitPrete()
+        ? `<button class="btn nuit-btn" onclick="nuitDuJugement()">🌑 LANCER LA NUIT DU JUGEMENT</button>`
+        : `<div class="nuit-attente">🌑 La Nuit du Jugement s'ouvrira ici, après la finale.</div>`}`;
     $('note-classement').textContent = `Le dépouillement aura lieu à la Nuit du Jugement, après la finale.`;
     const cj=$('commentaire-jour'); if(cj) cj.style.display='none';
     return;
   }
   const lignes = calculTotaux(filtrePhase);
+  window.__btnNuit = (palmares && palmares.champion_final) ? `<button class="btn nuit-btn" style="margin-bottom:10px" onclick="nuitDuJugement()">🌑 Revoir la Nuit du Jugement</button>` : '';
   const aujourdhui = jourCle({dt: new Date()});
   const lignesHier = calculTotaux(m => filtrePhase(m) && jourCle(m) !== aujourdhui);
   const aDesPointsHier = lignesHier.some(l=>l.total!==0);
@@ -2628,7 +2638,7 @@ function classement(){
       `Tu peux toujours recharger la page : le coffre, lui, ne craque pas.`,
       `Quelque part, un favori transpire. On ne dira pas qui. On sait, c'est tout.`
     ]);
-    $('tableau-classement').innerHTML = btnRevoir + `
+    $('tableau-classement').innerHTML = (window.__btnNuit||'') + btnRevoir + `
       <div class="scelle">
         <div class="scelle-cad">🔐</div>
         <div class="scelle-t">CLASSEMENT SOUS SCELLÉS</div>
@@ -2645,7 +2655,7 @@ function classement(){
 
   /* ÉTAT 2 — POULES TERMINÉES : le bouton du sacre, classement toujours masqué jusqu'au reveal */
   if(poulesFinies && !sacreGrave){
-    $('tableau-classement').innerHTML = btnRevoir + `
+    $('tableau-classement').innerHTML = (window.__btnNuit||'') + btnRevoir + `
       <div class="sacre-cta">
         <div class="sacre-cta-t">🏁 La phase de poules est terminée</div>
         <div class="sacre-cta-s">72 matchs joués. Le verdict est tombé, scellé. Réunissez la famille.</div>
@@ -2660,7 +2670,7 @@ function classement(){
   }
 
   /* ÉTAT 3 — NORMAL : tableau complet (avant le money time, ou phase 2 reconfigurée) */
-  $('tableau-classement').innerHTML = btnRevoir + lignes.map((l,i)=>{
+  $('tableau-classement').innerHTML = (window.__btnNuit||'') + btnRevoir + lignes.map((l,i)=>{
     let fleche = '';
     if(aDesPointsHier){
       const d = posHier[l.p] - i;
@@ -5867,6 +5877,167 @@ function voirEquipe(n){
   goTab('equipes');
   ficheOuverte = n; zoneEquipes();
   window.scrollTo({top:0});
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🌑 LA NUIT DU JUGEMENT — la cérémonie finale du tournoi.
+   Se lance depuis le classement scellé quand : résultats 103 & 104 saisis
+   + vainqueur du Mondial renseigné. Rejouable à volonté.
+   Le COURONNEMENT grave champion_final en base -> lève le rideau PARTOUT.
+   ═══════════════════════════════════════════════════════════════════ */
+function nuitPrete(){
+  return !!(resultats[103] && resultats[104] && palmares && palmares.vainqueur);
+}
+function jouerCeremonie(etapes){
+  let idx = 0;
+  let div = document.getElementById('reveal-overlay');
+  if(!div){ div = document.createElement('div'); div.id='reveal-overlay'; div.className='reveal'; document.body.appendChild(div); }
+  div.style.display='flex';
+  const rendre = () => {
+    div.innerHTML = etapes[idx] + `<div class="suite">${idx < etapes.length-1 ? 'Touche pour la suite ('+(idx+1)+'/'+etapes.length+')' : 'Touche pour refermer la Nuit'}</div>`;
+    const sc = div.querySelector('[data-reveal-score]');
+    if(sc) animerScore(sc, div);
+  };
+  div.onclick = () => {
+    idx++;
+    if(idx >= etapes.length){ div.style.display='none'; window.__rideauLeve = true; toutAfficher(); }
+    else rendre();
+  };
+  rendre();
+}
+async function nuitDuJugement(){
+  if(!nuitPrete()){ toast('🌑 La Nuit s\'ouvre après la finale : résultats des deux matchs + sacre du vainqueur saisis.'); return; }
+  toast('🌑 La Nuit du Jugement se prépare…');
+  let copies = [];
+  try{ copies = await sb('mondial_quiz?select=*') || []; }catch(e){}
+  jouerCeremonie(etapesNuit(copies));
+}
+function etapesNuit(copiesQuiz){
+  const E = [];
+  const m103 = M.find(x=>x.id===103), m104 = M.find(x=>x.id===104);
+  const re103 = resultats[103], re104 = resultats[104];
+  const clAvant = calculTotaux(x => x.id < 103 || x.id > 104);
+  const clApres = calculTotaux(filtrePhase);
+  const champ = clApres[0], dernier = clApres[clApres.length-1];
+
+  /* ── ACTE I · LE GÉNÉRIQUE ───────────────────────────────── */
+  E.push(`<div class="etape"><div class="eti-r">🌑 La Nuit du Jugement</div><h3>Un mois de guerre.<br>Une nuit de vérité.</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:420px">104 matchs. Quatre joueurs. Des pouvoirs, des trahisons, deux enterrements, un quiz — et deux enveloppes encore closes. Ce soir, tout se paie.</div></div>`);
+  (()=>{ /* stats familiales du tournoi */
+    let exacts=0, buts=0, pronosJuges=0;
+    clApres.forEach(l=>{ exacts+=l.exacts; buts+=(l.buts+(l.butsKo||0)); pronosJuges+=l.n; });
+    const butsTot = quizVerite('buts').val;
+    E.push(`<div class="etape"><div class="eti-r">Le générique</div><h3>Votre tournoi<br>en chiffres</h3><div class="ligne-r" style="margin-top:10px">⚽ ${butsTot} buts réels · 🎲 ${pronosJuges} pronos jugés</div><div class="ligne-r">🎯 ${exacts} scores exacts familiaux · 👟 ${buts} buteurs flairés</div><div class="ligne-r" style="color:var(--gris)">Sans compter les cris, les mauvaise foi, et les « je l'avais dit ».</div></div>`);
+  })();
+
+  /* ── ACTE II · LES COFFRES D'ARCHIVES ────────────────────── */
+  E.push(`<div class="etape"><div class="eti-r">Acte II</div><div style="font-size:54px">🧳</div><h3>Les Coffres<br>d'archives</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px">Pour chacun : le chef-d'œuvre, et la casserole. Les archives n'oublient rien — c'est même leur seul défaut.</div></div>`);
+  PARTICIPANTS.forEach(p=>{
+    let best=null, pire=null;
+    Object.values(pronos[p]||{}).forEach(pr=>{
+      const re = resultats[pr.match_id]; if(!re) return;
+      const t = ptsTotal(pr, re); if(t===null) return;
+      const m = M.find(x=>x.id===pr.match_id); if(!m) return;
+      if(!best || t > best.t) best = {t, m};
+      if(!pire || t < pire.t) pire = {t, m};
+    });
+    const vB = pioche([`Un coup pareil, ça ne s'explique pas. Ça s'encadre.`,`Ce soir-là, ${p} a vu le futur. Depuis, plus rien, mais ce soir-là, oui.`,`La preuve que le génie existe. Par intermittence, mais il existe.`]);
+    const vP = pioche([`Les archives ont hésité à classer cette pièce « accident industriel ».`,`Ce pari a été montré aux écoles de commerce comme contre-exemple.`,`Même la VAR a refusé de revoir ça une deuxième fois.`]);
+    E.push(`<div class="etape"><div class="eti-r">🧳 Le Coffre de ${p}</div>
+      <div class="nuit-coffre-bloc"><div class="nuit-coffre-t">✨ Le chef-d'œuvre</div><div class="ligne-r">${best?`<b>${best.m.a} – ${best.m.b}</b> · <b class="pts p3">+${best.t} pts</b>`:'—'}</div><div class="nuit-coffre-v">« ${vB} »</div></div>
+      <div class="nuit-coffre-bloc"><div class="nuit-coffre-t">🍳 La casserole</div><div class="ligne-r">${pire?`<b>${pire.m.a} – ${pire.m.b}</b> · <b class="pts p0">${pire.t>0?'+':''}${pire.t} pts</b>`:'—'}</div><div class="nuit-coffre-v">« ${vP} »</div></div>
+    </div>`);
+  });
+
+  /* ── ACTE III · LE VERDICT DU QUIZ ───────────────────────── */
+  const notes = notesQuiz(copiesQuiz);
+  if(notes.length){
+    E.push(`<div class="etape"><div class="eti-r">Acte III</div><div style="font-size:54px">🧠</div><h3>Le verdict<br>du Grand Quiz</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px">32 questions, ${notes.length} copies scellées. Voyons qui a vécu ce tournoi… et qui l'a regardé en diagonale, avec le pouce.</div></div>`);
+    /* les moments choisis */
+    const q12 = QUIZ_QUESTIONS.find(q=>q.id==='q21');
+    if(q12){
+      const kane = notes.map(n=>`${n.p} : ${n.rep['q21']!=null ? String.fromCharCode(65+n.rep['q21'])+') '+q12.o[n.rep['q21']] : '—'}`).join(' · ');
+      E.push(`<div class="etape"><div class="eti-r">La question piège</div><h3>Harry qui ?</h3><div class="ligne-r" style="margin-top:8px">${kane}</div><div class="ligne-r" style="color:var(--or);margin-top:8px">Réponse officielle : D) Harry KAaaaaaaaanee. Ceux qui ont coché A avaient « techniquement raison ». Le tribunal s'en fiche : zéro point, on prononce correctement dans cette famille.</div></div>`);
+    }
+    notes.forEach(n=>{
+      if(n.toutD) E.push(`<div class="etape"><div class="eti-r">🤡 Mention spéciale</div><h3>La Réponse D</h3><div class="ligne-r" style="margin-top:8px">${n.p} a coché D à ${n.nbD} reprises. Le tribunal salue la constance artistique, confirme le total de <b>${n.score} pts</b>, et rappelle que le Poisson Rouge d'Or ne se refuse pas.</div></div>`);
+    });
+    const podium = notes.slice().sort((a,b)=>b.score-a.score || Math.abs(a.ecartSub)-Math.abs(b.ecartSub));
+    const memoire = podium[0], poisson = podium[podium.length-1];
+    E.push(`<div class="etape"><div class="eti-r">Le classement du Quiz</div><h3>Les notes<br>sont tombées</h3>${podium.map((n,i)=>`<div class="ligne-r">${i===0?'🧠':i===podium.length-1?'🐟':(i+1)+'.'} <b>${n.p}</b> — ${n.score}/${n.max} ${n.sansFaute?'· 🕵️ Mention Stasi':''}</div>`).join('')}<div class="ligne-r" style="color:var(--gris);margin-top:8px">Subsidiaire (${quizVerite('buts').val} buts) : ${podium.map(n=>`${n.p} ${n.rep['sub']!=null?n.rep['sub']:'—'}`).join(' · ')}</div></div>`);
+    E.push(`<div class="etape" data-fete="1"><div class="eti-r">🧠 Sacre</div><div style="font-size:54px">🏛️</div><h3>${memoire.p},<br>Mémoire du Mondial</h3><div class="ligne-r" style="margin-top:8px">${memoire.p} a tout vu, tout retenu, tout noté. Flippant. La famille est priée de surveiller ses paroles pour l'édition 2030.</div><div class="ligne-r" style="color:var(--gris);margin-top:10px">🐟 Et le Poisson Rouge d'Or revient à <b>${poisson.p}</b> — présent${GENRE[poisson.p]==='f'?'e':''} à chaque soirée, absent${GENRE[poisson.p]==='f'?'e':''} de chacune.</div></div>`);
+  }
+
+  /* ── ACTE IV · LE DÉPOUILLEMENT ──────────────────────────── */
+  E.push(`<div class="etape"><div class="eti-r">Acte IV</div><div style="font-size:54px">🗳️</div><h3>Le Dépouillement</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px">Deux matchs sous scellés. Les enveloppes s'ouvrent une à une. Certains vont rire. Les autres diront « de toute façon je m'en fichais ». Les archives notent qui dit quoi.</div></div>`);
+  [ {m:m103, re:re103, nom:'🥉 La petite finale'}, {m:m104, re:re104, nom:'🏆 La finale'} ].forEach(({m,re,nom})=>{
+    if(!m || !re) return;
+    E.push(`<div class="etape"><div class="eti-r">${nom}</div><h3>${m.a} ${re.score_a} – ${re.score_b} ${m.b}</h3><div class="ligne-r" style="color:var(--gris)">${re.scenario==='tab'?'Décidé aux tirs au but'+(re.score_final?' ('+re.score_final+')':''):re.scenario==='prolongation'?'Après prolongation'+(re.score_final?' ('+re.score_final+')':''):'Réglé en 90 minutes'} · ${re.qualifie} ${m.id===104?'CHAMPION DU MONDE':'prend le bronze'}.</div><div class="ligne-r" style="color:var(--gris);margin-top:6px">On décachette.</div></div>`);
+    PARTICIPANTS.forEach(p=>{
+      const pr = pronos[p] && pronos[p][m.id];
+      if(!pr){
+        E.push(`<div class="etape"><div class="eti-r">${nom} · l'enveloppe de ${p}</div><div style="font-size:44px">⏳</div><h3>Vide.</h3><div class="ligne-r" style="color:var(--gris)">${p} n'a rien déposé. La prudence, ou l'oubli. Le classement, lui, retient juste : zéro.</div></div>`);
+        return;
+      }
+      const t = ptsTotal(pr, re);
+      const extras = [pr.buteur?`⚽ ${pr.buteur}`:'', pr.buteur2?`⚽² ${pr.buteur2}`:'', pr.qualifie?`🎫 ${pr.qualifie}`:'', pr.scenario?`⏱️ ${pr.scenario}`:'', pr.btts===true?'🥅 oui':pr.btts===false?'🥅 non':''].filter(Boolean).join(' · ');
+      const armes = [pr.en_or?'🌟 MATCH EN OR ×2':'', pr.pouvoir==='tapie'?'💼 L\'ASSURANCE TAPIE':'', pr.pouvoir&&pr.pouvoir!=='tapie'?('⚡ '+pr.pouvoir.toUpperCase()):''].filter(Boolean);
+      if(pr.pouvoir==='tapie'){
+        E.push(`<div class="etape etape-pouvoir" style="--pv:#F5B43C;--pv2:rgba(245,180,60,.35)"><div class="eti-r">L'enveloppe de ${p} contient…</div><div style="font-size:56px">💼</div><h3>LA VALISE<br>A PARLÉ</h3><div class="ligne-r" style="margin-top:8px">Le quatrième pouvoir existait. ${p} l'a dégainé ici, en silence, sous le rideau : <b>L'Assurance Tapie</b> — pertes annulées, +4 si la tendance est bonne. À la loyale, mais à la marseillaise.</div></div>`);
+      }
+      E.push(`<div class="etape"><div class="eti-r">${nom} · l'enveloppe de ${p}</div><div style="font-size:44px">🗳️</div><h3>${pr.score_a} – ${pr.score_b}</h3>${extras?`<div class="ligne-r">${extras}</div>`:''}${armes.length?`<div class="ligne-r" style="color:var(--or);font-weight:800">${armes.join(' · ')}</div>`:''}<div class="verdict-box" style="margin-top:12px"><div class="verdict-titre">${t>=4?'💰 JACKPOT':t>0?'✅ ÇA PAIE':t===0?'😬 BLANC':'💀 ÇA SAIGNE'}</div><div class="verdict-sous">${p} ${t>0?'empoche':t===0?'ressort avec':'rend'} <b>${t>0?'+':''}${t} point${Math.abs(t)>1?'s':''}</b></div></div></div>`);
+    });
+  });
+
+  /* ── ACTE V · LE CLASSEMENT BASCULE + COURONNEMENT ───────── */
+  const posAvant = {}; clAvant.forEach((l,i)=>posAvant[l.p]=i);
+  E.push(`<div class="etape"><div class="eti-r">Le rideau se lève</div><h3>Le classement<br>final</h3>${clApres.map((l,i)=>{
+    const av = posAvant[l.p], fl = av===undefined?'' : av>i?' <span style="color:var(--lagon)">▲</span>' : av<i?' <span style="color:var(--corail)">▼</span>' : '';
+    return `<div class="ligne-r">${i===0?'👑':(i+1)+'.'} <b>${l.p}</b> ${l.total} pts${fl}</div>`;
+  }).join('')}<div class="ligne-r" style="color:var(--gris);margin-top:8px">La course au dauphin est réglée : ${clApres[1].p} termine devant ${clApres[2].p}${clApres[1].total===clApres[2].total?' — à égalité parfaite, départagés par le destin':''}.</div></div>`);
+  E.push(`<div class="etape" data-fete="1"><div class="eti-r">👑 Le Couronnement</div><div style="font-size:64px">🏆</div><h3>${champ.p},<br>Champion du<br>Mondial en Famille</h3><div class="ligne-r" style="margin-top:8px"><b>${champ.total} points</b> · ${champ.exacts} scores exacts · un mois de règne</div><div class="ligne-r" style="color:var(--gris);margin-top:6px">Gravé au palmarès pour l'éternité. Les autres ont quatre ans pour préparer leur revanche — et leurs excuses.</div>${(palmares && palmares.champion_final)?'<div class="ligne-r" style="color:var(--or);margin-top:10px">✅ Déjà gravé au palmarès</div>':'<button class="btn" style="margin-top:14px;background:var(--or);color:var(--nuit);font-weight:800" onclick="event.stopPropagation(); graverSacreFinal()">👑 Graver le champion à jamais</button>'}</div>`);
+
+  /* ── ÉPILOGUE ────────────────────────────────────────────── */
+  const destins = {
+    0:[`Le trône, la couronne, et quatre ans de « vous vous souvenez quand j'ai gagné ? ». Courage aux autres.`],
+    1:[`Dauphin. C'est joli, dauphin. C'est intelligent, ça fait des sauts. Mais ça ne soulève jamais la coupe.`],
+    2:[`Sur le podium sans les honneurs — la médaille en chocolat, mais du bon chocolat.`],
+    3:[`Dernier au général, mais riche d'une histoire que personne d'autre ne peut raconter : deux écuries enterrées, un pouvoir grillé par erreur, et une dignité intacte. Enfin, presque intacte.`]
+  };
+  E.push(`<div class="etape"><div class="eti-r">Épilogue</div><h3>Les destins</h3>${clApres.map((l,i)=>`<div class="ligne-r" style="margin-bottom:6px">${i===0?'👑':i===clApres.length-1?'🕯️':'▪️'} <b>${l.p}</b> — ${pioche(destins[Math.min(i,3)])}</div>`).join('')}</div>`);
+  E.push(`<div class="etape"><div class="eti-r">🌑 Fin de la Nuit</div><h3>Le rideau<br>tombe</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px">Le Mondial en Famille 2026 est clos. Les Reliques (diplômes et affiche du tournoi) arrivent demain. Les archives, elles, veillent déjà sur l'édition suivante.</div><div class="ligne-r" style="margin-top:8px">Merci d'avoir joué. Rendez-vous en 2030. 🍿</div></div>`);
+  return E;
+}
+/* notes du quiz : score par joueur */
+function notesQuiz(copies){
+  const verites = {};
+  ['remontada','gadin','statue'].forEach(c=>{ const v=quizVerite(c); verites[c]=v&&v.p; });
+  const regne = quizVerite('regne').val;
+  return (copies||[]).filter(c=>PARTICIPANTS.includes(c.pseudo)).map(c=>{
+    const rep = c.reponses || {};
+    let score=0, max=0, nbD=0, nbQCM=0;
+    QUIZ_QUESTIONS.forEach(q=>{
+      if(q.sub) return;
+      max++;
+      const r = rep[q.id];
+      if(q.calc==='regne'){ if(r===regne) score++; return; }
+      if(q.calc){ if(q.o && q.o[r]===verites[q.calc]) score++; return; }
+      if(q.num) return;
+      nbQCM++; if(r===3) nbD++;
+      if(r===q.b) score++;
+    });
+    const ecartSub = rep['sub']!=null ? rep['sub'] - quizVerite('buts').val : 9999;
+    return {p:c.pseudo, rep, score, max, nbD, toutD: nbQCM>0 && nbD/nbQCM>=0.8, sansFaute: score===max, ecartSub};
+  });
+}
+async function graverSacreFinal(){
+  const cl = calculTotaux(filtrePhase);
+  try{
+    await sb('mondial_palmares?on_conflict=id', {method:'POST', prefer:'resolution=merge-duplicates',
+      body: JSON.stringify({id:1, champion_final: cl[0].p, classement_final: cl.map(l=>({p:l.p,total:l.total,exacts:l.exacts}))})});
+    palmares = Object.assign({}, palmares, {champion_final: cl[0].p, classement_final: cl.map(l=>({p:l.p,total:l.total,exacts:l.exacts}))});
+    window.__rideauLeve = true;
+    toast(`👑 ${cl[0].p} gravé${GENRE[cl[0].p]==='f'?'e':''} au palmarès pour l'éternité !`);
+  }catch(e){ toast('Échec de la gravure — colonnes champion_final/classement_final en base ?'); }
 }
 
 /* ============ MISE À JOUR QUOTIDIENNE (un seul collage) ============ */
