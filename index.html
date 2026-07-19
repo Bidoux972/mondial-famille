@@ -644,6 +644,17 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .qz-relire summary{font-size:12.5px;font-weight:800;color:#c9b8f5;cursor:pointer;margin-bottom:10px}
 .nuit-btn{width:100%;background:linear-gradient(135deg,#a78bfa,#7c5ce0);color:var(--nuit);font-weight:800;font-size:13px;margin-top:12px;box-shadow:0 0 18px rgba(167,139,250,.35)}
 .nuit-attente{font-size:11px;color:#c9b8f5;text-align:center;margin-top:12px;font-style:italic}
+#ce-finale{position:fixed;inset:0;z-index:9998;background:rgba(6,10,18,.94);display:flex;align-items:center;justify-content:center;padding:20px;animation:pvFade .35s ease}
+.ce-boite{position:relative;background:radial-gradient(circle at 50% 30%, #241a05 0%, #0A0F18 78%);border:1.5px solid var(--or);border-radius:16px;padding:34px 22px;text-align:center;max-width:390px;width:100%;overflow:hidden;box-shadow:0 0 30px rgba(245,180,60,.25)}
+.ce-halo{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(245,180,60,.18),transparent 70%);top:14px;left:50%;transform:translateX(-50%);pointer-events:none}
+.ce-sur{position:relative;font-size:10px;font-weight:800;color:var(--or);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px}
+.ce-duel{position:relative;display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:8px}
+.ce-dra{font-size:44px;line-height:1;animation:pvPop .6s cubic-bezier(.34,1.56,.64,1)}
+.ce-vs{font-family:'Archivo Black';font-size:16px;color:var(--gris)}
+.ce-titre{position:relative;font-family:'Archivo Black';font-size:27px;font-weight:900;color:var(--creme);line-height:1.1;margin-top:8px;text-shadow:0 0 24px rgba(245,180,60,.4)}
+.ce-texte{position:relative;font-size:13px;color:var(--creme);margin-top:14px;line-height:1.55}
+.ce-vanne{position:relative;font-size:12px;color:var(--gris);font-style:italic;margin-top:12px;line-height:1.5}
+.ce-btn{position:relative;width:auto;background:var(--or);color:var(--nuit);font-weight:800;font-size:12.5px;padding:10px 22px;margin-top:18px}
 .nuit-coffre-bloc{background:var(--panneau2);border:1px solid var(--ligne);border-radius:10px;padding:11px;margin-top:10px;max-width:420px;width:100%}
 .nuit-coffre-t{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--or);margin-bottom:5px}
 .nuit-coffre-v{font-size:11.5px;color:var(--gris);font-style:italic;margin-top:5px}
@@ -874,7 +885,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.62';
+const APP_VERSION = '13.63';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -1532,6 +1543,35 @@ function ceremonieSceau(sur, titre, texte){
     <div class="sceau-texte">${texte}</div>
     <div class="sceau-vanne">« ${v} »</div>
     <button class="btn sceau-btn" onclick="document.getElementById('sceau-overlay').remove()">Sceller 🔏</button>
+  </div>`;
+  document.body.appendChild(d);
+}
+/* 🏆 LE COUP D'ENVOI DE LA FINALE : plein écran, une fois par personne, dès l'ouverture pendant le match */
+function coupDenvoiFinale(){
+  if(!pseudo) return;
+  const m = M.find(x=>x.id===104);
+  if(!m || !m.dt || !m.a || !m.b) return;
+  if(Date.now() < m.dt.getTime()) return;          /* pas encore 15h */
+  if(resultats[104]) return;                        /* match fini : place au teasing du récap */
+  if(localStorage.getItem('mf_ce_104')) return;     /* déjà vécu */
+  localStorage.setItem('mf_ce_104','1');
+  const enveloppes = PARTICIPANTS.filter(p=>pronos[p] && pronos[p][104]).length;
+  const van = pioche([
+    "Il ne reste qu'à regarder, mentir sur ses pronos, et attendre la Nuit.",
+    "Quatre visages neutres devant une télé. Quatre calculatrices mentales en surchauffe. Aucune n'a le bon résultat.",
+    "Quelque part dans le coffre, une enveloppe contient déjà le nom du champion de la famille. Elle ne le dira qu'à la Nuit.",
+    "Le monde regarde onze contre onze. Cette famille regarde quatre contre quatre. Les deux matchs comptent — un seul se joue à la loyale."
+  ]);
+  const d = document.createElement('div');
+  d.id = 'ce-finale';
+  d.innerHTML = `<div class="ce-boite">
+    <div class="ce-halo"></div>
+    <div class="ce-sur">Dimanche 19 juillet · MetLife Stadium</div>
+    <div class="ce-duel"><span class="ce-dra">${F[m.a]||''}</span><span class="ce-vs">VS</span><span class="ce-dra">${F[m.b]||''}</span></div>
+    <div class="ce-titre">LA FINALE<br>A COMMENCÉ</div>
+    <div class="ce-texte">Les paris sont clos. Le Quiz est scellé. ${enveloppes} enveloppe${enveloppes>1?'s':''} dorm${enveloppes>1?'ent':''} au coffre — plus personne ne peut rien changer, et c'est très bien comme ça.</div>
+    <div class="ce-vanne">« ${van} »</div>
+    <button class="btn ce-btn" onclick="document.getElementById('ce-finale').remove()">🍿 Place au match</button>
   </div>`;
   document.body.appendChild(d);
 }
@@ -3480,6 +3520,7 @@ function banniereEcurie(){
   const z = $('banniere-ecurie');
   afficheDuJour();
   carteQuiz();
+  coupDenvoiFinale();
   if(!pseudo){ z.style.display='none'; return; }
   const eq = ecurieDe(pseudo);
   if(!eq){
