@@ -854,7 +854,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.54';
+const APP_VERSION = '13.55';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -4641,6 +4641,14 @@ async function ajouterPotin(){
 /* ============ ORCHESTRATION ============ */
 function miniClassement(){
   const z = $('mini-classement');
+  /* 🔒 HUIS CLOS FINAL : la barre de classement de l'onglet Matchs passe sous scellés,
+     avec la vanne du jour — du teasing, jamais de chiffres. */
+  if(huisClosActif()){
+    z.style.display = '';
+    z.innerHTML = `<span class="eti" style="color:#a78bfa">🔒 Classement scellé</span><span class="item" style="color:#c9b8f5;font-weight:500;font-style:italic;font-size:12px;white-space:normal">${vanneHuisClos()}</span>`;
+    z.onclick = ()=>goTab('classement');
+    return;
+  }
   /* MONEY TIME : ce mini-classement est affiché en permanence en haut de l'app.
      On le scelle pour ne pas révéler les positions pendant la dernière ligne droite. */
   if(Object.keys(resultats).length < 72 && PARTICIPANTS.some(p=>Object.values(pronos[p]||{}).some(pr=>resultats[pr.match_id]))){
