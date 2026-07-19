@@ -854,7 +854,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.53';
+const APP_VERSION = '13.54';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -5179,7 +5179,7 @@ function annonceCheikh(){
 function detecterReveals(){
   if(!pseudo) return;
   const vus = vusReveal();
-  const nouveaux = M.filter(m => resultats[m.id] && !vus.includes(m.id) && !(huisClosActif() && m.id>=103));
+  const nouveaux = M.filter(m => resultats[m.id] && !vus.includes(m.id));
   if(!nouveaux.length) return;
   /* on ne théâtralise que les 3 plus récents, le reste est marqué vu */
   const aJouer = nouveaux.slice(-3);
@@ -5236,9 +5236,13 @@ function etapesReveal(id){
   _piocheVues = new Set();
   const m = M.find(x=>x.id===id), re = resultats[id];
   if(!m || !re) return [];   /* sécurité minimale : pas de match ou pas de résultat */
+  const hcRecap = huisClosActif() && id >= 103;   /* 🔒 récap sous rideau : on teasera sans rien dire */
   const lignesParis = PARTICIPANTS.map(p=>{
     const pr = pronos[p] && pronos[p][id];
-    if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">n'a pas parié 🙈</span></div>`;
+    if(!pr) return `<div class="ligne-r">${p} : <span style="color:var(--gris)">${hcRecap?'⏳ rien déposé':'n\'a pas parié 🙈'}</span></div>`;
+    if(hcRecap && p!==pseudo){
+      return `<div class="ligne-r">${p} : <span class="hc-env">🗳️ enveloppe scellée</span></div>`;
+    }
     const extras = [pr.buteur?`⚽ ${pr.buteur}`:'', pr.btts===true?'🥅 oui':pr.btts===false?'🥅 non':'', pr.en_or?'🌟 EN OR':'', pr.cheikh?'🕋 CHEIKH':''].filter(Boolean).join(' · ');
     return `<div class="ligne-r">${p} : <b>${pr.score_a}–${pr.score_b}</b>${extras?' · '+extras:''}</div>`;
   }).join('');
@@ -5262,7 +5266,7 @@ function etapesReveal(id){
     musa:     {coul:'#7aa2ff', coul2:'rgba(122,162,255,.35)', accroche:p=>`${p} dégaine le Joker Musa ⚽ — et cette fois Ginou, il joue vraiment ! Deux buteurs misés.`},
     remontada:{coul:'#FF6B5E', coul2:'rgba(255,107,94,.35)', accroche:p=>`${p} invoque la Remontada 🔥 — comme le Barça face au PSG, +2 garantis si le qualifié tombe.`}
   };
-  const etapesPouvoirs = PARTICIPANTS.map(p=>{
+  const etapesPouvoirs = (hcRecap ? [] : PARTICIPANTS).map(p=>{
     const pr = pronos[p] && pronos[p][id];
     if(!pr || !pr.pouvoir || id===104) return null;
     const pvDef = POUVOIRS[Object.keys(POUVOIRS).find(k=>POUVOIRS[k].id===pr.pouvoir)];
@@ -5406,6 +5410,16 @@ function etapesReveal(id){
             `Petit match tranquille côté pronos. Mais ne te repose pas : le prochain peut tout faire basculer.`,
             `Rien de spectaculaire cette fois. Le classement attend son prochain coup de théâtre — qui viendra, c'est sûr.`
           ]);
+        }
+        if(hcRecap){
+          piqueT = pioche([
+            `Quelqu'un vient de faire une très belle soirée. Quelqu'un d'autre fixe le plafond. Le coffre sait qui — et il adore garder les secrets jusqu'à dimanche.`,
+            `Des points ont changé de mains ce soir, peut-être beaucoup, peut-être un trône. Les seules certitudes : quatre sourires de façade, et un dépouillement qui va faire du bruit.`,
+            `Le rideau a tout vu. Un pari a claqué, un autre a coulé, et il n'est pas impossible qu'une arme secrète ait parlé. Rendez-vous à la Nuit du Jugement — venez avec des excuses préparées.`,
+            `Le classement a peut-être basculé. Ou pas. C'est tout le charme : chacun s'endort ce soir en refaisant ses calculs. Ils sont faux, évidemment.`,
+            `Entre ce qui s'est dit devant la télé et ce qui est écrit dans les enveloppes, il y a un monde. Dimanche soir, on compare les deux versions.`
+          ]);
+          return `<div class="etape"><div class="eti-r">🔒 Classement sous scellés</div><div style="font-size:54px;line-height:1;margin:6px 0">🔐</div><h3 style="font-size:clamp(18px,5vw,26px)">Le Huis Clos Final</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:420px">Points masqués, enveloppes closes, armes peut-être dégainées — personne ne saura rien avant le dépouillement de la Nuit du Jugement.</div><div class="punch">🎙️ ${piqueT}</div></div>`;
         }
         return `<div class="etape"><div class="eti-r">🔒 Classement sous scellés</div><div style="font-size:54px;line-height:1;margin:6px 0">🔐</div><h3 style="font-size:clamp(18px,5vw,26px)">Money Time</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:420px">${tease}</div><div class="punch">🎙️ ${piqueT}</div></div>`; })()
     : `<div class="etape"><div class="eti-r">Le classement après ce match</div>${lignesClassement}<div class="punch">🎙️ ${punch}</div></div>`;
