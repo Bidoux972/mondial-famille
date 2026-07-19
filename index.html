@@ -894,7 +894,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.64';
+const APP_VERSION = '13.68';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -6111,22 +6111,48 @@ function etapesNuit(copiesQuiz){
     if(tapieJouee) return;
     E.push(`<div class="etape etape-pouvoir" style="--pv:#F5B43C;--pv2:rgba(245,180,60,.35)"><div class="eti-r">Avant de refermer les enveloppes…</div><div style="font-size:56px">💼</div><h3>Le pouvoir<br>qui n'a jamais parlé</h3><div class="ligne-r" style="margin-top:8px">Trois pouvoirs ont claqué dans ce tournoi. Le quatrième a passé un mois au fond d'une poche : <b>L'Assurance Tapie</b> de Bidou — pertes annulées sur un match, +4 si la tendance est bonne. Une assurance tous risques… jamais déclarée.</div><div class="ligne-r" style="color:var(--gris);margin-top:8px">Sang-froid de champion, ou oubli de retraité — le tribunal laisse la famille trancher. Bruyamment, de préférence.</div></div>`);
   })();
-  /* ── ACTE V · LE CLASSEMENT BASCULE + COURONNEMENT ───────── */
-  const posAvant = {}; clAvant.forEach((l,i)=>posAvant[l.p]=i);
-  E.push(`<div class="etape"><div class="eti-r">Le rideau se lève</div><h3>Le classement<br>final</h3>${clApres.map((l,i)=>{
-    const av = posAvant[l.p], fl = av===undefined?'' : av>i?' <span style="color:var(--lagon)">▲</span>' : av<i?' <span style="color:var(--corail)">▼</span>' : '';
-    return `<div class="ligne-r">${i===0?'👑':(i+1)+'.'} <b>${l.p}</b> ${l.total} pts${fl}</div>`;
-  }).join('')}<div class="ligne-r" style="color:var(--gris);margin-top:8px">La course au dauphin est réglée : ${clApres[1].p} termine devant ${clApres[2].p}${clApres[1].total===clApres[2].total?' — à égalité parfaite, départagés par le destin':''}.</div></div>`);
+  /* ── ACTE V · LE VERDICT, PLACE PAR PLACE (en remontant) ───── */
+  const posAvant = {}; clAvant.forEach((l,i2)=>posAvant[l.p]=i2);
+  const fleche = (p, i2) => {
+    const av = posAvant[p];
+    return av===undefined?'' : av>i2?' <span style="color:var(--lagon)">▲ +'+(av-i2)+'</span>' : av<i2?' <span style="color:var(--corail)">▼ −'+(i2-av)+'</span>' : ' <span style="color:var(--gris)">＝</span>';
+  };
+  E.push(`<div class="etape"><div class="eti-r">Le rideau se lève</div><div style="font-size:52px">🎭</div><h3>Le verdict,<br>place par place</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:400px">Mes amis… quelle Coupe du monde. La France est morte un mardi soir à Dallas, sans cadrer un tir en première période. Deschamps a plié quatorze ans dans une valise. Mbappé et Messi se sont arraché un Soulier d'Or à coups de passes décisives. Et pendant que la planète regardait onze contre onze… cette famille jouait SA finale. Voici le verdict. Place par place. Comme on égrène un chapelet.</div></div>`);
+  const DESTINS_PLACE = {
+    3:[`Dernier au général, mais riche d'une histoire que personne d'autre ne peut raconter. La dignité est intacte. Enfin, presque intacte.`,
+       `La lanterne rouge éclaire aussi. C'est même à ça qu'on la reconnaît.`],
+    2:[`Sur le podium sans les honneurs — la médaille en chocolat, mais du bon chocolat.`,
+       `Troisième : assez haut pour la photo, trop bas pour le discours.`],
+    1:[`Dauphin. C'est joli, dauphin. C'est intelligent, ça fait des sauts. Mais ça ne soulève jamais la coupe.`,
+       `À une marche du trône. Les marches, c'est traître — demandez aux escaliers.`]
+  };
+  const CHAUFFE_4E = [
+    `Chaque grande épopée a ses tombés, mes amis. Le Panamá a traversé ce Mondial sans marquer UN but — et il est rentré chez lui la tête haute. La personne qui suit connaît intimement ce sentiment.`,
+    `Dix-huit sélectionneurs ont été éjectés de leur banc pendant ce tournoi. Dix-huit ! La personne qui suit a survécu à pire : à son propre classement.`,
+    `Elle a tout donné, tout perdu, tout assumé. Comme les Bleus à Dallas — mais sans la prime de la Fédération.`
+  ];
+  const CHAUFFE_3E = [
+    `La troisième place… Demandez aux Bleus ce qu'elle vaut : ils l'ont jouée samedi à Miami, pour les yeux mouillés d'un sélectionneur qui partait. Un podium, c'est un trophée que personne ne demande et que tout le monde garde.`,
+    `Just Fontaine a marqué un quadruplé dans une petite finale, en 1958. La personne qui suit n'a pas fait de quadruplé. Mais elle a existé sur le podium, et l'Histoire retient les podiums.`,
+    `Assez haut pour la photo, trop bas pour le discours — le purgatoire doré des presque-grands.`
+  ];
+  for(let pl = clApres.length-1; pl >= 2; pl--){
+    const chauffe = pl===clApres.length-1 ? CHAUFFE_4E : CHAUFFE_3E;
+    E.push(`<div class="etape"><div class="eti-r">${pl===clApres.length-1?'On ouvre par la cave':'Montons d\'un étage'}</div><div style="font-size:44px">🎙️</div><h3>${pl+1}e place…</h3>${chauffe.map(v=>`<div class="ligne-r" style="color:var(--gris);margin-top:8px;max-width:400px">${v}</div>`).join('')}<div class="ligne-r" style="color:var(--or);font-weight:800;margin-top:12px">Le nom est à l'écran suivant. Les excuses aussi, probablement.</div></div>`);
+    const l = clApres[pl];
+    const medaille = pl===clApres.length-1?'🕯️':pl===2?'🥉':pl===1?'🥈':'▪️';
+    const titre = pl===clApres.length-1?`${pl+1}e et dernier`:pl===1?'Le dauphin':`${pl+1}e place`;
+    const extra = pl===1 ? `<div class="ligne-r" style="color:var(--gris);margin-top:8px">La course au dauphin est tranchée : ${l.p} devant ${clApres[2].p}${l.total===clApres[2].total?' — à égalité parfaite, départagés par le destin':''}.</div>` : '';
+    E.push(`<div class="etape"><div class="eti-r">${titre}</div><div style="font-size:50px">${medaille}</div><h3>${l.p}</h3><div class="ligne-r" style="margin-top:6px"><b data-reveal-score>${l.total}</b> points${fleche(l.p, pl)} · ${l.exacts} scores exacts</div><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:400px">${pioche(DESTINS_PLACE[Math.min(pl,3)]||DESTINS_PLACE[2])}</div>${extra}</div>`);
+  }
+  E.push(`<div class="etape"><div class="eti-r">Ils ne sont plus que deux</div><div style="font-size:44px">⚔️</div><h3>${clApres[0].p}<br><span style="font-size:.6em;color:var(--gris)">contre</span><br>${clApres[1].p}</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:400px">Deux noms face à face, comme Yamal et Messi cette nuit au MetLife — l'aube contre le crépuscule, la méthode contre le génie. L'un des deux est champion du Mondial en Famille. L'autre racontera pendant quatre ans qu'il « n'était pas loin ». Personne ne sait encore qui dit quoi.</div></div>`);
+  E.push(`<div class="etape"><div class="eti-r">Il ne reste qu'un trône</div><div style="font-size:58px;animation:pvBlink 0.7s ease-in-out infinite">🥁</div><h3>Roulement<br>de tambour</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:400px">Écoutez… vous entendez ? C'est le MetLife qui gronde encore. 104 matchs, des pouvoirs, des trahisons, deux enterrements, une tentative de corruption — et le tambour du destin qui bat. QUÉ MOMENTO, mes amis. Quelqu'un dans cette pièce est déjà champion. Regardez les visages : l'un d'eux ment mieux que les autres.</div><div class="ligne-r" style="color:var(--or);margin-top:8px;font-weight:800">Le trône attend. Touchez quand vous serez prêts. Vous n'êtes pas prêts.</div></div>`);
+  E.push(`<div class="etape"><div class="eti-r">La décision</div><div style="font-size:48px">📜</div><h3>Le champion du<br>Mondial en Famille<br>est…</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:400px">…attendez. Une pensée d'abord pour les géants que ce tournoi a dévorés : Neymar parti en larmes sur la pelouse de ses débuts, Ronaldo à 41 ans face à son crépuscule, Modric ovationné jusqu'à la sortie. Ce Mondial a couché les légendes. Pas vous. Pas encore. On progresse.</div></div>`);
+  E.push(`<div class="etape"><div class="eti-r">Non, vraiment, cette fois</div><div style="font-size:48px">⏳</div><h3>Le champion<br>est…</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:400px">Le nom est là, sur mes lèvres, mes amis… La VAR familiale vérifie une dernière image. Infantino signe le procès-verbal. Le show de mi-temps est terminé, les confettis du MetLife retombent — place au SEUL sacre qui compte dans cette pièce.</div><div class="ligne-r" style="color:var(--or);font-weight:800;margin-top:10px">Le tribunal savoure. Le tribunal a le temps. Pas vous.</div></div>`);
   E.push(`<div class="etape" data-fete="1"><div class="eti-r">👑 Le Couronnement</div><div style="font-size:64px">🏆</div><h3>${champ.p},<br>Champion du<br>Mondial en Famille</h3><div class="ligne-r" style="margin-top:8px"><b>${champ.total} points</b> · ${champ.exacts} scores exacts · un mois de règne</div><div class="ligne-r" style="color:var(--gris);margin-top:6px">Gravé au palmarès pour l'éternité. Les autres ont quatre ans pour préparer leur revanche — et leurs excuses.</div>${(palmares && palmares.champion_final)?'<div class="ligne-r" style="color:var(--or);margin-top:10px">✅ Déjà gravé au palmarès</div>':'<button class="btn" style="margin-top:14px;background:var(--or);color:var(--nuit);font-weight:800" onclick="event.stopPropagation(); graverSacreFinal()">👑 Graver le champion à jamais</button>'}</div>`);
 
   /* ── ÉPILOGUE ────────────────────────────────────────────── */
-  const destins = {
-    0:[`Le trône, la couronne, et quatre ans de « vous vous souvenez quand j'ai gagné ? ». Courage aux autres.`],
-    1:[`Dauphin. C'est joli, dauphin. C'est intelligent, ça fait des sauts. Mais ça ne soulève jamais la coupe.`],
-    2:[`Sur le podium sans les honneurs — la médaille en chocolat, mais du bon chocolat.`],
-    3:[`Dernier au général, mais riche d'une histoire que personne d'autre ne peut raconter : deux écuries enterrées, un pouvoir grillé par erreur, et une dignité intacte. Enfin, presque intacte.`]
-  };
-  E.push(`<div class="etape"><div class="eti-r">Épilogue</div><h3>Les destins</h3>${clApres.map((l,i)=>`<div class="ligne-r" style="margin-bottom:6px">${i===0?'👑':i===clApres.length-1?'🕯️':'▪️'} <b>${l.p}</b> — ${pioche(destins[Math.min(i,3)])}</div>`).join('')}</div>`);
+  E.push(`<div class="etape"><div class="eti-r">🥈 Et donc…</div><div style="font-size:48px">🐬</div><h3>${clApres[1].p},<br>dauphin</h3><div class="ligne-r" style="margin-top:6px"><b data-reveal-score>${clApres[1].total}</b> points${fleche(clApres[1].p, 1)} · à ${clApres[0].total-clApres[1].total} point${clApres[0].total-clApres[1].total>1?'s':''} du trône</div><div class="ligne-r" style="color:var(--gris);margin-top:10px;max-width:400px">${pioche(DESTINS_PLACE[1])}</div></div>`);
   E.push(`<div class="etape"><div class="eti-r">🌑 Fin de la Nuit</div><h3>Le rideau<br>tombe</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px">Le Mondial en Famille 2026 est clos. Les Reliques (diplômes et affiche du tournoi) arrivent demain. Les archives, elles, veillent déjà sur l'édition suivante.</div><div class="ligne-r" style="margin-top:8px">Merci d'avoir joué. Rendez-vous en 2030. 🍿</div></div>`);
   return E;
 }
