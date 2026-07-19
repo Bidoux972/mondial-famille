@@ -874,7 +874,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.61';
+const APP_VERSION = '13.62';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -5983,6 +5983,8 @@ function etapesNuit(copiesQuiz){
   const notes = notesQuiz(copiesQuiz);
   if(notes.length){
     E.push(`<div class="etape"><div class="eti-r">Acte III</div><div style="font-size:54px">🧠</div><h3>Le verdict<br>du Grand Quiz</h3><div class="ligne-r" style="color:var(--gris);margin-top:10px">32 questions, ${notes.length} copies scellées. Voyons qui a vécu ce tournoi… et qui l'a regardé en diagonale, avec le pouce.</div></div>`);
+    /* ⚖️ l'incident de séance : la tentative de corruption du dimanche */
+    E.push(`<div class="etape"><div class="eti-r">⚖️ Incident de séance</div><div style="font-size:50px">🚨</div><h3>Tentative<br>de corruption</h3><div class="ligne-r" style="margin-top:10px;max-width:420px">Le tribunal doit signaler qu'une tentative de corruption a été enregistrée ce dimanche : un membre de cette famille a proposé au commissaire de rouvrir sa copie scellée pour « rectifier deux petites questions ». La requête a été rejetée.</div><div class="ligne-r" style="color:var(--gris);margin-top:8px;max-width:420px">La jurisprudence est claire : on ne rouvre pas une enveloppe, on assume ses cachets. Le tribunal ne citera pas de nom. Le tribunal précise juste que la personne se reconnaîtra — et que les trois autres aussi.</div></div>`);
     /* les moments choisis */
     const q12 = QUIZ_QUESTIONS.find(q=>q.id==='q21');
     if(q12){
