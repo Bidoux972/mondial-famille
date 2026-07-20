@@ -667,6 +667,17 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 .nuit-coffre-bloc{background:var(--panneau2);border:1px solid var(--ligne);border-radius:10px;padding:11px;margin-top:10px;max-width:420px;width:100%}
 .nuit-coffre-t{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--or);margin-bottom:5px}
 .nuit-coffre-v{font-size:11.5px;color:var(--gris);font-style:italic;margin-top:5px}
+.pantheon{background:linear-gradient(160deg,#2a1f0e 0%,#16263B 65%);border:2px solid var(--or);border-radius:16px;padding:20px 15px;text-align:center;margin:0 0 14px;box-shadow:0 0 26px rgba(245,180,60,.22)}
+.pan-sur{font-size:10px;font-weight:800;letter-spacing:2.5px;color:var(--or);text-transform:uppercase}
+.pan-couronne{font-size:42px;margin:8px 0 2px;filter:drop-shadow(0 0 12px rgba(245,180,60,.6))}
+.pan-champ{font-family:'Archivo Black';font-size:30px;color:var(--creme);text-shadow:0 0 20px rgba(245,180,60,.35)}
+.pan-mention{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--or);margin-top:4px}
+.pan-reste{margin-top:12px}
+.pan-ligne{font-size:12.5px;color:var(--creme);margin-top:3px}
+.pan-poules{font-size:11.5px;color:var(--gris);margin-top:11px;padding-top:10px;border-top:1px dashed rgba(245,180,60,.3)}
+.pan-titres{font-size:11.5px;color:var(--gris);margin-top:5px}
+.pan-titres b, .pan-poules b{color:var(--creme)}
+.pan-grave{font-size:10px;color:var(--or);letter-spacing:1.5px;margin-top:11px;font-style:italic}
 .qz-plateau{display:flex;align-items:center;justify-content:center}
 .qz-solo{max-width:460px;width:100%;text-align:center;animation:pvFade .3s ease}
 .qz-solo-cat{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#a78bfa;margin-bottom:6px}
@@ -894,7 +905,7 @@ input[type=text],input[type=password]{width:100%;padding:10px;border-radius:8px;
 
 <script>
 /* ============ CONFIGURATION ============ */
-const APP_VERSION = '13.68';
+const APP_VERSION = '13.69';
 const SUPABASE_URL = 'https://nvomaxjyhuemdfvhzcbf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52b21heGp5aHVlbWRmdmh6Y2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTI3NjEsImV4cCI6MjA4NzY2ODc2MX0.2vQyuT6rPTeGzMp244L9n0OzBwOnW3WTviC3RKxrp8U';
 const ADMIN_CODE = '972972';            /* ← change-le avant d'envoyer le lien ! */
@@ -2752,7 +2763,7 @@ function classement(){
       `Tu peux toujours recharger la page : le coffre, lui, ne craque pas.`,
       `Quelque part, un favori transpire. On ne dira pas qui. On sait, c'est tout.`
     ]);
-    $('tableau-classement').innerHTML = (window.__btnNuit||'') + btnRevoir + `
+    $('tableau-classement').innerHTML = pantheonHTML() + (window.__btnNuit||'') + btnRevoir + `
       <div class="scelle">
         <div class="scelle-cad">🔐</div>
         <div class="scelle-t">CLASSEMENT SOUS SCELLÉS</div>
@@ -2769,7 +2780,7 @@ function classement(){
 
   /* ÉTAT 2 — POULES TERMINÉES : le bouton du sacre, classement toujours masqué jusqu'au reveal */
   if(poulesFinies && !sacreGrave){
-    $('tableau-classement').innerHTML = (window.__btnNuit||'') + btnRevoir + `
+    $('tableau-classement').innerHTML = pantheonHTML() + (window.__btnNuit||'') + btnRevoir + `
       <div class="sacre-cta">
         <div class="sacre-cta-t">🏁 La phase de poules est terminée</div>
         <div class="sacre-cta-s">72 matchs joués. Le verdict est tombé, scellé. Réunissez la famille.</div>
@@ -2784,7 +2795,7 @@ function classement(){
   }
 
   /* ÉTAT 3 — NORMAL : tableau complet (avant le money time, ou phase 2 reconfigurée) */
-  $('tableau-classement').innerHTML = (window.__btnNuit||'') + btnRevoir + lignes.map((l,i)=>{
+  $('tableau-classement').innerHTML = pantheonHTML() + (window.__btnNuit||'') + btnRevoir + lignes.map((l,i)=>{
     let fleche = '';
     if(aDesPointsHier){
       const d = posHier[l.p] - i;
@@ -6177,6 +6188,38 @@ function notesQuiz(copies){
     const ecartSub = rep['sub']!=null ? rep['sub'] - quizVerite('buts').val : 9999;
     return {p:c.pseudo, rep, score, max, nbD, toutD: nbQCM>0 && nbD/nbQCM>=0.8, sansFaute: score===max, ecartSub};
   });
+}
+/* 🏛️ LE PANTHÉON : le palmarès éternel, affiché à jamais en tête du classement */
+async function chargerTitresQuiz(){
+  if(window.__quizNotes !== undefined || !palmares || !palmares.champion_final) return;
+  window.__quizNotes = null;
+  try{
+    const copies = await sb('mondial_quiz?select=*');
+    const n = notesQuiz(copies||[]);
+    if(n.length){
+      const tri = n.slice().sort((x,y)=>y.score-x.score || Math.abs(x.ecartSub)-Math.abs(y.ecartSub));
+      window.__quizNotes = {memoire: tri[0].p, poisson: tri[tri.length-1].p};
+      classement();
+    }
+  }catch(e){}
+}
+function pantheonHTML(){
+  if(!palmares || !palmares.champion_final) return '';
+  chargerTitresQuiz();
+  const cf = palmares.classement_final || [];
+  const champ = cf[0] || {p: palmares.champion_final, total:''};
+  const lignes = cf.slice(1).map((l,i)=>`<div class="pan-ligne">${i===0?'🥈':i===1?'🥉':'🕯️'} ${l.p} · ${l.total} pts</div>`).join('');
+  const titres = window.__quizNotes ? `<div class="pan-titres">🧠 Mémoire du Mondial : <b>${window.__quizNotes.memoire}</b> · 🐟 Poisson Rouge d'Or : <b>${window.__quizNotes.poisson}</b></div>` : '';
+  return `<div class="pantheon">
+    <div class="pan-sur">🏛️ Palmarès éternel · Mondial en Famille 2026</div>
+    <div class="pan-couronne">👑</div>
+    <div class="pan-champ">${champ.p}</div>
+    <div class="pan-mention">CHAMPION${GENRE[champ.p]==='f'?'NE':''} DU MONDIAL EN FAMILLE${champ.total?` · ${champ.total} points`:''}</div>
+    <div class="pan-reste">${lignes}</div>
+    <div class="pan-poules">🏁 Champion des poules : <b>${palmares.champion_poules||'—'}</b></div>
+    ${titres}
+    <div class="pan-grave">Gravé le 19 juillet 2026 — à jamais.</div>
+  </div>`;
 }
 async function graverSacreFinal(){
   const cl = calculTotaux(filtrePhase);
